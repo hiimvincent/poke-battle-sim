@@ -57,6 +57,13 @@ POISONED = 4
 ASLEEP = 5
 BADLY_POISONED = 5
 
+CLEAR = 0
+HARSH_SUNLIGHT = 1
+RAIN = 2
+SANDSTORM = 3
+HAIL = 4
+FOG = 5
+
 class Battle:
     def __init__(self, t1: tr.Trainer, t2: tr.Trainer):
         if not isinstance(t1, tr.Trainer) or not isinstance(t2, tr.Trainer):
@@ -87,7 +94,7 @@ class Battle:
         self.t2.in_battle = True
         self.t1_faint = False
         self.t2_faint = False
-        self.battlefield = bf.Battlefield()
+        self.battlefield = bf.Battlefield(self)
         self.battle_started = True
         self.winner = None
         self.turn_count = 0
@@ -250,6 +257,8 @@ class Battle:
             poke.bide_count -= 1
         if poke.mr_count:
             poke.mr_count -= 1
+        if poke.db_count:
+            poke.db_count -= 1
             if not poke.mr_count:
                 poke.mr_target = None
         if poke.protect:
@@ -257,16 +266,30 @@ class Battle:
             poke.invulnerable = False
             if poke.last_successful_move not in ['protect', 'detect', 'endure']:
                 poke.protect_count = 0
+        if poke.endure:
+            poke.endure = False
+            if poke.last_successful_move not in ['protect', 'detect', 'endure']:
+                poke.protect_count = 0
+        if poke.perish_count:
+            poke.perish_count -= 1
+            if not poke.perish_count:
+                poke.faint()
         if poke.v_status[FLINCHED]:
             poke.v_status[FLINCHED] = 0
         if poke.foresight_target and not poke.foresight_target is other.current_poke:
             poke.foresight_target = None
+
+        self.battlefield.update()
+        if self.battlefield.weather == SANDSTORM:
+            if not poke.in_ground and not any(type in poke.types for type in ['ground', 'steel', 'rock']):
+                poke.take_damage(max(1, poke.max_hp // 16))
+                self._add_text(poke.nickname + ' is buffeted by the Sandstorm!')
         if poke.nv_status == BURNED:
             poke.take_damage(max(1, poke.max_hp // 8))
-            self._add_text(poke.nickname + " was hurt by its burn!")
+            self._add_text(poke.nickname + ' was hurt by its burn!')
         if poke.nv_status == POISONED:
             poke.take_damage(max(1, poke.max_hp // 8))
-            self._add_text(poke.nickname + " was hurt by poison!")
+            self._add_text(poke.nickname + ' was hurt by poison!')
         if poke.nv_status == BADLY_POISONED:
             poke.take_damage(max(1, poke.max_hp * poke.nv_counter // 16))
             poke.nv_counter += 1
@@ -297,7 +320,7 @@ class Battle:
     def _victory(self, winner: tr.Trainer, loser: tr.Trainer):
         self._process_end_battle()
         self.winner = winner
-        self._add_text(winner.name + " has defeated " + loser.name + "!")
+        self._add_text(winner.name + ' has defeated ' + loser.name + '!')
 
     def _process_other(self, attacker: tr.Trainer, defender: tr.Trainer, a_move: tuple[str, str]):
         if a_move[ACTION_VALUE] == 'recharging':
@@ -317,9 +340,9 @@ class Battle:
         self._add_text(selector.name + ' sent out ' + selector.current_poke.nickname + '!')
 
         if selector.spikes and 'flying' not in selector.current_poke.types:
-            if spikes == 1:
+            if selector.spikes == 1:
                 mult = 8
-            elif spikes == 2:
+            elif selector.spikes == 2:
                 mult = 6
             else:
                 mult = 4

@@ -30,6 +30,13 @@ CLAMP = 4
 NIGHTMARE = 4
 CURSE = 5
 
+CLEAR = 0
+HARSH_SUNLIGHT = 1
+RAIN = 2
+SANDSTORM = 3
+HAIL = 4
+FOG = 5
+
 # STAT_ORDERING_FORMAT
 HP = 0
 ATK = 1
@@ -535,7 +542,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             _failed(battle)
         return
     elif ef_id == 55:
-        attacker.take_damage(attacker.cur_hp)
+        attacker.faint()
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
         return
     elif ef_id == 56:
@@ -590,7 +597,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         if not defender.is_alive:
             _failed(battle)
             return
-        attacker.take_damage(attacker.cur_hp)
+        attacker.faint()
         old_def = defender.stats_actual[DEF]
         defender.stats_actual[DEF] //= 2
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
@@ -781,6 +788,31 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         if defender.is_alive and not attacker.foresight_target:
             attacker.foresight_target = defender
             battle._add_text(attacker.nickname + ' identified ' + defender.nickname + '!')
+        else:
+            _failed(battle)
+    elif ef_id == 85:
+        battle._add_text(attacker.nickname + ' is trying to take its foe with it!')
+        attacker.db_count = 1 if is_first else 2
+    elif ef_id == 86:
+        if not attacker.perish_count:
+            attacker.perish_count = 4
+        if defender.is_alive and not defender.perish_count:
+            defender.perish_count = 4
+        battle._add_text('All pokemon hearing the song will faint in three turns!')
+    elif ef_id == 87:
+        if battlefield.weather != SANDSTORM:
+            battlefield.weather = SANDSTORM
+            battlefield.weather_count = 5
+            battle._add_text('A sandstorm brewed')
+        else:
+            _failed(battle)
+    elif ef_id == 88:
+        if attacker.substitute:
+            _failed(battle)
+        p_chance = min(8, 2 ** attacker.protect_count)
+        if random.randrange(p_chance) < 1:
+            attacker.endure = True
+            attacker.protect_count += 1
         else:
             _failed(battle)
 

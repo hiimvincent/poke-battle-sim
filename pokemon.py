@@ -154,6 +154,7 @@ class Pokemon:
 
         self.is_alive = self.cur_hp != 0
         self.in_battle = False
+        self.transformed = False
         self.is_invulnerable = False
 
     def calculate_stats_actual(self):
@@ -180,7 +181,6 @@ class Pokemon:
         self.trapped = False
         self.perma_trapped = False
         self.minimized = False
-        self.transformed = False
         self.rage = False
         self.v_status = [0 for _ in range(V_STATUS_NUM)]
         self.last_move = None
@@ -195,13 +195,19 @@ class Pokemon:
         self.substitute = 0
         self.mist_count = 0
         self.mr_count = 0
+        self.db_count = 0
+        self.perish_count = 0
         self.mr_target = None
         self.bide_count = 0
         self.bide_dmg = 0
         self.protect = False
+        self.endure = False
         self.protect_count = 0
         self.last_damage_taken = 0
         self.moves = self.o_moves
+        if self.transformed:
+            self.reset_transform()
+        self.transformed = False
         self.item = self.o_item
         self.next_moves = Queue()
         self.types = (self.stats_base[_TYPE1], self.stats_base[_TYPE2])
@@ -230,10 +236,11 @@ class Pokemon:
             self.bide_dmg += damage
         if self.cur_hp - damage <= 0:
             self.last_damage_taken = self.cur_hp
+            if self._endure_check():
+                return self.last_damage_taken - 1
+            self._db_check()
             self.cur_hp = 0
             self.is_alive = False
-            if self.transformed:
-                self.reset_transform()
             self.reset_stats()
             return self.last_damage_taken
         if self.rage and self.stat_stages[ATK] < 6:
@@ -242,6 +249,14 @@ class Pokemon:
         self.cur_hp -= damage
         self.last_damage_taken = damage
         return self.last_damage_taken
+
+    def faint(self):
+        if not self.is_alive:
+            return
+        self.cur_hp = 0
+        self.is_alive = False
+        self.reset_stats()
+        self.cur_battle._faint_check()
 
     def heal(self, heal_amount: int) -> int:
         if heal_amount <= 0:
@@ -253,7 +268,6 @@ class Pokemon:
         else:
             self.cur_hp += heal_amount
             return heal_amount
-
 
     def get_move_data(self, move_name: str) -> Move:
         if self.copied and move_name == self.copied.name:
@@ -359,3 +373,20 @@ class Pokemon:
         self.evasion_stage = 0
         self.crit_stage = 0
         self.stat_stages = [0 for _ in range(STAT_NUM)]
+
+    def _endure_check(self) -> bool:
+        if self.endure:
+            battle._add_text(self.nickname + ' endured the hit!')
+            self.cur_hp = 1
+            return True
+        return False
+
+    def _db_check(self):
+        if not self.db_count:
+            return
+        if self.cur_battle.t1.current_poke is self:
+            enemy = self.cur_battle.t2.current_poke
+        else:
+            enemy = self.cur_battle.t1.current_poke
+        self.cur_battle._add_text(self.nickname + ' took down ' + enemy.nickname + ' down with it!')
+        enemy.faint()

@@ -9,7 +9,7 @@ TYPE_EF_PATH = './csv/type_effectiveness.csv'
 POKEMON_STATS_NUMS = [0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 MOVES_NUM = [0, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 
-COMPLETED_MOVES = 193
+COMPLETED_MOVES = 203
 
 class PokeSim:
     _pokemon_stats = []
@@ -116,7 +116,7 @@ class PokeSim:
 
     @classmethod
     def get_all_types(cls) -> list:
-        return _type_to_id.keys()
+        return cls._type_to_id.keys()
 
     @classmethod
     def get_rand_move(cls) -> list:
