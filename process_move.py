@@ -72,13 +72,8 @@ def process_move(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Bat
         return
     battle._add_text(attacker.nickname + ' used ' + _cap_move_name(move_data.name) + '!')
     attacker.last_move = move_data
-    if not _calculate_hit_or_miss(attacker, defender, battlefield, move_data):
-        if defender.evasion_stage > 0:
-            battle._add_text(defender.nickname + ' avoided the attack!')
-        else:
-            _missed(attacker, battle)
+    if not _calculate_hit_or_miss(attacker, defender, battlefield, battle, move_data):
         return
-
     attacker.last_successful_move = move_data
     if _protect_check(defender, battle, move_data):
         return
@@ -94,7 +89,7 @@ def _calculate_type_ef(defender: pokemon.Pokemon, move_data: list):
     return t_mult
 
 def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle,
-                      move_data: Move, crit_chance: int = None, inv_bypass: bool = False, skip_fc: bool = False) -> int:
+                      move_data: Move, crit_chance: int = None, inv_bypass: bool = False, skip_fc: bool = False, skip_dmg: bool = False) -> int:
     if move_data.category == STATUS:
         return
     if not defender.is_alive:
@@ -167,12 +162,14 @@ def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
     damage = (2 * attacker.level / 5 + 2) * move_data.power * ad_ratio / 50 * burn * screen * targets * weather_mult * ff + 2
     damage *= crit_mult * item_mult * first * random_mult * stab * t_mult * srf * eb * tl * berry_mult
     damage = int(damage)
+    if skip_dmg:
+        return damage
     damage_done = defender.take_damage(damage, move_data)
     if not skip_fc:
         battle._faint_check()
     return damage_done
 
-def _calculate_hit_or_miss(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, move_data: Move):
+def _calculate_hit_or_miss(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move):
     d_eva_stage = defender.evasion_stage
     if attacker.foresight_target and attacker.foresight_target is defender:
          if defender.evasion_stage > 0:
@@ -188,11 +185,16 @@ def _calculate_hit_or_miss(attacker: pokemon.Pokemon, defender: pokemon.Pokemon,
     if defender.mr_count and defender.mr_target and attacker is defender.mr_target:
         return True
     if ma == -1:
-        if move_data.ef_id == 20:
-            return random.randrange(1, 101) <= attacker.level - defender.level + 30
-
-    hit_threshold = ma * stage_mult * battlefield.acc_modifier * item_mult * ability_mult
-    return random.randrange(1, 101) <= hit_threshold
+        res = random.randrange(1, 101) <= attacker.level - defender.level + 30
+    else:
+        hit_threshold = ma * stage_mult * battlefield.acc_modifier * item_mult * ability_mult
+        res = random.randrange(1, 101) <= hit_threshold
+    if not res:
+        if defender.evasion_stage > 0:
+            battle._add_text(defender.nickname + ' avoided the attack!')
+        else:
+            _missed(attacker, battle)
+    return res
 
 
 def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool):
@@ -480,9 +482,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         attacker.minimized = True
         _give_stat_change(attacker, battle, EVA, 1)
     elif ef_id == 48:
-        for move in attacker.moves:
-            if move.name == 'rollout' or move.name == 'ice-ball' and move.power == move.o_power:
-                move.power *= 2
+        attacker.df_curl = True
         _give_stat_change(attacker, battle, DEF, 1)
     elif ef_id == 49:
         t = _get_trainer(attacker, battle)
@@ -742,7 +742,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         types = PokeSim.get_all_types()
         poss_types = []
         for type in types:
-            if PokeSim.get_type_effectiveness(last_move_type, type) < 1:
+            if type and PokeSim.get_type_effectiveness(last_move_type, type) < 1:
                 poss_types.append(type)
         poss_types = [type for type in poss_types if type not in attacker.types]
         if len(poss_types):
@@ -815,6 +815,41 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             attacker.protect_count += 1
         else:
             _failed(battle)
+    elif ef_id == 89:
+        if not move_data.ef_stat:
+            if attacker.df_curl and move_data.power == move_data.o_power:
+                move_data.power *= 2
+                move_data.ef_stat = 1
+            else:
+                move_data.ef_stat += 1
+        _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
+        move_data.power *= 2
+        if move_data.ef_stat < 5:
+            attacker.next_moves.put(move_data)
+        return
+    elif ef_id == 90:
+        dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data, skip_dmg=True)
+        if not dmg:
+            return
+        if not defender.substitute and dmg >= defender.cur_hp:
+            dmg = defender.cur_hp - 1
+        defender.take_damage(dmg, move_data)
+        return
+    elif ef_id == 91:
+        if defender.is_alive:
+            _give_stat_change(defender, battle, ATK, 2)
+            _confuse(defender, battle, forced=True)
+        else:
+            _failed(battle)
+    elif ef_id == 92:
+        if attacker.last_move is attacker.last_successful_move and attacker.last_move.name == move_data.name:
+            move_data.ef_stat = min(5, int(attacker.last_move.ef_stat) + 1)
+            move_data.power = move_data.o_power * (2 ** (move.data.ef_stat - 1))
+        else:
+            move_data.ef_stat = 1
+    elif ef_id == 93:
+        _infatuate(attacker, defender, battle)
+
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
@@ -863,6 +898,13 @@ def _pre_process_status(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, ba
     if attacker.nv_status == PARALYZED:
         if random.randrange(4) < 1:
             battle._add_text(attacker.nickname + ' is paralyzed! It can\'t move!')
+            return True
+    if attacker.infatuation:
+        if not attacker.infatuation is defender:
+            attacker.infatuation = None
+            battle._add_text(attacker.nickname + ' got over its infatuation!')
+        elif random.randrange(2) < 1:
+            battle._add_text(attacker.nickname + ' is immobilized by love!')
             return True
     if attacker.v_status[CONFUSED]:
         attacker.v_status[CONFUSED] -= 1
@@ -918,6 +960,12 @@ def _flinch(recipient: pk.Pokemon, is_first: bool):
     if is_first and recipient.is_alive and not recipient.v_status[FLINCHED]:
         recipient.v_status[FLINCHED] = 1
 
+def _infatuate(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle):
+    if not defender.is_alive or defender.infatuation:
+        _failed(battle)
+    elif (attacker.gender == 'male' and defender.gender == 'female') or (attacker.gender == 'female' and defender.gender == 'male'):
+        defender.infatuation = attacker
+        battle._add_text(defender.nickname + ' fell in love with ' + attacker.nickname + '!')
 
 def _give_stat_change(recipient: pokemon.Pokemon, battle: bt.Battle, stat: int, amount: int, forced: bool = False):
     if not recipient.is_alive:

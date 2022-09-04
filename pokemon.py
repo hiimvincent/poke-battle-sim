@@ -192,12 +192,14 @@ class Pokemon:
         self.binding_poke = None
         self.recharging = False
         self.biding = False
+        self.df_curl = False
         self.substitute = 0
         self.mist_count = 0
         self.mr_count = 0
         self.db_count = 0
         self.perish_count = 0
         self.mr_target = None
+        self.infatuation = None
         self.bide_count = 0
         self.bide_dmg = 0
         self.protect = False
