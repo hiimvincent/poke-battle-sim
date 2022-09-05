@@ -24,6 +24,7 @@ class Trainer:
             poke.start_battle(battle)
         self.in_battle = False
         self.light_screen = 0
+        self.safeguard = 0
         self.reflect = 0
         self.current_poke = self.poke_list[0]
         self.has_moved = False

@@ -54,7 +54,7 @@ class Pokemon:
             self, name_or_id: str | int, level: int, moves: [str], gender: str, nature: str = None,
             cur_hp: int = None, stats_actual: [int] = None,
             ivs: [int] = None, evs: [int] = None, item: str = None,
-            status: str = None, nickname: str = None):
+            status: str = None, nickname: str = None, friendship: int = 0):
 
         self.stats_base = PokeSim.get_pokemon(name_or_id)
         if not self.stats_base:
@@ -74,7 +74,8 @@ class Pokemon:
         self.level = level
 
         if not gender or not isinstance(gender, str) or gender.lower() not in POSSIBLE_GENDERS:
-            self.gender = gender
+            raise Exception
+        self.gender = gender
 
         if not stats_actual and not ivs and not evs:
             raise Exception
@@ -151,6 +152,10 @@ class Pokemon:
             self.nv_counter = 1
         else:
             self.nv_counter = 0
+
+        if not isinstance(friendship, int) or friendship < 0 or friendship > 255:
+            raise Exception
+        self.friendship = friendship
 
         self.is_alive = self.cur_hp != 0
         self.in_battle = False

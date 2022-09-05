@@ -688,10 +688,8 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             _failed(battle)
     elif ef_id == 75:
-        if attacker.nv_status == FROZEN:
-            battle._add_text(attacker.nickname + ' thawed out!')
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if defender.is_alive and random.randrange(10) < 1:
+        if defender.is_alive and random.randrange(100) < move_data.ef_amount:
             _burn(defender, battle)
         return
     elif ef_id == 76:
@@ -849,7 +847,85 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             move_data.ef_stat = 1
     elif ef_id == 93:
         _infatuate(attacker, defender, battle)
-
+    elif ef_id == 94:
+        if attacker.nv_status != ASLEEP:
+            _failed(battle)
+            return
+        pos_moves = [move for move in attacker.moves if move.name != 'sleep-talk']
+        sel_move = Move(pos_moves[random.randrange(len(pos_moves))].md)
+        battle._add_text(attacker.nickname + ' used ' + _cap_move_name(sel_move.name) + '!')
+        _process_effect(attacker, defender, battlefield, battle, sel_move, is_first)
+        return
+    elif ef_id == 95:
+        battle._add_text('A bell chimed!')
+        t = _get_trainer(attacker, battle)
+        for poke in t.poke_list:
+            poke.nv_status = 0
+    elif ef_id == 96:
+        move_data.power = max(1, int(attacker.friendship / 2.5))
+    elif ef_id == 97:
+        res = random.randrange(10)
+        if res < 2:
+            if not defender.is_alive:
+                _missed(attacker, battle)
+                return
+            if defender.cur_hp == defender.max_hp:
+                battle._add_text(defender.nickname + ' can\'t receive the gift!')
+                return
+            defender.heal(defender.max_hp // 4)
+            battle._add_text(attacker.nickname + ' regained health!')
+            return
+        elif res < 6:
+            move_data.power = 40
+        elif res < 9:
+            move_data.power = 80
+        elif res < 10:
+            move_data.power = 120
+    elif ef_id == 98:
+        move_data.power = max(1, int((255 - attacker.friendship) / 2.5))
+    elif ef_id == 99:
+        t = _get_trainer(attacker, battle)
+        if not t.safeguard:
+            t.safeguard = 5
+            battle._add_text(t.name + '\'s team became cloaked in a mystical veil!')
+        else:
+            _failed(battle)
+    elif ef_id == 100:
+        if defender.is_alive:
+            new_hp = (attacker.cur_hp + defender.cur_hp) // 2
+            battle._add_text('The battlers shared their pain!')
+            attacker.cur_hp = min(new_hp, attacker.max_hp)
+            defender.cur_hp = min(new_hp, defender.max_hp)
+        else:
+            _failed(battle)
+        return
+    elif ef_id == 101:
+        res = random.randrange(20)
+        if res < 1:
+            mag = 4
+            move_data.power = 10
+        elif res < 3:
+            mag = 5
+            move_data.power = 30
+        elif res < 7:
+            mag = 6
+            move_data.power = 50
+        elif res < 13:
+            mag = 7
+            move_data.power = 70
+        elif res < 17:
+            mag = 8
+            move_data.power = 90
+        elif res < 19:
+            mag = 9
+            move_data.power = 110
+        else:
+            mag = 10
+            move_data.power = 150
+        if defender.in_ground:
+            inv_bypass = True
+            move_data.power *= 2
+        battle._add_text('Magnitude ' + str(mag) + '!')
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
@@ -876,11 +952,12 @@ def _invulnerability_check(attacker: pokemon.Pokemon, defender: pokemon.Pokemon,
 
 def _pre_process_status(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move) -> bool:
     if attacker.nv_status == FROZEN:
-        if random.randrange(5) < 4:
+        if move_data.ef_id == 75 or random.randrange(5) < 1:
+            attacker.nv_status = 0
+            battle._add_text(attacker.nickname + ' thawed out!')
+        else:
             battle._add_text(attacker.nickname + ' is frozen solid!')
             return True
-        attacker.nv_status = 0
-        battle._add_text(attacker.nickname + ' thawed out!')
     if attacker.nv_status == ASLEEP:
         if not attacker.nv_counter:
             attacker.nv_status = 0
@@ -943,6 +1020,8 @@ def _generate_2_to_5() -> int:
     return num_hits
 
 def _confuse(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
+    if _safeguard_check(recipient, battle):
+        return
     if recipient.substitute:
         if forced:
             _failed(battle)
@@ -1036,6 +1115,8 @@ def _give_nv_status(status: int, recipient: pk.Pokemon, battle: bt.Battle, force
         _badly_poison(recipient, battle, forced)
 
 def _burn(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
+    if _safeguard_check(recipient, battle):
+        return
     if recipient.substitute:
         if forced:
             _failed(battle)
@@ -1052,6 +1133,8 @@ def _burn(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         battle._add_text(recipient.nickname + ' was burned!')
 
 def _freeze(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
+    if _safeguard_check(recipient, battle):
+        return
     if recipient.substitute:
         if forced:
             _failed(battle)
@@ -1068,6 +1151,8 @@ def _freeze(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         battle._add_text(recipient.nickname + ' was frozen solid!')
 
 def _paralyze(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
+    if _safeguard_check(recipient, battle):
+        return
     if recipient.substitute:
         if forced:
             _failed(battle)
@@ -1080,6 +1165,8 @@ def _paralyze(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         battle._add_text(recipient.nickname + ' is paralyzed! It may be unable to move!')
 
 def _poison(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
+    if _safeguard_check(recipient, battle):
+        return
     if recipient.substitute:
         if forced:
             _failed(battle)
@@ -1092,6 +1179,8 @@ def _poison(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         battle._add_text(recipient.nickname + ' was poisoned!')
 
 def _sleep(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
+    if _safeguard_check(recipient, battle):
+        return
     if recipient.substitute:
         if forced:
             _failed(battle)
@@ -1104,6 +1193,8 @@ def _sleep(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         battle._add_text(recipient.nickname + ' fell asleep!')
     
 def _badly_poison(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
+    if _safeguard_check(recipient, battle):
+        return
     if recipient.substitute:
         if forced:
             _failed(battle)
@@ -1137,3 +1228,9 @@ def _failed(battle: bt.Battle):
 
 def _missed(attacker: pk.Pokemon, battle: bt.Battle):
     battle._add_text(attacker.nickname + '\'s attack missed!')
+
+def _safeguard_check(poke: pk.Pokemon, battle: bt.Battle) -> bool:
+    if _get_trainer(poke, battle).safeguard:
+        battle._add_text(poke.nickname + ' is protected by Safeguard!')
+        return True
+    return False

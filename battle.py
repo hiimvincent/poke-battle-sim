@@ -251,6 +251,11 @@ class Battle:
             trainer.reflect -= 1
         if trainer.light_screen:
             trainer.light_screen -= 1
+            self._add_text(trainer.name + '\'s Light Screen wore off!')
+        if trainer.safeguard:
+            trainer.safeguard -= 1
+            if not trainer.safeguard:
+                self._add_text(trainer.name + ' is no longer protected by Safeguard!')
         if poke.mist_count:
             poke.mist_count -= 1
         if poke.bide_count:
