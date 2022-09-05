@@ -9,7 +9,7 @@ TYPE_EF_PATH = './csv/type_effectiveness.csv'
 POKEMON_STATS_NUMS = [0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 MOVES_NUM = [0, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 
-COMPLETED_MOVES = 223
+COMPLETED_MOVES = 233
 
 class PokeSim:
     _pokemon_stats = []

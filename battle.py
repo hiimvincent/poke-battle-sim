@@ -49,6 +49,10 @@ RECHARDING = ('other', 'recharging')
 BIDING = ('other', 'biding')
 RAGE = ('move', 'rage')
 STRUGGLE = ('move', 'struggle')
+PURSUIT = ('move', 'pursuit')
+SWITCH = ('other', 'switch')
+
+PURSUIT_CHECK = ['baton-pass', 'teleport', 'u-turn', 'volt-switch', 'parting-shot']
 
 BURNED = 1
 FROZEN = 2
@@ -112,6 +116,7 @@ class Battle:
         t2_move_data = None
         t1_mv_check_bypass = False
         t2_mv_check_bypass = False
+        t1_first = None
 
         if self.t1.current_poke.recharging:
             t1_move = RECHARDING
@@ -124,6 +129,13 @@ class Battle:
             t1_move_data = self.t1.current_poke.next_moves.get()
             t1_move = (MOVE, t1_move_data.name)
             t1_mv_check_bypass = True
+        elif self.t1.current_poke.encore_count:
+            t1_move_data = self.t1.current_poke.encore_move
+            t1_move = (MOVE, t1_move_data.name)
+            if t1_move_data.disabled:
+                t1_move = STRUGGLE
+                t1_move_data = None
+                t1_mv_check_bypass = True
         elif t1_move[ACTION_TYPE] == MOVE and self.t1.current_poke.no_pp():
             t1_move = STRUGGLE
             t1_mv_check_bypass = True
@@ -138,6 +150,13 @@ class Battle:
             t2_move_data = self.t2.current_poke.next_moves.get()
             t2_move = (MOVE, t2_move_data.name)
             t2_mv_check_bypass = True
+        elif self.t2.current_poke.encore_count:
+            t2_move_data = self.t2.current_poke.encore_move
+            t2_move = (MOVE, t2_move_data.name)
+            if t2_move_data.disabled:
+                t2_move = STRUGGLE
+                t2_move_data = None
+                t2_mv_check_bypass = True
         elif t2_move[ACTION_TYPE] == MOVE and self.t2.current_poke.no_pp():
             t2_move = STRUGGLE
             t2_mv_check_bypass = True
@@ -161,10 +180,11 @@ class Battle:
         if t2_move[ACTION_TYPE] == MOVE and not t2_mv_check_bypass and not self.t2.current_poke.is_move(t2_move[ACTION_VALUE]):
             raise Exception
 
-        if not t1_move_data and  t1_move[ACTION_TYPE] == MOVE:
+        if not t1_move_data and t1_move[ACTION_TYPE] == MOVE:
             t1_move_data = self.t1.current_poke.get_move_data(t1_move[ACTION_VALUE])
         if not t2_move_data and t2_move[ACTION_TYPE] == MOVE:
             t2_move_data = self.t2.current_poke.get_move_data(t2_move[ACTION_VALUE])
+
         t1_prio = ACTION_PRIORITY[t1_move[ACTION_TYPE]]
         t2_prio = ACTION_PRIORITY[t2_move[ACTION_TYPE]]
         t1_first = t1_prio >= t2_prio
@@ -177,6 +197,13 @@ class Battle:
                     t1_first = random.randrange(2) < 1
                 else:
                     t1_first = spd_dif > 0
+
+        if self._pursuit_check(t1_move, t2_move, t1_first):
+            t1_first = t1_move == PURSUIT
+            p_move = t1_move_data if t1_first else t2_move_data
+            p_move.cur_pp -= 1
+            p_move.get_tcopy()
+            p_move.power *= 2
 
         self._add_text("Turn " + str(self.turn_count) + ":")
         if t1_first:
@@ -241,9 +268,26 @@ class Battle:
             self._process_other(attacker, defender, a_move)
         elif a_move[ACTION_TYPE] == 'item':
             process_item()
-        else:
-            pm.process_move(attacker.current_poke, defender.current_poke, self.battlefield, self, a_move_data.get_tcopy(), not defender.has_moved)
+        elif self._process_pp(attacker.current_poke, a_move_data):
+            pm.process_move(attacker.current_poke, defender.current_poke, self.battlefield, self,
+                            a_move_data.get_tcopy(), not defender.has_moved)
+            attacker.current_poke.update_last_moves()
         attacker.has_moved = True
+
+    def _process_pp(self, attacker: pk.Pokemon, move: Move) -> bool:
+        if move.name == 'struggle':
+            return True
+        if move.cur_pp <= 0:
+            raise Exception
+        is_disabled = move.disabled
+        attacker.reduce_disabled_count()
+        if is_disabled:
+            self._add_text(move.name + ' is disabled!')
+            return False
+        move.cur_pp -= 1
+        if move.cur_pp == 0 and attacker.copied and move.name == attacker.copied.name:
+            attacker.copied = None
+        return True
 
     def _post_process_status(self, trainer: tr.Trainer, other: tr.Trainer):
         poke = trainer.current_poke
@@ -266,6 +310,13 @@ class Battle:
             poke.db_count -= 1
             if not poke.mr_count:
                 poke.mr_target = None
+        if poke.encore_count:
+            poke.encore_count -= 1
+            if not poke.encore_count:
+                poke.encore_move = None
+                for move in poke.moves:
+                    move.encore_blocked = False
+                    self._add_text(poke.nickname + '\'s encore ended!')
         if poke.protect:
             poke.protect = False
             poke.invulnerable = False
@@ -303,12 +354,14 @@ class Battle:
             if not poke.binding_poke is other.current_poke:
                 poke.v_status[BINDING_COUNT] = 0
                 poke.binding_type = None
+                poke.binding_poke = None
             else:
                 poke.take_damage(max(1, poke.max_hp // 16))
                 self._add_text(poke.nickname + ' was hurt by ' + poke.binding_type + '!')
                 poke.v_status[BINDING_COUNT] -= 1
                 if not poke.v_status[BINDING_COUNT]:
                     poke.binding_type = None
+                    poke.binding_poke = None
         if poke.v_status[LEECH_SEED] and poke.is_alive:
             heal_amt = poke.take_damage(max(1, poke.max_hp // 8))
             self._add_text(poke.nickname + '\'s health is sapped by Leech Seed!')
@@ -334,16 +387,18 @@ class Battle:
         if a_move[ACTION_VALUE] == 'biding':
             self._add_text(attacker.current_poke.nickname + ' is storing energy!')
 
-    def _process_selection(self, selector: tr.Trainer):
+    def _process_selection(self, selector: tr.Trainer) -> bool:
+        old_poke = selector.current_poke
         if selector.selection:
             selector.selection(self)
-        if not selector.current_poke.is_alive:
+        if not selector.current_poke.is_alive or selector.current_poke is old_poke:
             for p in selector.poke_list:
-                if p.is_alive:
+                if p.is_alive and not p is old_poke:
                     selector.current_poke = p
                     break
+        if not selector.current_poke.is_alive or selector.current_poke is old_poke:
+            return True
         self._add_text(selector.name + ' sent out ' + selector.current_poke.nickname + '!')
-
         if selector.spikes and 'flying' not in selector.current_poke.types:
             if selector.spikes == 1:
                 mult = 8
@@ -353,7 +408,7 @@ class Battle:
                 mult = 4
             selector.current_poke.take_damage(selector.current_poke.max_hp // mult)
             self._add_text(selector.current_poke.nickname + ' was hurt by the spikes!')
-
+        return False
 
     def _faint_check(self):
         if not self.t1_fainted and not self.t1.current_poke.is_alive:
@@ -370,6 +425,13 @@ class Battle:
             poke.battle_end_reset()
         self.t1.in_battle = False
         self.t2.in_battle = False
+
+    def _pursuit_check(self, t1_move: tuple[str, str], t2_move: tuple[str, str], t1_first: bool) -> True:
+        if t1_move == PURSUIT and (t2_move == SWITCH or (t2_move[ACTION_TYPE] == MOVE and t2_move[ACTION_VALUE] in PURSUIT_CHECK and not t1_first)):
+            return True
+        elif t2_move == PURSUIT and (t1_move == SWITCH or (t1_move[ACTION_TYPE] == MOVE and t1_move[ACTION_VALUE] in PURSUIT_CHECK and t1_first)):
+            return True
+        return False
 
     def _add_text(self, txt: str):
         self.all_text.append(txt)

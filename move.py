@@ -34,11 +34,13 @@ class Move:
         self.cur_pp = self.max_pp
         self.pos = None
         self.disabled = 0
+        self.encore_blocked = False
 
     def reset(self):
         self.cur_pp = self.max_pp
         self.pos = None
         self.disabled = 0
+        self.encore_blocked = False
         self.power = self.md[MOVE_POWER]
         self.max_pp = self.md[MOVE_PP]
         self.acc = self.md[MOVE_ACC]

@@ -63,18 +63,18 @@ METRONOME_CHECK = ['assist', 'chatter', 'copycat', 'counter', 'covet', 'destiny-
                    'focus-punch', 'follow-me', 'helping-hand', 'me-first', 'mimic', 'mirror-coat', 'mirror-move',
                    'protect', 'sketch', 'sleep-talk', 'snatch', 'struggle', 'switcheroo', 'thief', 'trick']
 
+ENCORE_CHECK = ['transform', 'mimic', 'sketch', 'mirror-move', 'sleep-talk', 'encore', 'struggle']
+
 PROTECT_TARGETS = [8, 9, 10, 11]
 
 def process_move(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool):
-    if not _process_pp(attacker, battle, move_data):
-        return
     if _pre_process_status(attacker, defender, battlefield, battle, move_data):
         return
     battle._add_text(attacker.nickname + ' used ' + _cap_move_name(move_data.name) + '!')
-    attacker.last_move = move_data
+    attacker.last_move_next = move_data
     if not _calculate_hit_or_miss(attacker, defender, battlefield, battle, move_data):
         return
-    attacker.last_successful_move = move_data
+    attacker.last_successful_move_next = move_data
     if _protect_check(defender, battle, move_data):
         return
     _process_effect(attacker, defender, battlefield, battle, move_data, is_first)
@@ -465,13 +465,13 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
                 if move.name != 'rage':
                     move.disabled = True
     elif ef_id == 44:
-        if attacker.copied or not defender.is_alive or attacker.is_move(defender.last_move.md):
+        if defender.is_alive and defender.last_move and not attacker.copied and not attacker.is_move(defender.last_move.md):
+            attacker.copied = Move(defender.last_move.md)
+            attacker.copied.max_pp = min(5, attacker.copied.max_pp)
+            attacker.copied.cur_pp = attacker.copied.max_pp
+            battle._add_text(attacker.nickname + ' learned ' + _cap_move_name(attacker.copied.name))
+        else:
             _failed(battle)
-            return
-        attacker.copied = Move(defender.last_move.md)
-        attacker.copied.max_pp = min(5, attacker.copied.max_pp)
-        attacker.copied.cur_pp = attacker.copied.max_pp
-        battle._add_text(attacker.nickname + ' learned ' + _cap_move_name(attacker.copied.name))
     elif ef_id == 45:
         # ability check
         _give_stat_change(defender, battle, DEF, -2)
@@ -840,7 +840,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             _failed(battle)
     elif ef_id == 92:
-        if attacker.last_move is attacker.last_successful_move and attacker.last_move.name == move_data.name:
+        if attacker.last_move and attacker.last_move is attacker.last_successful_move and attacker.last_move.name == move_data.name:
             move_data.ef_stat = min(5, int(attacker.last_move.ef_stat) + 1)
             move_data.power = move_data.o_power * (2 ** (move.data.ef_stat - 1))
         else:
@@ -926,6 +926,32 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             inv_bypass = True
             move_data.power *= 2
         battle._add_text('Magnitude ' + str(mag) + '!')
+    elif ef_id == 102:
+        t = _get_trainer(attacker, battle)
+        if t.num_fainted >= len(t.poke_list) - 1 or battle._process_selection(t):
+            _failed(battle)
+    elif ef_id == 103:
+        if defender.is_alive and not defender.encore_count and defender.last_move and defender.last_move.cur_pp \
+                and defender.last_move not in ENCORE_CHECK and any([move.name == defender.last_move.name for move in defender.moves]):
+            defender.next_moves.clear()
+            defender.encore_count = min(random.randrange(2, 7), defender.last_move.pp)
+            defender.encore_move = defender.last_move
+            for move in defender.moves:
+                if move.name != defender.last_move.name:
+                    move.encore_blocked = True
+            battle._add_text(defender.nickname + ' received an encore!')
+        else:
+            _failed(battle)
+    elif ef_id == 104:
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if attacker.is_alive:
+            attacker.v_status[BINDING_COUNT] = 0
+            attacker.binding_type = None
+            attacker.binding_poke = None
+            attacker.v_status[LEECH_SEED] = 0
+            t = _get_trainer(attacker, battle)
+            t.spikes = 0
+        return
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
@@ -993,19 +1019,6 @@ def _pre_process_status(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, ba
                 _calculate_damage(attacker, attacker, battlefield, battle, self_attack, crit_chance=0)
                 return True
     return False
-
-def _process_pp(attacker: pk.Pokemon, battle: bt.Battle, move: Move) -> bool:
-    if move.cur_pp == 0:
-        raise Exception
-    is_disabled = move.disabled
-    attacker.reduce_disabled_count()
-    if is_disabled:
-        battle._add_text(move.name + ' is disabled!')
-        return False
-    move.cur_pp -= 1
-    if move.cur_pp == 0 and attacker.copied and move.name == attacker.copied.name:
-        self.copied = None
-    return True
 
 def _generate_2_to_5() -> int:
     n = random.randrange(8)

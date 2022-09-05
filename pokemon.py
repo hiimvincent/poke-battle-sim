@@ -190,6 +190,8 @@ class Pokemon:
         self.v_status = [0 for _ in range(V_STATUS_NUM)]
         self.last_move = None
         self.last_successful_move = None
+        self.last_move_next = None
+        self.last_successful_move_next = None
         self.last_move_hit_by = None
         self.copied = None
         self.foresight_target = None
@@ -203,6 +205,8 @@ class Pokemon:
         self.mr_count = 0
         self.db_count = 0
         self.perish_count = 0
+        self.encore_count = 0
+        self.encore_move = None
         self.mr_target = None
         self.infatuation = None
         self.bide_count = 0
@@ -362,6 +366,14 @@ class Pokemon:
             self.reset_transform()
         self.reset_stats()
 
+    def update_last_moves(self):
+        if self.last_move_next:
+            self.last_move = self.last_move_next
+            self.last_move = None
+        if self.last_successful_move_next:
+            self.last_successful_move = self.last_successful_move_next
+            self.last_successful_move_next = None
+
     def print_all_data(self):
         print('Name:', self.name)
         print('\nNDex:', self.id)
@@ -373,7 +385,7 @@ class Pokemon:
                 move.disabled -= 1
 
     def no_pp(self) -> bool:
-        return all(not move.cur_pp or move.disabled for move in self.moves)
+        return all(not move.cur_pp or move.disabled or move.encore_blocked for move in self.moves)
 
     def reset_stages(self):
         self.accuracy_stage = 0
@@ -383,7 +395,7 @@ class Pokemon:
 
     def _endure_check(self) -> bool:
         if self.endure:
-            battle._add_text(self.nickname + ' endured the hit!')
+            self.cur_battle._add_text(self.nickname + ' endured the hit!')
             self.cur_hp = 1
             return True
         return False
