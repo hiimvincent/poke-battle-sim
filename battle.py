@@ -34,6 +34,7 @@ BIND = 1
 WRAP = 2
 FIRE_SPIN = 3
 CLAMP = 4
+WHIRLPOOL = 5
 
 NIGHTMARE = 4
 CURSE = 5
@@ -51,6 +52,7 @@ RAGE = ('move', 'rage')
 STRUGGLE = ('move', 'struggle')
 PURSUIT = ('move', 'pursuit')
 SWITCH = ('other', 'switch')
+UPROAR = ('move', 'uproar')
 
 PURSUIT_CHECK = ['baton-pass', 'teleport', 'u-turn', 'volt-switch', 'parting-shot']
 
@@ -125,6 +127,9 @@ class Battle:
         elif self.t1.current_poke.rage:
             t1_move = RAGE
             t1_mv_check_bypass = True
+        elif self.t1.current_poke.uproar:
+            t1_move = UPROAR
+            t1_mv_check_bypass = True
         elif not self.t1.current_poke.next_moves.empty():
             t1_move_data = self.t1.current_poke.next_moves.get()
             t1_move = (MOVE, t1_move_data.name)
@@ -145,6 +150,9 @@ class Battle:
             t2_move = BIDING
         elif self.t2.current_poke.rage:
             t2_move = RAGE
+            t2_mv_check_bypass = True
+        elif self.t2.current_poke.uproar:
+            t2_move = UPROAR
             t2_mv_check_bypass = True
         elif not self.t2.current_poke.next_moves.empty():
             t2_move_data = self.t2.current_poke.next_moves.get()
@@ -225,6 +233,8 @@ class Battle:
                 self._half_turn(self.t1, self.t2, t1_move, t1_move_data)
             self._faint_check()
 
+        self.battlefield.update()
+
         dif = self.t1.current_poke.stats_actual[SPD] - self.t2.current_poke.stats_actual[SPD]
         if dif > 0:
             faster = self.t1
@@ -291,15 +301,20 @@ class Battle:
 
     def _post_process_status(self, trainer: tr.Trainer, other: tr.Trainer):
         poke = trainer.current_poke
+        if trainer.fs_count:
+            trainer.fs_count -= 1
+            if not trainer.fs_count:
+                poke.take_damage(trainer.fs_dmg)
+                self._add_text(poke.nickname + ' took the Future Sight attack!')
         if trainer.reflect:
             trainer.reflect -= 1
         if trainer.light_screen:
             trainer.light_screen -= 1
-            self._add_text(trainer.name + '\'s Light Screen wore off!')
+            self._add_text(trainer.name + '\'s Light Screen wore off.')
         if trainer.safeguard:
             trainer.safeguard -= 1
             if not trainer.safeguard:
-                self._add_text(trainer.name + ' is no longer protected by Safeguard!')
+                self._add_text(trainer.name + ' is no longer protected by Safeguard.')
         if poke.mist_count:
             poke.mist_count -= 1
         if poke.bide_count:
@@ -316,7 +331,11 @@ class Battle:
                 poke.encore_move = None
                 for move in poke.moves:
                     move.encore_blocked = False
-                    self._add_text(poke.nickname + '\'s encore ended!')
+                    self._add_text(poke.nickname + '\'s encore ended.')
+        if poke.uproar:
+            poke.uproar -= 1
+            if not poke.uproar:
+                self._add_text(poke.nickname + ' calmed down.')
         if poke.protect:
             poke.protect = False
             poke.invulnerable = False
@@ -330,12 +349,12 @@ class Battle:
             poke.perish_count -= 1
             if not poke.perish_count:
                 poke.faint()
+                return
         if poke.v_status[FLINCHED]:
             poke.v_status[FLINCHED] = 0
         if poke.foresight_target and not poke.foresight_target is other.current_poke:
             poke.foresight_target = None
 
-        self.battlefield.update()
         if self.battlefield.weather == SANDSTORM:
             if not poke.in_ground and not any(type in poke.types for type in ['ground', 'steel', 'rock']):
                 poke.take_damage(max(1, poke.max_hp // 16))

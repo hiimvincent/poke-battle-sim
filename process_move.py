@@ -26,6 +26,7 @@ BIND = 1
 WRAP = 2
 FIRE_SPIN = 3
 CLAMP = 4
+WHIRLPOOL = 5
 
 NIGHTMARE = 4
 CURSE = 5
@@ -333,6 +334,9 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             elif move_data.ef_stat == CLAMP:
                 defender.binding_type = 'Clamp'
                 battle._add_text(attacker.nickname + ' clamped ' + defender.nickname + '!')
+            elif move_data.ef_stat == WHIRLPOOL:
+                defender.binding_type = 'Whirlpool'
+                battle._add_text(defender.nickname + ' was trapped in the vortex!')
         return
     elif ef_id == 25:
         if not defender.is_alive:
@@ -999,6 +1003,53 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             _failed(battle)
         return
+    elif ef_id == 111:
+        if defender.is_alive:
+            attacker.stat_stages = [stat for stat in defender.stat_stages]
+            attacker.accuracy_stage = defender.accuracy_stage
+            attacker.evasion_stage = defender.evasion_stage
+            attacker.crit_stage = defender.crit_stage
+            battle._add_text(attacker.nickname + ' copied ' + defender.nickname + '\'s stat changes!')
+        else:
+            _failed(battle)
+    elif ef_id == 112:
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if random.randrange(10) < 1:
+            _give_stat_change(attacker, battle, ATK, 1)
+            _give_stat_change(attacker, battle, DEF, 1)
+            _give_stat_change(attacker, battle, SP_ATK, 1)
+            _give_stat_change(attacker, battle, SP_DEF, 1)
+            _give_stat_change(attacker, battle, SPD, 1)
+        return
+    elif ef_id == 113:
+        t = _get_trainer(defender, battle)
+        if defender.is_alive and not t.fs_count:
+            move_data.type = 'typeless'
+            t.fs_dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance=0, skip_dmg=True)
+            t.fs_count = 3
+            battle._add_text(attacker.nickname + ' foresaw an attack!')
+        else:
+            _failed(battle)
+        return
+    elif ef_id == 114:
+        if not defender.is_alive:
+            _failed(battle)
+            return
+        poke_hits = [poke for poke in _get_trainer(attacker, battle).poke_list if not poke.nv_status]
+        num_hits = 0
+        move_data.power = 10
+        while defender.is_alive and num_hits < len(poke_hits):
+            _calculate_damage(attacker, defender, battlefield, battle, move_data)
+            battle._add_text(poke_hits[num_hits].nickname + '\'s attack!')
+            num_hits += 1
+        return
+    elif ef_id == 115:
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if not attacker.uproar:
+            attacker.uproar = random.randrange(1, 5)
+            battle._add_text(attacker.nickname + ' caused an uproar!')
+        return
+
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
