@@ -159,7 +159,7 @@ def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
     item_mult = 1
     first = 1
 
-    damage = (2 * attacker.level / 5 + 2) * move_data.power * ad_ratio / 50 * burn * screen * targets * weather_mult * ff + 2
+    damage = ((2 * attacker.level / 5 + 2) * move_data.power * ad_ratio) / 50 * burn * screen * targets * weather_mult * ff + 2
     damage *= crit_mult * item_mult * first * random_mult * stab * t_mult * srf * eb * tl * berry_mult
     damage = int(damage)
     if skip_dmg:
@@ -180,6 +180,8 @@ def _calculate_hit_or_miss(attacker: pokemon.Pokemon, defender: pokemon.Pokemon,
     item_mult = 1
     ability_mult = 1
     ma = move_data.acc
+    if _special_move_acc(attacker, defender, battlefield, battle, move_data):
+        return True
     if not ma:
         return True
     if defender.mr_count and defender.mr_target and attacker is defender.mr_target:
@@ -413,8 +415,8 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             move_data.power = 120
     elif ef_id == 36:
-        if defender.is_alive and attacker.last_move_hit_by and attacker.last_move_hit_by.category == PHYSICAL:
-            if attacker.last_damage_taken and _calculate_type_ef(defender, move_data):
+        if defender.is_alive and attacker.last_move_hit_by and defender.last_move and attacker.last_move_hit_by.name == defender.last_move.name \
+                and attacker.last_move_hit_by.category == PHYSICAL and _calculate_type_ef(defender, move_data):
                 defender.take_damage(attacker.last_damage_taken * 2, move_data)
         else:
             _failed(battle)
@@ -438,7 +440,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             defender.v_status[LEECH_SEED] = 1
             battle._add_text(defender.nickname + ' was seeded!')
     elif ef_id == 40:
-        if not move_data.ef_stat:
+        if not move_data.ef_stat and battlefield.weather != HARSH_SUNLIGHT:
             battle._pop_text()
             battle._add_text(attacker.nickname + ' absorbed light!')
             move_data.ef_stat = 1
@@ -817,9 +819,9 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         if not move_data.ef_stat:
             if attacker.df_curl and move_data.power == move_data.o_power:
                 move_data.power *= 2
-                move_data.ef_stat = 1
-            else:
-                move_data.ef_stat += 1
+            move_data.ef_stat = 1
+        else:
+            move_data.ef_stat += 1
         _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
         move_data.power *= 2
         if move_data.ef_stat < 5:
@@ -951,6 +953,51 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             attacker.v_status[LEECH_SEED] = 0
             t = _get_trainer(attacker, battle)
             t.spikes = 0
+        return
+    elif ef_id == 105:
+        if battlefield.weather == CLEAR:
+            heal_amount = 2
+        elif battlefield.weather == HARSH_SUNLIGHT:
+            heal_amount = 1.5
+        else:
+            heal_amount = 4
+        attacker.heal(int(attacker.max_hp / heal_amount))
+        battle._add_text(attacker.nickname + ' regained health!')
+    elif ef_id == 106:
+        hp_stats = attacker.hidden_power_stats()
+        if hp_stats:
+            move_data.type, move_data.power = hp_stats
+        else:
+            move_data.power = random.randrange(30, 71)
+            move_data.type = attacker.types[0]
+    elif ef_id == 107:
+        if defender.in_air:
+            inv_bypass = True
+            move_data.power *= 2
+        _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
+        if defender.is_alive and random.randrange(5) < 1:
+            _flinch(defender, is_first)
+        return
+    elif ef_id == 108:
+        if battlefield.weather != RAIN:
+            battlefield.weather = RAIN
+            battlefield.weather_count = 5
+            battle._add_text('It started to rain!')
+        else:
+            _failed(battle)
+    elif ef_id == 109:
+        if battlefield.weather != HARSH_SUNLIGHT:
+            battlefield.weather = HARSH_SUNLIGHT
+            battlefield.weather_count = 5
+            battle._add_text('The sunlight turned harsh!')
+        else:
+            _failed(battle)
+    elif ef_id == 110:
+        if defender.is_alive and attacker.last_move_hit_by and defender.last_move and attacker.last_move_hit_by.name == defender.last_move.name \
+                and attacker.last_move_hit_by.category == SPECIAL and _calculate_type_ef(defender, move_data):
+            defender.take_damage(attacker.last_damage_taken * 2, move_data)
+        else:
+            _failed(battle)
         return
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
@@ -1223,6 +1270,14 @@ def _protect_check(defender: pokemon.Pokemon, battle: bt.Battle, move_data: Move
     if defender.is_alive and defender.protect and move_data.target in PROTECT_TARGETS:
         battle._add_text(defender.nickname + ' protected itself!')
         return True
+
+def _special_move_acc(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move) -> bool:
+    if move_data.name == 'thunder':
+        if battlefield.weather == RAIN and not defender.in_ground:
+            return True
+        if battlefield.weather == HARSH_SUNLIGHT:
+            move_data.acc = 50
+    return False
 
 def _get_trainer(poke: pk.Pokemon, battle: bt.Battle) -> tr.Trainer:
     if battle.t1.current_poke == poke:

@@ -48,6 +48,9 @@ _WEIGHT = 11
 _BASE_EXP = 12
 _GEN = 13
 
+HP_TYPES = ['fighting', 'flying', 'poison', 'ground', 'rock', 'bug', 'ghost', 'steel', 'fire', 'water', 'grass',
+            'electric', 'psychic', 'ice', 'dragon', 'dark']
+
 # need item, ability
 class Pokemon:
     def __init__(
@@ -409,3 +412,19 @@ class Pokemon:
             enemy = self.cur_battle.t1.current_poke
         self.cur_battle._add_text(self.nickname + ' took down ' + enemy.nickname + ' down with it!')
         enemy.faint()
+
+    def hidden_power_stats(self) -> tuple[str, int] | None:
+        if not self.ivs:
+            return
+        hp_type = 0
+        for i in range(6):
+            hp_type += 2 ** i * (self.ivs[i] & 1)
+        hp_type = (hp_type * 15) // 63
+        hp_power = 0
+        for i in range(6):
+            hp_power += 2 ** i * ((self.ivs[i] >> 1) & 1)
+        hp_power = (hp_type * 40) // 63 + 30
+        return (HP_TYPES[hp_type], hp_power)
+
+
+

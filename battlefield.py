@@ -22,9 +22,17 @@ class Battlefield:
             if self.weather_count:
                 if self.weather == SANDSTORM:
                     self.cur_battle._add_text('The sandstorm is raging.')
+                elif self.weather == RAIN:
+                    self.cur_battle._add_text('Rain continues to fall.')
+                elif self.weather == HARSH_SUNLIGHT:
+                    self.cur_battle._add_text('The sunlight is strong.')
             else:
                 if self.weather == SANDSTORM:
                     self.cur_battle._add_text('The sandstorm subsided.')
+                elif self.weather == RAIN:
+                    self.cur_battle._add_text('The rain stopped.')
+                elif self.weather == HARSH_SUNLIGHT:
+                    self.cur_battle._add_text('The harsh sunlight faded.')
 
 
 
