@@ -53,6 +53,7 @@ STRUGGLE = ('move', 'struggle')
 PURSUIT = ('move', 'pursuit')
 SWITCH = ('other', 'switch')
 UPROAR = ('move', 'uproar')
+FOCUS_PUNCH = ('move', 'focus-punch')
 
 PURSUIT_CHECK = ['baton-pass', 'teleport', 'u-turn', 'volt-switch', 'parting-shot']
 
@@ -206,6 +207,8 @@ class Battle:
                 else:
                     t1_first = spd_dif > 0
 
+        self._add_text("Turn " + str(self.turn_count) + ":")
+
         if self._pursuit_check(t1_move, t2_move, t1_first):
             t1_first = t1_move == PURSUIT
             p_move = t1_move_data if t1_first else t2_move_data
@@ -213,7 +216,8 @@ class Battle:
             p_move.get_tcopy()
             p_move.power *= 2
 
-        self._add_text("Turn " + str(self.turn_count) + ":")
+        self._focus_punch_check(t1_move, t2_move)
+
         if t1_first:
             if self.t1.current_poke.is_alive:
                 # trainer 1 turn
@@ -301,6 +305,12 @@ class Battle:
 
     def _post_process_status(self, trainer: tr.Trainer, other: tr.Trainer):
         poke = trainer.current_poke
+        if trainer.wish:
+            trainer.wish -= 1
+            if not trainer.wish:
+                self._add_text(trainer.wish_poke + '\'s wish came true!')
+                trainer.current_poke.heal(trainer.current_poke.max_hp // 2)
+                trainer.wish_poke = None
         if trainer.fs_count:
             trainer.fs_count -= 1
             if not trainer.fs_count:
@@ -315,6 +325,8 @@ class Battle:
             trainer.safeguard -= 1
             if not trainer.safeguard:
                 self._add_text(trainer.name + ' is no longer protected by Safeguard.')
+        if not poke.is_alive:
+            return
         if poke.mist_count:
             poke.mist_count -= 1
         if poke.bide_count:
@@ -325,6 +337,10 @@ class Battle:
             poke.db_count -= 1
             if not poke.mr_count:
                 poke.mr_target = None
+        if poke.charged:
+            poke.charged -= 1
+        if poke.taunt:
+            poke.taunt -= 1
         if poke.encore_count:
             poke.encore_count -= 1
             if not poke.encore_count:
@@ -355,48 +371,50 @@ class Battle:
         if poke.foresight_target and not poke.foresight_target is other.current_poke:
             poke.foresight_target = None
 
-        if self.battlefield.weather == SANDSTORM:
+        if self.battlefield.weather == SANDSTORM and poke.is_alive:
             if not poke.in_ground and not any(type in poke.types for type in ['ground', 'steel', 'rock']):
-                poke.take_damage(max(1, poke.max_hp // 16))
                 self._add_text(poke.nickname + ' is buffeted by the Sandstorm!')
-        if self.battlefield.weather == HAIL:
-            if not poke.in_ground and not any(type in poke.types for type in ['ice']):
                 poke.take_damage(max(1, poke.max_hp // 16))
+        if self.battlefield.weather == HAIL and poke.is_alive:
+            if not poke.in_ground and not any(type in poke.types for type in ['ice']):
                 self._add_text(poke.nickname + ' is buffeted by the Hail!')
-        if poke.nv_status == BURNED:
-            poke.take_damage(max(1, poke.max_hp // 8))
+                poke.take_damage(max(1, poke.max_hp // 16))
+        if poke.nv_status == BURNED and poke.is_alive:
             self._add_text(poke.nickname + ' was hurt by its burn!')
-        if poke.nv_status == POISONED:
             poke.take_damage(max(1, poke.max_hp // 8))
+        if poke.nv_status == POISONED and poke.is_alive:
             self._add_text(poke.nickname + ' was hurt by poison!')
-        if poke.nv_status == BADLY_POISONED:
+            poke.take_damage(max(1, poke.max_hp // 8))
+        if poke.nv_status == BADLY_POISONED and poke.is_alive:
             poke.take_damage(max(1, poke.max_hp * poke.nv_counter // 16))
             poke.nv_counter += 1
 
         if poke.v_status[BINDING_COUNT] and poke.is_alive:
-            if not poke.binding_poke is other.current_poke:
-                poke.v_status[BINDING_COUNT] = 0
-                poke.binding_type = None
-                poke.binding_poke = None
-            else:
+            if poke.binding_poke is other.current_poke and poke.binding_type:
+                self._add_text(poke.nickname + ' is hurt by ' + poke.binding_type + '!')
                 poke.take_damage(max(1, poke.max_hp // 16))
-                self._add_text(poke.nickname + ' was hurt by ' + poke.binding_type + '!')
+                if not poke.is_alive:
+                    return
                 poke.v_status[BINDING_COUNT] -= 1
                 if not poke.v_status[BINDING_COUNT]:
                     poke.binding_type = None
                     poke.binding_poke = None
+            else:
+                poke.v_status[BINDING_COUNT] = 0
+                poke.binding_type = None
+                poke.binding_poke = None
         if poke.v_status[LEECH_SEED] and poke.is_alive:
-            heal_amt = poke.take_damage(max(1, poke.max_hp // 8))
             self._add_text(poke.nickname + '\'s health is sapped by Leech Seed!')
+            heal_amt = poke.take_damage(max(1, poke.max_hp // 8))
             other = self.t2.current_poke if poke is self.t1.current_poke else self.t1.current_poke
             if other.is_alive:
                 other.heal(heal_amt)
         if poke.v_status[NIGHTMARE] and poke.is_alive:
-            poke.take_damage(max(1, poke.max_hp // 4))
             self._add_text(poke.nickname + ' is locked in a nightmare!')
-        if poke.v_status[CURSE] and poke.is_alive:
             poke.take_damage(max(1, poke.max_hp // 4))
+        if poke.v_status[CURSE] and poke.is_alive:
             self._add_text(poke.nickname + ' is afflicted by the curse!')
+            poke.take_damage(max(1, poke.max_hp // 4))
 
     def _victory(self, winner: tr.Trainer, loser: tr.Trainer):
         self._process_end_battle()
@@ -455,6 +473,12 @@ class Battle:
         elif t2_move == PURSUIT and (t1_move == SWITCH or (t1_move[ACTION_TYPE] == MOVE and t1_move[ACTION_VALUE] in PURSUIT_CHECK and t1_first)):
             return True
         return False
+
+    def _focus_punch_check(self, t1_move: tuple[str, str], t2_move: tuple[str, str]):
+        if t1_move == FOCUS_PUNCH:
+            self._add_text(self.t1.current_poke.nickname + ' is tightening its focus!')
+        if t2_move == FOCUS_PUNCH:
+            self._add_text(self.t2.current_poke.nickname + ' is tightening its focus!')
 
     def _add_text(self, txt: str):
         self.all_text.append(txt)

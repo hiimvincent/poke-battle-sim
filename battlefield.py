@@ -8,7 +8,6 @@ SANDSTORM = 3
 HAIL = 4
 FOG = 5
 
-
 class Battlefield:
     def __init__(self, battle: bt.Battle):
         self.weather = CLEAR

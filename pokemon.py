@@ -16,6 +16,10 @@ SP_DEF = 4
 SPD = 5
 STAT_NUM = 6
 
+STATUS = 1
+PHYSICAL = 2
+SPECIAL = 3
+
 # STAT_RANGES
 LEVEL_MIN, LEVEL_MAX = 1, 100
 STAT_ACTUAL_MIN, STAT_ACTUAL_MAX = 1, 500
@@ -54,9 +58,8 @@ HP_TYPES = ['fighting', 'flying', 'poison', 'ground', 'rock', 'bug', 'ghost', 's
 # need item, ability
 class Pokemon:
     def __init__(
-            self, name_or_id: str | int, level: int, moves: [str], gender: str, nature: str = None,
-            cur_hp: int = None, stats_actual: [int] = None,
-            ivs: [int] = None, evs: [int] = None, item: str = None,
+            self, name_or_id: str | int, level: int, moves: [str], gender: str, ability = None, nature: str = None,
+            cur_hp: int = None, stats_actual: [int] = None, ivs: [int] = None, evs: [int] = None, item: str = None,
             status: str = None, nickname: str = None, friendship: int = 0):
 
         self.stats_base = PokeSim.get_pokemon(name_or_id)
@@ -128,6 +131,8 @@ class Pokemon:
             self.moves[i].pos = i
         self.o_moves = self.moves
 
+        self.o_ability = ability
+        self.ability = self.o_ability
         if nickname and not isinstance(nickname, str):
             raise Exception
         self.nickname = nickname if nickname else self.name
@@ -142,7 +147,6 @@ class Pokemon:
         self.base_exp = int(self.stats_base[_BASE_EXP])
         self.gen = int(self.stats_base[_GEN])
         self.original = None
-        self.ability = None
         if status:
             if status not in NV_STATUSES:
                 raise Exception
@@ -196,6 +200,8 @@ class Pokemon:
         self.protect_count = 0
         self.uproar = 0
         self.stockpile = 0
+        self.charged = 0
+        self.taunt = 0
         self.last_damage_taken = 0
         self.last_move = None
         self.last_successful_move = None
@@ -222,7 +228,9 @@ class Pokemon:
         self.endure = False
         self.transformed = False
         self.tormented = False
+        self.focused = False
         self.moves = self.o_moves
+        self.ability = self.o_ability
         if self.transformed:
             self.reset_transform()
         self.item = self.o_item
@@ -263,6 +271,8 @@ class Pokemon:
         if self.rage and self.stat_stages[ATK] < 6:
             self.stat_stages[ATK] += 1
             self.cur_battle._add_text(self.nickname + '\'s rage is building!')
+        if self.focused:
+            self.focused = False
         self.cur_hp -= damage
         self.last_damage_taken = damage
         return self.last_damage_taken
@@ -281,10 +291,12 @@ class Pokemon:
         if self.cur_hp + heal_amount >= self.max_hp:
             amt = self.max_hp - self.cur_hp
             self.cur_hp = self.max_hp
-            return amt
+            r_amt = amt
         else:
             self.cur_hp += heal_amount
-            return heal_amount
+            r_amt = heal_amount
+        self.cur_battle._add_text(self.nickname + ' regained health!')
+        return r_amt
 
     def get_move_data(self, move_name: str) -> Move:
         if self.copied and move_name == self.copied.name:
@@ -312,8 +324,10 @@ class Pokemon:
             for i in range(len(av_moves)):
                 if av_moves[i].name == 'mimic':
                     av_moves[i] = self.copied
-        if self.tormented and av_moves:
+        if self.tormented and av_moves and self.last_move:
             av_moves = [move for move in av_moves if move.name != self.last_move.name]
+        if self.taunt and av_moves:
+            av_moves = [move for move in av_moves if move.category != STATUS]
         return av_moves
 
     def transform(self, target: Pokemon):

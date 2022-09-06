@@ -28,8 +28,10 @@ class Trainer:
         self.reflect = 0
         self.fs_dmg = 0
         self.fs_count = 0
+        self.wish = 0
         self.spikes = 0
         self.num_fainted = 0
+        self.wish_poke = None
         self.in_battle = False
         self.has_moved = False
 

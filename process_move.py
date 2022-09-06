@@ -142,7 +142,8 @@ def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
         burn = 0.5
     else:
         burn = 1
-
+    if attacker.charged and move_data.type == 'electric':
+        move_data.power *= 2
     screen = 1
     targets = 1
     weather_mult = 1
@@ -614,7 +615,6 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         attacker.nv_counter = 3
         battle._add_text(attacker.nickname + ' went to sleep!')
         attacker.heal(attacker.max_hp)
-        battle._add_text(attacker.nickname + ' regained health!')
     elif ef_id == 64:
         move_types = [move.type for move in attacker.moves if move.type not in attacker.types]
         if not len(move_types):
@@ -879,7 +879,6 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
                 battle._add_text(defender.nickname + ' can\'t receive the gift!')
                 return
             defender.heal(defender.max_hp // 4)
-            battle._add_text(attacker.nickname + ' regained health!')
             return
         elif res < 6:
             move_data.power = 40
@@ -941,10 +940,11 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
                 and defender.last_move not in ENCORE_CHECK and any([move.name == defender.last_move.name for move in defender.moves]):
             defender.next_moves.clear()
             defender.encore_count = min(random.randrange(2, 7), defender.last_move.pp)
-            defender.encore_move = defender.last_move
             for move in defender.moves:
                 if move.name != defender.last_move.name:
                     move.encore_blocked = True
+                else:
+                    defender.encore_move = move
             battle._add_text(defender.nickname + ' received an encore!')
         else:
             _failed(battle)
@@ -966,7 +966,6 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             heal_amount = 4
         attacker.heal(int(attacker.max_hp / heal_amount))
-        battle._add_text(attacker.nickname + ' regained health!')
     elif ef_id == 106:
         hp_stats = attacker.hidden_power_stats()
         if hp_stats:
@@ -1070,7 +1069,6 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
     elif ef_id == 118:
         if attacker.stockpile:
             attacker.heal(attacker.max_hp * (2 ** (attacker.stockpile - 1)) // 4)
-            battle._add_text(attacker.nickname + ' regained health!')
             attacker.stockpile = 0
             attacker.stat_stages[DEF] -= attacker.stockpile
             attacker.stat_stages[SP_DEF] -= attacker.stockpile
@@ -1105,6 +1103,62 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
     elif ef_id == 123:
         if attacker.nv_status == BURNED or attacker.nv_status == PARALYZED or attacker.nv_status == POISONED:
             move_data.power *= 2
+    elif ef_id == 124:
+        if not defender.is_alive:
+            _failed(battle)
+            return
+        if not attacker.focused:
+            battle._pop_text()
+            battle._add_text(attacker.nickname + ' lost its focus and couldn\'t move!')
+            return
+        else:
+            attacker.focused = False
+    elif ef_id == 125:
+        if not defender.is_alive:
+            _failed(battle)
+            return
+        if defender.nv_status == PARALYZED:
+            move_data.power *= 2
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if defender.is_alive and defender.nv_status == PARALYZED:
+            defender.nv_status = 0
+            battle._add_text(defender.nickname + ' was cured of paralysis!')
+        return
+    elif ef_id == 126:
+        move_data = Move(PokeSim.get_move_data(['swift'])[0])
+    elif ef_id == 127:
+        attacker.charged = 2
+        battle._add_text(attacker.nickname + ' began charging power!')
+        _give_stat_change(attacker, battle, SP_DEF, 1)
+    elif ef_id == 128:
+        if defender.is_alive and not defender.taunt:
+            defender.taunt = random.randrange(3, 6)
+            battle._add_text(defender.nickname + ' fell for the taunt!')
+        else:
+            _failed(battle)
+    elif ef_id == 129:
+        _failed(battle)
+    elif ef_id == 130:
+        if attacker.item and defender.is_alive and defender.item and not defender.substitute:
+            attacker.item, defender.item = defender.item, attacker.item
+            battle._add_text(attacker.nickname + ' switched items with its target!')
+            battle._add_text(attacker.nickname + ' obtained one ' + attacker.item + '.')
+            battle._add_text(defender.nickname + ' obtained one ' + defender.item + '.')
+        else:
+            _failed(battle)
+    elif ef_id == 131:
+        if defender.is_alive and defender.ability and defender.ability != 'wonder-guard':
+            attacker.ability = defender.ability
+            battle._add_text(attacker.nickname + ' copied ' + defender.nickname + '\'s ' + defender.ability + '!')
+        else:
+            _failed(battle)
+    elif ef_id == 132:
+        t = _get_trainer(attacker, battle)
+        if not t.wish:
+            t.wish = 2
+            t.wish_poke = attacker.nickname
+        else:
+            _failed(battle)
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
