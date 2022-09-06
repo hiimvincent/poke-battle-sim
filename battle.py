@@ -359,6 +359,10 @@ class Battle:
             if not poke.in_ground and not any(type in poke.types for type in ['ground', 'steel', 'rock']):
                 poke.take_damage(max(1, poke.max_hp // 16))
                 self._add_text(poke.nickname + ' is buffeted by the Sandstorm!')
+        if self.battlefield.weather == HAIL:
+            if not poke.in_ground and not any(type in poke.types for type in ['ice']):
+                poke.take_damage(max(1, poke.max_hp // 16))
+                self._add_text(poke.nickname + ' is buffeted by the Hail!')
         if poke.nv_status == BURNED:
             poke.take_damage(max(1, poke.max_hp // 8))
             self._add_text(poke.nickname + ' was hurt by its burn!')

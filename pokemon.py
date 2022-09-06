@@ -195,6 +195,7 @@ class Pokemon:
         self.bide_dmg = 0
         self.protect_count = 0
         self.uproar = 0
+        self.stockpile = 0
         self.last_damage_taken = 0
         self.last_move = None
         self.last_successful_move = None
@@ -220,6 +221,7 @@ class Pokemon:
         self.protect = False
         self.endure = False
         self.transformed = False
+        self.tormented = False
         self.moves = self.o_moves
         if self.transformed:
             self.reset_transform()
@@ -302,14 +304,17 @@ class Pokemon:
                 return True
         return False
 
-    def get_available_moves(self):
-        if self.next_moves.empty() and not self.recharging:
-            av_moves = [move for move in self.moves if not move.disabled and move.cur_pp]
-            if self.copied and self.copied.cur_pp:
-                for i in range(len(av_moves)):
-                    if av_moves[i].name == 'mimic':
-                        av_moves[i] = self.copied
-            return av_moves
+    def get_available_moves(self) -> list | None:
+        if not self.next_moves.empty() or self.recharging:
+            return
+        av_moves = [move for move in self.moves if not move.disabled and move.cur_pp]
+        if self.copied and self.copied.cur_pp:
+            for i in range(len(av_moves)):
+                if av_moves[i].name == 'mimic':
+                    av_moves[i] = self.copied
+        if self.tormented and av_moves:
+            av_moves = [move for move in av_moves if move.name != self.last_move.name]
+        return av_moves
 
     def transform(self, target: Pokemon):
         if self.transformed or target.transformed:
@@ -389,7 +394,7 @@ class Pokemon:
                 move.disabled -= 1
 
     def no_pp(self) -> bool:
-        return all(not move.cur_pp or move.disabled or move.encore_blocked for move in self.moves)
+        return all(not move.cur_pp or move.disabled or move.encore_blocked for move in self.get_available_moves())
 
     def reset_stages(self):
         self.accuracy_stage = 0

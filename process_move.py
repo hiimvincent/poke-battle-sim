@@ -1049,7 +1049,62 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             attacker.uproar = random.randrange(1, 5)
             battle._add_text(attacker.nickname + ' caused an uproar!')
         return
-
+    elif ef_id == 116:
+        if attacker.stockpile < 3:
+            attacker.stockpile += 1
+            battle._add_text(attacker.nickname + ' stockpiled ' + str(attacker.stockpile) + '!')
+            _give_stat_change(attacker, battle, DEF, 1)
+            _give_stat_change(attacker, battle, SP_DEF, 1)
+        else:
+            _failed(battle)
+    elif ef_id == 117:
+        if attacker.stockpile:
+            _calculate_damage(attacker, defender, battlefield, battle, move_data)
+            move_data.power = 100 * attacker.stockpile
+            attacker.stockpile = 0
+            attacker.stat_stages[DEF] -= attacker.stockpile
+            attacker.stat_stages[SP_DEF] -= attacker.stockpile
+            battle._add_text(attacker.nickname + '\'s stockpile effect wore off!')
+        else:
+            _failed(battle)
+    elif ef_id == 118:
+        if attacker.stockpile:
+            attacker.heal(attacker.max_hp * (2 ** (attacker.stockpile - 1)) // 4)
+            battle._add_text(attacker.nickname + ' regained health!')
+            attacker.stockpile = 0
+            attacker.stat_stages[DEF] -= attacker.stockpile
+            attacker.stat_stages[SP_DEF] -= attacker.stockpile
+            battle._add_text(attacker.nickname + '\'s stockpile effect wore off!')
+        else:
+            _failed(battle)
+    elif ef_id == 119:
+        if battlefield.weather != HAIL:
+            battlefield.weather = HAIL
+            battlefield.weather_count = 5
+            battle._add_text('It started to hail!')
+        else:
+            _failed(battle)
+    elif ef_id == 120:
+        if defender.is_alive and not defender.tormented:
+            defender.tormented = True
+            battle._add_text(defender.nickname + ' was subjected to Torment!')
+        else:
+            _failed(battle)
+    elif ef_id == 121:
+        if defender.is_alive and not defender.substitute and (not defender.v_status[CONFUSED] or defender.stat_stages[SP_ATK] < 6):
+            _give_stat_change(defender, battle, SP_ATK, 1)
+            _confuse(defender, battle)
+        else:
+            _failed(battle)
+    elif ef_id == 122:
+        if defender.is_alive and not defender.substitute:
+            attacker.faint()
+            _give_stat_change(defender, battle, ATK, -2)
+            _give_stat_change(defender, battle, SP_ATK, -2)
+        return
+    elif ef_id == 123:
+        if attacker.nv_status == BURNED or attacker.nv_status == PARALYZED or attacker.nv_status == POISONED:
+            move_data.power *= 2
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
