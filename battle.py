@@ -328,6 +328,8 @@ class Battle:
             trainer.safeguard -= 1
             if not trainer.safeguard:
                 self._add_text(trainer.name + ' is no longer protected by Safeguard.')
+        if trainer.imprisoned_poke and not trainer.imprisoned_poke is other.current_poke:
+            trainer.imprisoned_poke = None
         if not poke.is_alive:
             return
         if poke.mist_count:
@@ -369,6 +371,8 @@ class Battle:
                 poke.protect_count = 0
         if poke.magic_coat:
             poke.magic_coat = False
+        if poke.snatch:
+            poke.snatch = False
         if poke.v_status[DROWSY]:
             poke.v_status[DROWSY] -= 1
             if not poke.v_status[DROWSY] and not poke.nv_status:
@@ -385,11 +389,11 @@ class Battle:
             poke.foresight_target = None
 
         if self.battlefield.weather == SANDSTORM and poke.is_alive:
-            if not poke.in_ground and not any(type in poke.types for type in ['ground', 'steel', 'rock']):
+            if not poke.in_ground and not poke.in_water and not any(type in poke.types for type in ['ground', 'steel', 'rock']):
                 self._add_text(poke.nickname + ' is buffeted by the Sandstorm!')
                 poke.take_damage(max(1, poke.max_hp // 16))
         if self.battlefield.weather == HAIL and poke.is_alive:
-            if not poke.in_ground and not any(type in poke.types for type in ['ice']):
+            if not poke.in_ground and not poke.in_water and not any(type in poke.types for type in ['ice']):
                 self._add_text(poke.nickname + ' is buffeted by the Hail!')
                 poke.take_damage(max(1, poke.max_hp // 16))
         if poke.nv_status == BURNED and poke.is_alive:

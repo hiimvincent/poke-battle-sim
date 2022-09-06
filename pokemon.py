@@ -147,6 +147,7 @@ class Pokemon:
         self.base_exp = int(self.stats_base[_BASE_EXP])
         self.gen = int(self.stats_base[_GEN])
         self.original = None
+        self.trainer = None
         if status:
             if status not in NV_STATUSES:
                 raise Exception
@@ -218,6 +219,7 @@ class Pokemon:
         self.infatuation = None
         self.in_air = False
         self.in_ground = False
+        self.in_water = False
         self.grounded = False
         self.ingrain = False
         self.invulnerable = False
@@ -233,6 +235,7 @@ class Pokemon:
         self.transformed = False
         self.tormented = False
         self.magic_coat = False
+        self.snatch = False
         self.turn_damage = False
         self.moves = self.o_moves
         self.ability = self.o_ability
@@ -249,6 +252,7 @@ class Pokemon:
         self.cur_battle = battle
         self.in_battle = True
         self.reset_stats()
+        self.enemy = self.cur_battle.t2 if self.cur_battle.t1 is self.trainer else self.cur_battle.t1
 
     def take_damage(self, damage: int, enemy_move: Move = None) -> int:
         if damage < 0:
@@ -268,8 +272,12 @@ class Pokemon:
         if self.cur_hp - damage <= 0:
             self.last_damage_taken = self.cur_hp
             if self._endure_check():
+                self.cur_hp = 1
                 return self.last_damage_taken - 1
             self._db_check()
+            if self.last_move and self.last_move.name == 'grudge' and enemy_move and self.enemy.current_poke.is_alive:
+                self.cur_battle._add_text(self.enemy.current_poke.name + '\'s ' + enemy_move + ' lost all its PP due to the grudge!')
+                enemy_move.cur_pp = 0
             self.cur_hp = 0
             self.is_alive = False
             self.reset_stats()
@@ -317,7 +325,8 @@ class Pokemon:
                 return True
             if move_name == 'mimic':
                 return False
-        for move in self.moves:
+        av_moves = self.get_available_moves()
+        for move in av_moves:
             if move.name == move_name:
                 return True
         return False
@@ -334,6 +343,9 @@ class Pokemon:
             av_moves = [move for move in av_moves if move.name != self.last_move.name]
         if self.taunt and av_moves:
             av_moves = [move for move in av_moves if move.category != STATUS]
+        if self.trainer.imprisoned_poke and self.trainer.imprisoned_poke is self.enemy.current_poke and av_moves:
+            i_moves = [move.name for move in self.trainer.imprisoned_poke.moves]
+            av_moves = [move for move in av_moves if move.name not in i_moves]
         return av_moves
 
     def transform(self, target: Pokemon):
@@ -429,15 +441,13 @@ class Pokemon:
             return True
         return False
 
-    def _db_check(self):
+    def _db_check(self) -> bool:
         if not self.db_count:
-            return
-        if self.cur_battle.t1.current_poke is self:
-            enemy = self.cur_battle.t2.current_poke
-        else:
-            enemy = self.cur_battle.t1.current_poke
-        self.cur_battle._add_text(self.nickname + ' took down ' + enemy.nickname + ' down with it!')
-        enemy.faint()
+            return False
+        enemy_poke = self.enemy.current_poke
+        self.cur_battle._add_text(self.nickname + ' took down ' + enemy_poke.nickname + ' down with it!')
+        enemy_poke.faint()
+        return True
 
     def give_item(self, item: str):
         self.item = item

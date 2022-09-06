@@ -78,6 +78,15 @@ MAGIC_COAT_CHECK = ['attract', 'block', 'captivate', 'charm', 'confuse-ray', 'co
                     'string-shot', 'stun-spore', 'supersonic', 'swagger', 'sweet-kiss', 'sweet-scent', 'tail-whip',
                     'thunder-wave', 'tickle', 'toxic', 'will-o-wisp', 'worry-seed', 'yawn']
 
+SNATCH_CHECK = ['acid-armor', 'acupressure', 'agility', 'amnesia', 'aromatherapy', 'barrier', 'belly-drum', 'bulk-up',
+                'calm-mind', 'camouflage', 'charge', 'cosmic-power', 'defender-order', 'defender-curl', 'double-team',
+                'dragon-dance', 'focus-energy', 'growth', 'harden', 'heal-bell', 'heal-order', 'howl', 'ingrain',
+                'iron-defense', 'light-screen', 'meditate', 'milk-drink', 'minimize', 'mist', 'moonlight', 'morning-sun',
+                'nasty-plot', 'psych-up', 'recover', 'reflect', 'refresh', 'rest', 'rock-polish', 'roost', 'safeguard',
+                'sharpen', 'slack-off', 'soft-boiled', 'stockpile', 'substitute', 'swallow', 'swords-dance', 'synthesis',
+                'tail-glow', 'tailwind', 'withdraw']
+
+
 PROTECT_TARGETS = [8, 9, 10, 11]
 
 def process_move(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool):
@@ -89,6 +98,8 @@ def process_move(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Bat
         return
     attacker.last_successful_move_next = move_data
     if _magic_coat_check(attacker, defender, battlefield, battle, move_data, is_first):
+        return
+    if _snatch_check(attacker, defender, battlefield, battle, move_data, is_first):
         return
     if _protect_check(defender, battle, move_data):
         return
@@ -139,7 +150,7 @@ def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
     if move_data.category == PHYSICAL:
         if crit_mult == 1:
             ad_ratio = attacker.stats_effective[ATK] / defender.stats_effective[DEF]
-            if _get_trainer(defender, battle).reflect:
+            if defender.trainer.reflect:
                 ad_ratio /= 2
         else:
             atk_ig = max(attacker.stats_actual[ATK], attacker.stats_effective[ATK])
@@ -148,7 +159,7 @@ def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
     else:
         if crit_mult == 1:
             ad_ratio = attacker.stats_effective[SP_ATK] / defender.stats_effective[SP_DEF]
-            if _get_trainer(defender, battle).light_screen:
+            if defender.trainer.light_screen:
                 ad_ratio /= 2
         else:
             sp_atk_ig = max(attacker.stats_actual[SP_ATK], attacker.stats_effective[SP_ATK])
@@ -295,6 +306,10 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             battle._add_text(defender.nickname + '\'s protected by mist.')
             return
         _give_stat_change(recipient, battle, move_data.ef_stat, move_data.ef_amount)
+    elif ef_id == 18:
+        if defender.in_water:
+            move_data.power *= 2
+            inv_bypass = True
     elif ef_id == 19:
         if defender.minimized:
             move_data.power *= 2
@@ -413,12 +428,12 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             disabled_move = defender.last_move
             disabled_move.disabled = random.randrange(4, 8)
-            battle._add_text(_get_trainer(defender, battle).name + '\'s ' + defender.nickname + '\'s ' + disabled_move.name + ' was disabled!')
+            battle._add_text(defender.trainer.name + '\'s ' + defender.nickname + '\'s ' + disabled_move.name + ' was disabled!')
     elif ef_id == 33:
         if attacker.mist_count:
             _failed(battle)
         else:
-            battle._add_text(_get_trainer(attacker, battle).name + '\'s team became shrouded in mist!')
+            battle._add_text(attacker.trainer.name + '\'s team became shrouded in mist!')
             attacker.mist_count = 5
     elif ef_id == 34:
         attacker.recharging = True
@@ -508,7 +523,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         attacker.df_curl = True
         _give_stat_change(attacker, battle, DEF, 1)
     elif ef_id == 49:
-        t = _get_trainer(attacker, battle)
+        t = attacker.trainer
         if move_data.ef_stat == 1:
             if t.light_screen:
                 _failed(battle)
@@ -798,7 +813,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         battle._add_text(attacker.nickname + ' cut its own HP and maximized its Attack!')
         attacker.stat_stages[ATK] = 6
     elif ef_id == 83:
-        enemy = _get_trainer(defender, battle)
+        enemy = defender.trainer
         if enemy.spikes < 3:
             enemy.spikes += 1
             battle._add_text('Spikes were scattered all around the feet of ' + enemy.name + '\'s team!')
@@ -880,7 +895,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         return
     elif ef_id == 95:
         battle._add_text('A bell chimed!')
-        t = _get_trainer(attacker, battle)
+        t = attacker.trainer
         for poke in t.poke_list:
             poke.nv_status = 0
     elif ef_id == 96:
@@ -905,7 +920,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
     elif ef_id == 98:
         move_data.power = max(1, int((255 - attacker.friendship) / 2.5))
     elif ef_id == 99:
-        t = _get_trainer(attacker, battle)
+        t = attacker.trainer
         if not t.safeguard:
             t.safeguard = 5
             battle._add_text(t.name + '\'s team became cloaked in a mystical veil!')
@@ -948,7 +963,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             move_data.power *= 2
         battle._add_text('Magnitude ' + str(mag) + '!')
     elif ef_id == 102:
-        t = _get_trainer(attacker, battle)
+        t = attacker.trainer
         if t.num_fainted >= len(t.poke_list) - 1 or battle._process_selection(t):
             _failed(battle)
     elif ef_id == 103:
@@ -971,7 +986,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             attacker.binding_type = None
             attacker.binding_poke = None
             attacker.v_status[LEECH_SEED] = 0
-            t = _get_trainer(attacker, battle)
+            t = attacker.trainer
             t.spikes = 0
         return
     elif ef_id == 105:
@@ -1037,7 +1052,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             _give_stat_change(attacker, battle, SPD, 1)
         return
     elif ef_id == 113:
-        t = _get_trainer(defender, battle)
+        t = defender.trainer
         if defender.is_alive and not t.fs_count:
             move_data.type = 'typeless'
             t.fs_dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance=0, skip_dmg=True)
@@ -1050,7 +1065,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         if not defender.is_alive:
             _failed(battle)
             return
-        poke_hits = [poke for poke in _get_trainer(attacker, battle).poke_list if not poke.nv_status]
+        poke_hits = [poke for poke in attacker.trainer.poke_list if not poke.nv_status]
         num_hits = 0
         move_data.power = 10
         while defender.is_alive and num_hits < len(poke_hits):
@@ -1163,20 +1178,20 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             _failed(battle)
     elif ef_id == 131:
-        if defender.is_alive and defender.ability and defender.ability != 'wonder-guard':
+        if defender.is_alive and defender.ability and defender.ability not in ['wonder-guard', 'multitype']:
             attacker.ability = defender.ability
             battle._add_text(attacker.nickname + ' copied ' + defender.nickname + '\'s ' + defender.ability + '!')
         else:
             _failed(battle)
     elif ef_id == 132:
-        t = _get_trainer(attacker, battle)
+        t = attacker.trainer
         if not t.wish:
             t.wish = 2
             t.wish_poke = attacker.nickname
         else:
             _failed(battle)
     elif ef_id == 133:
-        possible_moves = [move for poke in _get_trainer(attacker, battle).poke_list for move in poke.moves if move.name not in ASSIST_CHECK]
+        possible_moves = [move for poke in attacker.trainer.poke_list for move in poke.moves if move.name not in ASSIST_CHECK]
         if len(possible_moves):
             _process_effect(attacker, defender, battlefield, battle, Move(possible_moves[random.randrange(len(possible_moves))].md), is_first)
         else:
@@ -1213,7 +1228,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             move_data.power *= 2
     elif ef_id == 139:
         if defender.is_alive and not defender.invulnerable and not defender.protect:
-            t = _get_trainer(defender, battle)
+            t = defender.trainer
             if t.light_screen or t.reflect:
                 t.light_screen = 0
                 t.reflect = 0
@@ -1225,7 +1240,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
     elif ef_id == 140:
         if defender.is_alive and not defender.v_status[DROWSY] and not defender.substitute \
                 and not defender.nv_status == FROZEN and not defender.nv_status == ASLEEP and defender.ability != 'insomnia' \
-                and defender.ability != 'vital-spirit' and not _get_trainer(defender, battle) \
+                and defender.ability != 'vital-spirit' and not defender.trainer \
                 and not (defender.ability == 'leaf-guard' and battlefield.weather == HARSH_SUNLIGHT) \
                 and not (defender.ability != 'soundproof' and defender.uproar):
             defender.v_status[DROWSY] = 2
@@ -1244,6 +1259,57 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             _failed(battle)
         return
+    elif ef_id == 143:
+        move_data.power = max(1, (150 * attacker.cur_hp) // attacker.max_hp)
+    elif ef_id == 144:
+        if defender.is_alive and defender.ability and defender.ability not in ['wonder-guard', 'multitype'] \
+                and attacker.ability not in ['wonder-guard', 'multitype']:
+            attacker.ability, defender.ability = defender.ability, attacker.ability
+            battle._add_text(attacker.nickname + ' swapped abilities with its target!')
+        else:
+            _failed(battle)
+    elif ef_id == 145:
+        a_moves = [move.name for move in attacker.moves]
+        t = defender.trainer
+        if not t.imprisoned_poke and any([move.name in a_moves for poke in t.poke_list for move in poke.moves]):
+            battle._add_text(attacker.nickname + ' sealed the opponent\'s move(s)!')
+            t.imprisoned_poke = attacker
+        else:
+            _failed(battle)
+    elif ef_id == 146:
+        if attacker.nv_status == BURNED or attacker.nv_status == PARALYZED or attacker.nv_status == POISONED:
+            attacker.nv_status = 0
+            battle._add_text(attacker.nickname + '\'s status returned to normal!')
+        else:
+            _failed(battle)
+    elif ef_id == 147:
+        battle._add_text(attacker.nickname + ' wants ' + attacker.enemy.name + ' to bear a grudge!')
+    elif ef_id == 148:
+        if is_first:
+            attacker.snatch = True
+            battle._add_text(attacker.nickname + ' waits for a target to make a move!')
+        else:
+            _failed(battle)
+    elif ef_id == 149:
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if defender.is_alive and random.randrange(10) < 3:
+            _paralyze(defender, battle)
+        return
+    elif ef_id == 150:
+        if not move_data.ef_stat:
+            move_data.ef_stat = 1
+            attacker.next_moves.put(move_data)
+            attacker.in_ground = True
+            attacker.invulnerable = True
+            battle._pop_text()
+            battle._add_text(attacker.nickname + ' hid underwater!')
+            return
+        attacker.in_ground = False
+        attacker.invulnerable = False
+
+
+
+
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
 def _calculate_crit(crit_chance: int = None):
@@ -1262,7 +1328,7 @@ def _calculate_crit(crit_chance: int = None):
 
 def _invulnerability_check(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move) -> bool:
     if defender.invulnerable:
-        if defender.in_air or defender.in_ground:
+        if defender.in_air or defender.in_ground or defender.in_water:
             _missed(attacker, battle)
         return True
     return False
@@ -1517,6 +1583,13 @@ def _magic_coat_check(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
         return True
     return False
 
+def _snatch_check(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool) -> bool:
+    if defender.is_alive and defender.snatch and move_data.name in SNATCH_CHECK:
+        battle._add_text(defender.nickname + ' snatched ' + attacker.nickname + '\'s move!')
+        _process_effect(defender, attacker, battlefield, battle, move_data, is_first)
+        return True
+    return False
+
 def _protect_check(defender: pokemon.Pokemon, battle: bt.Battle, move_data: Move) -> bool:
     if defender.is_alive and defender.protect and move_data.target in PROTECT_TARGETS:
         battle._add_text(defender.nickname + ' protected itself!')
@@ -1531,12 +1604,6 @@ def _special_move_acc(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
             move_data.acc = 50
     return False
 
-def _get_trainer(poke: pk.Pokemon, battle: bt.Battle) -> tr.Trainer:
-    if battle.t1.current_poke == poke:
-        return battle.t1
-    else:
-        return battle.t2
-
 def _cap_name(move_name: str) -> str:
     move_name = move_name.replace('-', ' ')
     words = move_name.split()
@@ -1550,7 +1617,7 @@ def _missed(attacker: pk.Pokemon, battle: bt.Battle):
     battle._add_text(attacker.nickname + '\'s attack missed!')
 
 def _safeguard_check(poke: pk.Pokemon, battle: bt.Battle) -> bool:
-    if _get_trainer(poke, battle).safeguard:
+    if poke.trainer.safeguard:
         battle._add_text(poke.nickname + ' is protected by Safeguard!')
         return True
     return False

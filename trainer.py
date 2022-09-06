@@ -22,6 +22,7 @@ class Trainer:
     def start_pokemon(self, battle: bt.Battle):
         for poke in self.poke_list:
             poke.start_battle(battle)
+            poke.trainer = self
         self.current_poke = self.poke_list[0]
         self.light_screen = 0
         self.safeguard = 0
@@ -32,6 +33,7 @@ class Trainer:
         self.spikes = 0
         self.num_fainted = 0
         self.wish_poke = None
+        self.imprisoned_poke = None
         self.in_battle = False
         self.has_moved = False
 
