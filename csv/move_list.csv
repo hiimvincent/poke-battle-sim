@@ -291,7 +291,7 @@ id,identifier,generation_id,type_id,power,pp,accuracy,priority,target_id,move_cl
 290,secret-power,3,normal,70,20,100,0,10,2,149,100,,
 291,dive,3,water,80,10,100,0,10,2,150,,,
 292,arm-thrust,3,fighting,15,20,100,0,10,2,10,,,
-293,camouflage,3,normal,,20,,0,7,1,214,,,
+293,camouflage,3,normal,,20,,0,7,1,151,,,
 294,tail-glow,3,bug,,20,,0,7,1,322,,,
 295,luster-purge,3,psychic,70,5,100,0,10,3,73,50,,
 296,mist-ball,3,psychic,70,5,100,0,10,3,72,50,,

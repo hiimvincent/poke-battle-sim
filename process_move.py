@@ -1306,9 +1306,9 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             return
         attacker.in_ground = False
         attacker.invulnerable = False
-
-
-
+    elif ef_id == 151:
+        attacker.type = ('normal', None)
+        battle._add_text(attacker.nickname + ' transformed into the ' + attacker.types[0].upper() + ' type!')
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
