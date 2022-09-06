@@ -106,8 +106,8 @@ class Battle:
         self.battle_started = True
         self.winner = None
         self.turn_count = 0
-        self._add_text(self.t1.name + " sent out " + self.t1.current_poke.nickname + "!")
-        self._add_text(self.t2.name + " sent out " + self.t2.current_poke.nickname + "!")
+        self._add_text(self.t1.name + ' sent out ' + self.t1.current_poke.nickname + '!')
+        self._add_text(self.t2.name + ' sent out ' + self.t2.current_poke.nickname + '!')
 
     def turn(self, t1_move: tuple[str, str], t2_move: tuple[str, str]) -> bool | None:
         self.turn_count += 1

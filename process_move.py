@@ -895,7 +895,10 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         _process_effect(attacker, defender, battlefield, battle, sel_move, is_first)
         return
     elif ef_id == 95:
-        battle._add_text('A bell chimed!')
+        if move_data.ef_stat == 1:
+            battle._add_text('A bell chimed!')
+        elif move_data.ef_stat == 2:
+            battle._add_text('A soothing aroma wafted through the area!')
         t = attacker.trainer
         for poke in t.poke_list:
             poke.nv_status = 0
@@ -1321,6 +1324,19 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             battle._add_text('Electricity\'s power was weakened')
         else:
             _failed(battle)
+    elif ef_id == 154:
+        if battlefield.weather == HARSH_SUNLIGHT:
+            move_data.type = 'fire'
+        elif battlefield.weather == RAIN:
+            move_data.type = 'water'
+        elif battlefield.weather == HAIL:
+            move_data.type = 'hail'
+        elif battlefield.weather == SANDSTORM:
+            move_data.type == 'rock'
+        else:
+            move_data.type = 'normal'
+        if battlefield.weather != CLEAR:
+            move_data.power *= 2
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
