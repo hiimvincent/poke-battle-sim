@@ -171,6 +171,8 @@ def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
         burn = 1
     if attacker.charged and move_data.type == 'electric':
         move_data.power *= 2
+    if move_data.type == 'electric' and (attacker.mud_sport or defender.mud_sport):
+        move_data.power //= 2
     screen = 1
     targets = 1
     weather_mult = 1
@@ -515,7 +517,6 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         _give_stat_change(defender, battle, DEF, -2)
     elif ef_id == 46:
         attacker.heal(attacker.max_hp // 2)
-        battle._add_text(attacker.nickname + ' recovered health!')
     elif ef_id == 47:
         attacker.minimized = True
         _give_stat_change(attacker, battle, EVA, 1)
@@ -1309,6 +1310,17 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
     elif ef_id == 151:
         attacker.type = ('normal', None)
         battle._add_text(attacker.nickname + ' transformed into the ' + attacker.types[0].upper() + ' type!')
+    elif ef_id == 152:
+        _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance=1)
+        if defender.is_alive and random.randrange(10) < 1:
+            _burn(defender, battle)
+        return
+    elif ef_id == 153:
+        if not attacker.mud_sport and not (defender.is_alive and defender.mud_sport):
+            attacker.mud_sport = True
+            battle._add_text('Electricity\'s power was weakened')
+        else:
+            _failed(battle)
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
