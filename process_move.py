@@ -1210,9 +1210,8 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             _failed(battle)
     elif ef_id == 135:
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if defender.is_alive:
-            _give_stat_change(defender, battle, ATK, -1)
-            _give_stat_change(defender, battle, DEF, -1)
+        _give_stat_change(attacker, battle, ATK, -1)
+        _give_stat_change(attacker, battle, DEF, -1)
         return
     elif ef_id == 136:
         if is_first:
@@ -1244,7 +1243,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
     elif ef_id == 140:
         if defender.is_alive and not defender.v_status[DROWSY] and not defender.substitute \
                 and not defender.nv_status == FROZEN and not defender.nv_status == ASLEEP and defender.ability != 'insomnia' \
-                and defender.ability != 'vital-spirit' and not defender.trainer \
+                and defender.ability != 'vital-spirit' and not defender.trainer.safeguard \
                 and not (defender.ability == 'leaf-guard' and battlefield.weather == HARSH_SUNLIGHT) \
                 and not (defender.ability != 'soundproof' and defender.uproar):
             defender.v_status[DROWSY] = 2
@@ -1337,6 +1336,28 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             move_data.type = 'normal'
         if battlefield.weather != CLEAR:
             move_data.power *= 2
+    elif ef_id == 155:
+        if defender.is_alive and defender.ability != 'soundproof':
+            _give_stat_change(defender, battle, SP_DEF, -2, forced=True)
+        else:
+            _failed(battle)
+    elif ef_id == 156:
+        if defender.is_alive and defender.ability not in ['insomnia', 'vital-spirit', 'soundproof']:
+            _sleep(defender, battle, forced=True)
+        else:
+            _failed(battle)
+    elif ef_id == 157:
+        if defender.is_alive and (defender.stat_stages[ATK] > -6 or defender.stat_stages[DEF] > -6):
+            _give_stat_change(defender, battle, ATK, -1)
+            _give_stat_change(defender, battle, DEF, -1)
+        else:
+            _failed(battle)
+    elif ef_id == 158:
+        if attacker.stat_stages[DEF] < 6 or attacker.stat_stages[SP_DEF] < 6:
+            _give_stat_change(attacker, battle, DEF, 1)
+            _give_stat_change(attacker, battle, SP_DEF, 1)
+        else:
+            _failed(battle)
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
