@@ -38,6 +38,7 @@ WHIRLPOOL = 5
 
 NIGHTMARE = 4
 CURSE = 5
+DROWSY = 6
 
 # TURN_DATA
 ACTION_TYPE = 0
@@ -181,6 +182,8 @@ class Battle:
         t2_move = (t2_move[ACTION_TYPE].lower(), t2_move[ACTION_VALUE].lower())
         self.t1_fainted = False
         self.t2_fainted = False
+        self.t1.current_poke.turn_damage = False
+        self.t2.current_poke.turn_damage = False
 
         if t1_move[ACTION_TYPE] not in ACTION_PRIORITY or t2_move[ACTION_TYPE] not in ACTION_PRIORITY:
             raise Exception
@@ -352,6 +355,9 @@ class Battle:
             poke.uproar -= 1
             if not poke.uproar:
                 self._add_text(poke.nickname + ' calmed down.')
+        if poke.ingrain:
+            self._add_text(poke.nickname + ' absorbed nutrients with its roots!')
+            poke.heal(poke.max_hp // 16, text_skip=True)
         if poke.protect:
             poke.protect = False
             poke.invulnerable = False
@@ -361,6 +367,13 @@ class Battle:
             poke.endure = False
             if poke.last_successful_move not in ['protect', 'detect', 'endure']:
                 poke.protect_count = 0
+        if poke.magic_coat:
+            poke.magic_coat = False
+        if poke.v_status[DROWSY]:
+            poke.v_status[DROWSY] -= 1
+            if not poke.v_status[DROWSY] and not poke.nv_status:
+                poke.nv_status = ASLEEP
+                self._add_text(poke.nickname + ' fell asleep!')
         if poke.perish_count:
             poke.perish_count -= 1
             if not poke.perish_count:

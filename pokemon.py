@@ -28,7 +28,7 @@ EV_MIN, EV_MAX = 0, 255
 EV_TOTAL_MAX = 510
 NATURE_DEC, NATURE_INC = 0.9, 1.1
 
-V_STATUS_NUM = 6
+V_STATUS_NUM = 7
 POSSIBLE_GENDERS = ['male', 'female', 'genderless']
 
 # NON_VOLATILE_STATUSES
@@ -167,7 +167,7 @@ class Pokemon:
         self.is_alive = self.cur_hp != 0
         self.in_battle = False
         self.transformed = False
-        self.is_invulnerable = False
+        self.invulnerable = False
 
     def calculate_stats_actual(self):
         stats_actual = []
@@ -208,6 +208,7 @@ class Pokemon:
         self.last_move_next = None
         self.last_successful_move_next = None
         self.last_move_hit_by = None
+        self.last_consumed_item = None
         self.copied = None
         self.foresight_target = None
         self.binding_type = None
@@ -217,6 +218,9 @@ class Pokemon:
         self.infatuation = None
         self.in_air = False
         self.in_ground = False
+        self.grounded = False
+        self.ingrain = False
+        self.invulnerable = False
         self.trapped = False
         self.perma_trapped = False
         self.minimized = False
@@ -228,12 +232,14 @@ class Pokemon:
         self.endure = False
         self.transformed = False
         self.tormented = False
-        self.focused = False
+        self.magic_coat = False
+        self.turn_damage = False
         self.moves = self.o_moves
         self.ability = self.o_ability
         if self.transformed:
             self.reset_transform()
         self.item = self.o_item
+        self.h_item = self.item
         self.next_moves = Queue()
         self.types = (self.stats_base[_TYPE1], self.stats_base[_TYPE2])
         self.stats_effective = self.stats_actual
@@ -271,8 +277,7 @@ class Pokemon:
         if self.rage and self.stat_stages[ATK] < 6:
             self.stat_stages[ATK] += 1
             self.cur_battle._add_text(self.nickname + '\'s rage is building!')
-        if self.focused:
-            self.focused = False
+        self.turn_damage = True
         self.cur_hp -= damage
         self.last_damage_taken = damage
         return self.last_damage_taken
@@ -285,7 +290,7 @@ class Pokemon:
         self.reset_stats()
         self.cur_battle._faint_check()
 
-    def heal(self, heal_amount: int) -> int:
+    def heal(self, heal_amount: int, text_skip: bool = False) -> int:
         if heal_amount <= 0:
             return 0
         if self.cur_hp + heal_amount >= self.max_hp:
@@ -295,7 +300,8 @@ class Pokemon:
         else:
             self.cur_hp += heal_amount
             r_amt = heal_amount
-        self.cur_battle._add_text(self.nickname + ' regained health!')
+        if not text_skip:
+            self.cur_battle._add_text(self.nickname + ' regained health!')
         return r_amt
 
     def get_move_data(self, move_name: str) -> Move:
@@ -432,6 +438,10 @@ class Pokemon:
             enemy = self.cur_battle.t1.current_poke
         self.cur_battle._add_text(self.nickname + ' took down ' + enemy.nickname + ' down with it!')
         enemy.faint()
+
+    def give_item(self, item: str):
+        self.item = item
+        self.h_item = item
 
     def hidden_power_stats(self) -> tuple[str, int] | None:
         if not self.ivs:
