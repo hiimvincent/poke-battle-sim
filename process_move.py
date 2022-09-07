@@ -27,6 +27,7 @@ WRAP = 2
 FIRE_SPIN = 3
 CLAMP = 4
 WHIRLPOOL = 5
+SAND_TOMB = 6
 
 NIGHTMARE = 4
 CURSE = 5
@@ -371,6 +372,9 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             elif move_data.ef_stat == WHIRLPOOL:
                 defender.binding_type = 'Whirlpool'
                 battle._add_text(defender.nickname + ' was trapped in the vortex!')
+            elif move_data.ef_stat == SAND_TOMB:
+                defender.binding_type = 'Sand Tomb'
+                battle._add_text(defender.nickname + ' was trapped by Sand Tomb!')
         return
     elif ef_id == 25:
         if not defender.is_alive:
@@ -1358,6 +1362,9 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             _give_stat_change(attacker, battle, SP_DEF, 1)
         else:
             _failed(battle)
+    elif ef_id == 159:
+        if defender.is_alive and defender.in_air:
+            inv_bypass = True
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
