@@ -705,7 +705,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         return
     elif ef_id == 71:
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if defender.item and not attacker.item:
+        if defender.item and not attacker.item and not defender.substitute and defender.ability not in ['sticky-hold', 'multitype']:
             battle._add_text(attacker.nickname + ' stole ' + defender.nickname + '\'s ' + _cap_name(defender.item) + '!')
             attacker.give_item(defender.item)
             defender.give_item(None)
@@ -1365,6 +1365,32 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
     elif ef_id == 159:
         if defender.is_alive and defender.in_air:
             inv_bypass = True
+    elif ef_id == 160:
+        if attacker.stat_stages[ATK] < 6 or attacker.stat_stages[DEF] < 6:
+            _give_stat_change(attacker, battle, ATK, 1)
+            _give_stat_change(attacker, battle, DEF, 1)
+        else:
+            _failed(battle)
+    elif ef_id == 161:
+        if not move_data.ef_stat:
+            move_data.ef_stat = 1
+            attacker.next_moves.put(move_data)
+            attacker.in_air = True
+            attacker.invulnerable = True
+            battle._pop_text()
+            battle._add_text(attacker.nickname + ' sprang up!')
+            return
+        attacker.in_air = False
+        attacker.invulnerable = False
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if defender.is_alive and random.randrange(10) < 3:
+            _paralyze(defender, battle)
+        return
+    elif ef_id == 162:
+        _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance=1)
+        if defender.is_alive and random.randrange(10) < 1:
+            _poison(defender, battle)
+        return
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
