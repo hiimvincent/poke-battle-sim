@@ -315,11 +315,16 @@ class Battle:
                 self._add_text(trainer.wish_poke + '\'s wish came true!')
                 trainer.current_poke.heal(trainer.current_poke.max_hp // 2)
                 trainer.wish_poke = None
-        if trainer.fs_count:
+        if trainer.fs_count and poke.is_alive:
             trainer.fs_count -= 1
             if not trainer.fs_count:
                 poke.take_damage(trainer.fs_dmg)
                 self._add_text(poke.nickname + ' took the Future Sight attack!')
+        if trainer.dd_count and poke.is_alive:
+            trainer.dd_count -= 1
+            if not trainer.dd_count:
+                poke.take_damage(trainer.dd_dmg)
+                self._add_text(poke.nickname + ' took the Doom Desire attack!')
         if trainer.reflect:
             trainer.reflect -= 1
         if trainer.light_screen:

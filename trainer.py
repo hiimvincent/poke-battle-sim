@@ -29,6 +29,8 @@ class Trainer:
         self.reflect = 0
         self.fs_dmg = 0
         self.fs_count = 0
+        self.dd_dmg = 0
+        self.dd_count = 0
         self.wish = 0
         self.spikes = 0
         self.num_fainted = 0

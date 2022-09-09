@@ -174,6 +174,8 @@ def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
         move_data.power *= 2
     if move_data.type == 'electric' and (attacker.mud_sport or defender.mud_sport):
         move_data.power //= 2
+    if move_data.type == 'fire' and (attacker.water_sport or defender.water_sport):
+        move_data.power //= 2
     screen = 1
     targets = 1
     weather_mult = 1
@@ -259,8 +261,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         _give_stat_change(recipient, battle, move_data.ef_stat, move_data.ef_amount)
     elif ef_id == 4 or ef_id == 5:
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if recipient.is_alive:
-            _give_nv_status(move_data.ef_stat, recipient, battle)
+        _give_nv_status(move_data.ef_stat, recipient, battle)
         return
     elif ef_id == 6 or ef_id == 7:
         if not recipient.is_alive:
@@ -294,10 +295,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         battle._add_text("Hit 2 time(s)!")
         return
     elif ef_id == 13:
-        if recipient.is_alive:
-            _give_nv_status(move_data.ef_stat, recipient, battle, True)
-        else:
-            _failed(battle)
+        _give_nv_status(move_data.ef_stat, recipient, battle, True)
         return
     elif ef_id == 14:
         if not defender.is_alive:
@@ -395,8 +393,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
         if dmg and dmg > 0:
             recoil = dmg // 4 if ef_id == 27 else dmg // 3
-            attacker.take_damage(recoil)
-            battle._add_text(attacker.nickname + ' is hit with recoil!')
+            _recoil(attacker, battle, max(1, recoil))
         return
     elif ef_id == 28:
         if not move_data.ef_stat:
@@ -418,7 +415,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         if random.randrange(1,6) < 2:
             _poison(defender, battle)
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if defender.is_alive and random.randrange(5) < 1:
+        if random.randrange(5) < 1:
             _poison(defender, battle)
         return
     elif ef_id == 31:
@@ -489,7 +486,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             attacker.next_moves.put(move_data)
             return
     elif ef_id == 41:
-        if defender.is_alive and random.randrange(10) < 3:
+        if random.randrange(10) < 3:
             _paralyze(defender, battle)
     elif ef_id == 42:
         if not move_data.ef_stat:
@@ -659,7 +656,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         attacker.types = (move_types[random.randrange(len(move_types))], None)
     elif ef_id == 65:
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if defender.is_alive and random.randrange(5) < 1:
+        if random.randrange(5) < 1:
             _give_nv_status(random.randrange(1, 4), defender, battle)
         return
     elif ef_id == 66:
@@ -684,9 +681,8 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         battle._add_text(attacker.nickname + ' has no moves left!')
         battle._add_text(attacker.nickname + ' used Struggle!')
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        struggle_dmg = attacker.max_hp // 4
-        attacker.take_damage(struggle_dmg if struggle_dmg > 0 else 1)
-        battle._add_text(attacker.nickname + ' is hit with recoil!')
+        struggle_dmg = max(1, attacker.max_hp // 4)
+        _recoil(attacker, battle, struggle_dmg)
     elif ef_id == 69:
         if attacker.transformed or not move_data in attacker.o_moves or not defender.is_alive or \
                 not defender.last_move or attacker.is_move(defender.last_move.name):
@@ -731,7 +727,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             _failed(battle)
     elif ef_id == 75:
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if defender.is_alive and random.randrange(100) < move_data.ef_amount:
+        if random.randrange(100) < move_data.ef_amount:
             _burn(defender, battle)
         return
     elif ef_id == 76:
@@ -1299,7 +1295,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             _failed(battle)
     elif ef_id == 149:
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if defender.is_alive and random.randrange(10) < 3:
+        if random.randrange(10) < 3:
             _paralyze(defender, battle)
         return
     elif ef_id == 150:
@@ -1318,7 +1314,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         battle._add_text(attacker.nickname + ' transformed into the ' + attacker.types[0].upper() + ' type!')
     elif ef_id == 152:
         _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance=1)
-        if defender.is_alive and random.randrange(10) < 1:
+        if random.randrange(10) < 1:
             _burn(defender, battle)
         return
     elif ef_id == 153:
@@ -1346,7 +1342,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             _failed(battle)
     elif ef_id == 156:
-        if defender.is_alive and defender.ability not in ['insomnia', 'vital-spirit', 'soundproof']:
+        if defender.ability not in ['insomnia', 'vital-spirit', 'soundproof']:
             _sleep(defender, battle, forced=True)
         else:
             _failed(battle)
@@ -1383,13 +1379,48 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         attacker.in_air = False
         attacker.invulnerable = False
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if defender.is_alive and random.randrange(10) < 3:
+        if random.randrange(10) < 3:
             _paralyze(defender, battle)
         return
     elif ef_id == 162:
         _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance=1)
-        if defender.is_alive and random.randrange(10) < 1:
+        if random.randrange(10) < 1:
             _poison(defender, battle)
+        return
+    elif ef_id == 163:
+        dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if random.randrange(10) < 10:
+            _paralyze(defender, battle)
+        if dmg:
+            _recoil(attacker, battle, dmg // 3)
+    elif ef_id == 164:
+        if not attacker.water_sport and not (defender.is_alive and defender.water_sport):
+            attacker.water_sport = True
+            battle._add_text('Fire\'s power was weakened')
+        else:
+            _failed(battle)
+    elif ef_id == 165:
+        if attacker.stat_stages[SP_ATK] < 6 or attacker.stat_stages[SP_DEF] < 6:
+            _give_stat_change(attacker, battle, SP_ATK, 1)
+            _give_stat_change(attacker, battle, SP_DEF, 1)
+        else:
+            _falied(battle)
+    elif ef_id == 166:
+        if attacker.stat_stages[ATK] < 6 or attacker.stat_stages[SPD] < 6:
+            _give_stat_change(attacker, battle, ATK, 1)
+            _give_stat_change(attacker, battle, SPD, 1)
+        else:
+            _falied(battle)
+    elif ef_id == 167:
+        t = defender.trainer
+        if defender.is_alive and not t.dd_count:
+            move_data.type = 'typeless'
+            t.dd_dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance=0,
+                                         skip_dmg=True)
+            t.dd_count = 3
+            battle._add_text(attacker.nickname + ' chose Doom Desire as its destiny!')
+        else:
+            _failed(battle)
         return
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
@@ -1567,11 +1598,11 @@ def _give_nv_status(status: int, recipient: pk.Pokemon, battle: bt.Battle, force
         _badly_poison(recipient, battle, forced)
 
 def _burn(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
-    if _safeguard_check(recipient, battle):
-        return
-    if recipient.substitute:
+    if not recipient.is_alive or recipient.substitute:
         if forced:
             _failed(battle)
+        return
+    if _safeguard_check(recipient, battle):
         return
     if 'fire' in recipient.types:
         if forced:
@@ -1585,11 +1616,11 @@ def _burn(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         battle._add_text(recipient.nickname + ' was burned!')
 
 def _freeze(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
-    if _safeguard_check(recipient, battle):
-        return
-    if recipient.substitute:
+    if not recipient.is_alive or recipient.substitute:
         if forced:
             _failed(battle)
+        return
+    if _safeguard_check(recipient, battle):
         return
     if 'ice' in recipient.types:
         if forced:
@@ -1603,11 +1634,11 @@ def _freeze(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         battle._add_text(recipient.nickname + ' was frozen solid!')
 
 def _paralyze(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
-    if _safeguard_check(recipient, battle):
-        return
-    if recipient.substitute:
+    if not recipient.is_alive or recipient.substitute:
         if forced:
             _failed(battle)
+        return
+    if _safeguard_check(recipient, battle):
         return
     if forced and recipient.nv_status == PARALYZED:
         battle._add_text(recipient.nickname + ' is already paralyzed!')
@@ -1617,11 +1648,11 @@ def _paralyze(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         battle._add_text(recipient.nickname + ' is paralyzed! It may be unable to move!')
 
 def _poison(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
-    if _safeguard_check(recipient, battle):
-        return
-    if recipient.substitute:
+    if not recipient.is_alive or recipient.substitute:
         if forced:
             _failed(battle)
+        return
+    if _safeguard_check(recipient, battle):
         return
     if forced and recipient.nv_status == POISONED:
         battle._add_text(recipient.nickname + ' is already poisoned!')
@@ -1631,11 +1662,11 @@ def _poison(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         battle._add_text(recipient.nickname + ' was poisoned!')
 
 def _sleep(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
-    if _safeguard_check(recipient, battle):
-        return
-    if recipient.substitute:
+    if not recipient.is_alive or recipient.substitute:
         if forced:
             _failed(battle)
+        return
+    if _safeguard_check(recipient, battle):
         return
     if forced and recipient.nv_status == ASLEEP:
         battle._add_text(recipient.nickname + ' is already asleep!')
@@ -1645,11 +1676,11 @@ def _sleep(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         battle._add_text(recipient.nickname + ' fell asleep!')
     
 def _badly_poison(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
-    if _safeguard_check(recipient, battle):
-        return
-    if recipient.substitute:
+    if not recipient.is_alive or recipient.substitute:
         if forced:
             _failed(battle)
+        return
+    if _safeguard_check(recipient, battle):
         return
     if forced and recipient.nv_status == BADLY_POISONED:
         battle._add_text(recipient.nickname + ' is already badly poisoned!')
@@ -1685,6 +1716,12 @@ def _special_move_acc(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
         if battlefield.weather == HARSH_SUNLIGHT:
             move_data.acc = 50
     return False
+
+def _recoil(attacker: pokemon.Pokemon, battle: bt.Battle, damage: int):
+    if not attacker.is_alive:
+        return
+    attacker.take_damage(damage)
+    battle._add_text(attacker.nickname + ' is hit with recoil!')
 
 def _cap_name(move_name: str) -> str:
     move_name = move_name.replace('-', ' ')

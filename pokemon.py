@@ -237,6 +237,7 @@ class Pokemon:
         self.magic_coat = False
         self.snatch = False
         self.mud_sport = False
+        self.water_sport = False
         self.turn_damage = False
         self.moves = self.o_moves
         self.ability = self.o_ability

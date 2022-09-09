@@ -9,19 +9,19 @@ import random
 #
 
 ps.PokeSim.start()
-a = ps.PokeSim._move_list[random.randrange(280, 344) - 1][1]
-b = ps.PokeSim._move_list[random.randrange(280, 344) - 1][1]
-c = ps.PokeSim._move_list[random.randrange(280, 344) - 1][1]
-d = ps.PokeSim._move_list[random.randrange(280, 344) - 1][1]
+a = ps.PokeSim._move_list[random.randrange(290, 354) - 1][1]
+b = ps.PokeSim._move_list[random.randrange(290, 354) - 1][1]
+c = ps.PokeSim._move_list[random.randrange(290, 354) - 1][1]
+d = ps.PokeSim._move_list[random.randrange(290, 354) - 1][1]
 while a in ['pound', 'double-slap']:
-    a = ps.PokeSim._move_list[random.randrange(280, 344) - 1][1]
+    a = ps.PokeSim._move_list[random.randrange(290, 354) - 1][1]
 while b in ['pound', 'double-slap', a]:
-    b = ps.PokeSim._move_list[random.randrange(280, 344) - 1][1]
+    b = ps.PokeSim._move_list[random.randrange(290, 354) - 1][1]
 m1 = [a, 'pound', 'double-slap', b]
 while c in ['scratch', 'fire-punch']:
-    c = ps.PokeSim._move_list[random.randrange(280, 344) - 1][1]
+    c = ps.PokeSim._move_list[random.randrange(290, 354) - 1][1]
 while d in ['scratch', 'fire-punch', c]:
-    d = ps.PokeSim._move_list[random.randrange(280, 344) - 1][1]
+    d = ps.PokeSim._move_list[random.randrange(290, 354) - 1][1]
 m2 = [c, 'scratch', 'fire-punch', d]
 print(m1[0], m1[3])
 print(m2[0], m2[3])
