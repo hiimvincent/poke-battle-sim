@@ -13,6 +13,8 @@ class Battlefield:
         self.weather = CLEAR
         self.acc_modifier = 1
         self.weather_count = 0
+        self.gravity_count = 0
+        self.gravity_stats = None
         self.cur_battle = battle
 
     def update(self):
@@ -36,6 +38,12 @@ class Battlefield:
                     self.cur_battle._add_text('The harsh sunlight faded.')
                 elif self.weather == HAIL:
                     self.cur_battle._add_text('The hail stopped.')
+        if self.gravity_count:
+            self.gravity_count -= 1
+            if not self.gravity_count:
+                self.acc_modifier = 1
+                self.cur_battle.t1.current_poke.grounded = False
+                self.cur_battle.t2.current_poke.grounded = False
 
 
 

@@ -352,6 +352,9 @@ class Battle:
             poke.charged -= 1
         if poke.taunt:
             poke.taunt -= 1
+        if poke.r_types:
+            poke.types = poke.r_types
+            poke.r_types = None
         if poke.encore_count:
             poke.encore_count -= 1
             if not poke.encore_count:
@@ -463,7 +466,9 @@ class Battle:
         if not selector.current_poke.is_alive or selector.current_poke is old_poke:
             return True
         self._add_text(selector.name + ' sent out ' + selector.current_poke.nickname + '!')
-        if selector.spikes and 'flying' not in selector.current_poke.types:
+        if self.battlefield.gravity_count:
+            selector.current_poke.grounded = True
+        if selector.spikes and ('flying' not in selector.current_poke.types or selector.current_poke.grounded):
             if selector.spikes == 1:
                 mult = 8
             elif selector.spikes == 2:

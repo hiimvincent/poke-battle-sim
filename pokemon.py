@@ -55,6 +55,8 @@ _GEN = 13
 HP_TYPES = ['fighting', 'flying', 'poison', 'ground', 'rock', 'bug', 'ghost', 'steel', 'fire', 'water', 'grass',
             'electric', 'psychic', 'ice', 'dragon', 'dark']
 
+GROUNDED_CHECK = ['bounce', 'fly', 'high-jump-kick', 'jump-kick', 'magnet-rise', 'splash']
+
 # need item, ability
 class Pokemon:
     def __init__(
@@ -211,12 +213,12 @@ class Pokemon:
         self.last_move_hit_by = None
         self.last_consumed_item = None
         self.copied = None
-        self.foresight_target = None
         self.binding_type = None
         self.binding_poke = None
         self.encore_move = None
         self.mr_target = None
         self.infatuation = None
+        self.r_types = None
         self.in_air = False
         self.in_ground = False
         self.in_water = False
@@ -235,6 +237,8 @@ class Pokemon:
         self.transformed = False
         self.tormented = False
         self.magic_coat = False
+        self.foresight_target = False
+        self.me_target = False
         self.snatch = False
         self.mud_sport = False
         self.water_sport = False
@@ -345,6 +349,8 @@ class Pokemon:
             av_moves = [move for move in av_moves if move.name != self.last_move.name]
         if self.taunt and av_moves:
             av_moves = [move for move in av_moves if move.category != STATUS]
+        if self.grounded:
+            av_moves = [move for move in av_moves if move not in GROUNDED_CHECK]
         if self.trainer.imprisoned_poke and self.trainer.imprisoned_poke is self.enemy.current_poke and av_moves:
             i_moves = [move.name for move in self.trainer.imprisoned_poke.moves]
             av_moves = [move for move in av_moves if move.name not in i_moves]

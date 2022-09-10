@@ -87,6 +87,24 @@ SNATCH_CHECK = ['acid-armor', 'acupressure', 'agility', 'amnesia', 'aromatherapy
                 'sharpen', 'slack-off', 'soft-boiled', 'stockpile', 'substitute', 'swallow', 'swords-dance', 'synthesis',
                 'tail-glow', 'tailwind', 'withdraw']
 
+GROUNDED_CHECK = ['bounce', 'fly', 'high-jump-kick', 'jump-kick', 'magnet-rise', 'splash']
+
+BERRY_DATA = {'cheri-berry': ('fire', 60), 'chesto-berry': ('water', 60), 'pecha-berry': ('electric', 60), 'rawst-berry': ('grass', 60),
+              'aspear-berry': ('ice', 60), 'leppa-berry': ('fighting', 60), 'oran-berry': ('poison', 60), 'persim-berry': ('ground', 60),
+              'lum-berry': ('flying', 60), 'sitrus-berry': ('psychic', 60), 'figy-berry': ('bug', 60), 'wiki-berry': ('rock', 60),
+              'mago-berry': ('ghost', 60), 'aguav-berry': ('dragon', 60), 'iapapa-berry': ('dark', 60), 'razz-berry': ('steel', 60),
+              'bluk-berry': ('fire', 70), 'nanb-berry': ('water', 70), 'wepear-berry': ('electric', 70), 'pinap-berry': ('grass', 70),
+              'pomeg-berry': ('ice', 70), 'kelpsy-berry': ('fighting', 70), 'qualot-berry': ('poison', 70), 'hondew-berry': ('ground', 70),
+              'grepa-berry': ('flying', 70), 'tamato-berry': ('psychic', 70), 'cornn-berry': ('bug', 70), 'magost-berry': ('rock', 70),
+              'rabuta-berry': ('ghost', 70), 'nomel-berry': ('dragon', 70), 'spelon-berry': ('dark', 70), 'pamtre-berry': ('steel', 70),
+              'watmel-berry': ('fire', 80), 'durin-berry': ('water', 80), 'belue-berry': ('electric', 80), 'occa-berry': ('fire', 60),
+              'passho-berry': ('water', 60), 'wacan-berry': ('electric', 60), 'rindo-berry': ('grass', 60), 'yache-berry': ('ice', 60),
+              'chople-berry': ('fighting', 60), 'kebia-berry': ('poison', 60), 'shuca-berry': ('ground', 60), 'coba-berry': ('flying', 60),
+              'papaya-berry': ('psychic', 60), 'tanga-berry': ('bug', 60), 'charti-berry': ('rock', 60), 'kasib-berry': ('ghost', 60),
+              'haban-berry': ('dragon', 60), 'colbur-berry': ('dark', 60), 'babiri-berry': ('steel', 60), 'chilan-berry': ('normal', 60),
+              'liechi-berry': ('grass', 80), 'ganlon-berry': ('ice', 80), 'salac-berry': ('fighting', 80), 'petaya-berry': ('poison', 80),
+              'apricot-berry': ('ground', 80), 'lansat-berry': ('flying', 80), 'starf-berry': ('psychic', 80), 'enigma-berry': ('bug', 80),
+              'micle-berry': ('rock', 80), 'custap-berry': ('ghost', 80), 'jacoba-berry': ('dragon', 80), 'rowap-berry': ('dark', 80)}
 
 PROTECT_TARGETS = [8, 9, 10, 11]
 
@@ -98,11 +116,7 @@ def process_move(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Bat
     if not _calculate_hit_or_miss(attacker, defender, battlefield, battle, move_data):
         return
     attacker.last_successful_move_next = move_data
-    if _magic_coat_check(attacker, defender, battlefield, battle, move_data, is_first):
-        return
-    if _snatch_check(attacker, defender, battlefield, battle, move_data, is_first):
-        return
-    if _protect_check(defender, battle, move_data):
+    if _meta_effect_check(attacker, defender, battlefield, battle, move_data, is_first):
         return
     _process_effect(attacker, defender, battlefield, battle, move_data, is_first)
     battle._faint_check()
@@ -110,11 +124,21 @@ def process_move(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Bat
 def _calculate_type_ef(defender: pokemon.Pokemon, move_data: list):
     if move_data.type == 'typeless':
         return 1
+    vulnerable_types = []
     if move_data.type == 'ground' and 'flying' in defender.types and defender.grounded:
-        return 1
-    t_mult = PokeSim.get_type_effectiveness(move_data.type, defender.types[0])
+        vulnerable_types.append('flying')
+    if defender.foresight_target and move_data.type in ['normal', 'fighting'] and 'ghost' in defender.types:
+        vulnerable_types.append('ghost')
+    if defender.me_target and move_data.type == 'psychic' and 'dark' in defender.types:
+        vulnerable_types.append('dark')
+
+    if defender.types[0] in vulnerable_types:
+        t_mult = 1
+    else:
+        t_mult = PokeSim.get_type_effectiveness(move_data.type, defender.types[0])
     if defender.types[1]:
-        t_mult *= PokeSim.get_type_effectiveness(move_data.type, defender.types[1])
+        if defender.types[1] not in vulnerable_types:
+            t_mult *= PokeSim.get_type_effectiveness(move_data.type, defender.types[1])
     return t_mult
 
 def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle,
@@ -205,7 +229,8 @@ def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
 
 def _calculate_hit_or_miss(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move):
     d_eva_stage = defender.evasion_stage
-    if attacker.foresight_target and attacker.foresight_target is defender:
+    a_acc_stage = attacker.accuracy_stage
+    if defender.foresight_target or defender.me_target:
          if defender.evasion_stage > 0:
              d_eva_stage = 0
     stage = attacker.accuracy_stage - d_eva_stage
@@ -232,6 +257,17 @@ def _calculate_hit_or_miss(attacker: pokemon.Pokemon, defender: pokemon.Pokemon,
             _missed(attacker, battle)
     return res
 
+def _meta_effect_check(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool) -> bool:
+    if _magic_coat_check(attacker, defender, battlefield, battle, move_data, is_first):
+        return True
+    if _snatch_check(attacker, defender, battlefield, battle, move_data, is_first):
+        return True
+    if _protect_check(defender, battle, move_data):
+        return True
+    if attacker.grounded and move_data.name in GROUNDED_CHECK:
+        _failed(battle)
+        return True
+    return False
 
 def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool):
     if move_data.ef_chance:
@@ -821,8 +857,8 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             _failed(battle)
     elif ef_id == 84:
-        if defender.is_alive and not attacker.foresight_target:
-            attacker.foresight_target = defender
+        if defender.is_alive and not defender.foresight_target:
+            defender.foresight_target = True
             battle._add_text(attacker.nickname + ' identified ' + defender.nickname + '!')
         else:
             _failed(battle)
@@ -1422,6 +1458,59 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             _failed(battle)
         return
+    elif ef_id == 168:
+        attacker.heal(max(1, attacker.max_hp // 2))
+        if not is_first or not 'flying' in attacker.types:
+            return
+        attacker.r_types = attacker.types
+        other_type = [type for type in attacker.types if type != 'flying']
+        if len(other_type) > 0:
+            attacker.types = (other_type[0], None)
+        else:
+            attacker.types = ('normal', None)
+    elif ef_id == 169:
+        if not battlefield.gravity_count:
+            battlefield.gravity_count = 5
+            battlefield.acc_modifier = 5 / 3
+            attacker.grounded = True
+            defender.grounded = True
+            battle._add_text('Gravity intensified!')
+        else:
+            _failed(battle)
+    elif ef_id == 170:
+        if defender.is_alive and not defender.me_target:
+            defender.me_target = True
+            battle._add_text(attacker.nickname + ' identified ' + defender.nickname + '!')
+        else:
+            _failed(battle)
+    elif ef_id == 171:
+        if defender.nv_status == ASLEEP:
+            move_data.power *= 2
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if defender.is_alive:
+            battle._add_text(defender.nickname + ' woke up!')
+            defender.nv_status = 0
+        return
+    elif ef_id == 172:
+        attacker.calculate_stats_effective()
+        defender.calculate_stats_effective()
+        move_data.power = min(150, attacker.stats_effective[SPD] * 25 / max(1, defender.stats_effective[SPD]) + 1)
+    elif ef_id == 173:
+        t = attacker.trainer
+        if t.num_fainted >= len(t.poke_list) - 1 or battle._process_selection(t):
+            _failed(battle)
+        battle._add_text('The healing wish came true!')
+        t.current_poke.heal(t.current_poke.max_hp)
+        t.current_poke.nv_status = 0
+    elif ef_id == 174:
+        if attacker.cur_hp < attacker.max_hp // 2:
+            move_data.power *= 2
+    elif ef_id == 175:
+        if attacker.item and attacker.item in BERRY_DATA and not battlefield.weather in [HARSH_SUNLIGHT, RAIN]:
+            move_data.type, move_data.power = BERRY_DATA[attacker.item]
+        else:
+            _failed(battle)
+            return
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
