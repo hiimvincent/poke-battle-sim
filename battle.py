@@ -315,6 +315,9 @@ class Battle:
                 self._add_text(trainer.wish_poke + '\'s wish came true!')
                 trainer.current_poke.heal(trainer.current_poke.max_hp // 2)
                 trainer.wish_poke = None
+        if poke.ingrain:
+            self._add_text(poke.nickname + ' absorbed nutrients with its roots!')
+            poke.heal(poke.max_hp // 16, text_skip=True)
         if trainer.fs_count and poke.is_alive:
             trainer.fs_count -= 1
             if not trainer.fs_count:
@@ -334,68 +337,22 @@ class Battle:
             trainer.safeguard -= 1
             if not trainer.safeguard:
                 self._add_text(trainer.name + ' is no longer protected by Safeguard.')
+        if trainer.tailwind_count:
+            trainer.tailwind_count -= 1
+            if not trainer.tailwind_count:
+                self._add_text(trainer.name + '\'s ' + 'tailwind petered out!')
+                for poke in trainer.poke_list:
+                    poke.stats_actual[SPD] //= 2
         if trainer.imprisoned_poke and not trainer.imprisoned_poke is other.current_poke:
             trainer.imprisoned_poke = None
-        if not poke.is_alive:
-            return
-        if poke.mist_count:
-            poke.mist_count -= 1
-        if poke.bide_count:
-            poke.bide_count -= 1
-        if poke.mr_count:
-            poke.mr_count -= 1
-        if poke.db_count:
-            poke.db_count -= 1
-            if not poke.mr_count:
-                poke.mr_target = None
-        if poke.charged:
-            poke.charged -= 1
-        if poke.taunt:
-            poke.taunt -= 1
-        if poke.r_types:
-            poke.types = poke.r_types
-            poke.r_types = None
-        if poke.encore_count:
-            poke.encore_count -= 1
-            if not poke.encore_count:
-                poke.encore_move = None
-                for move in poke.moves:
-                    move.encore_blocked = False
-                    self._add_text(poke.nickname + '\'s encore ended.')
-        if poke.uproar:
-            poke.uproar -= 1
-            if not poke.uproar:
-                self._add_text(poke.nickname + ' calmed down.')
-        if poke.ingrain:
-            self._add_text(poke.nickname + ' absorbed nutrients with its roots!')
-            poke.heal(poke.max_hp // 16, text_skip=True)
-        if poke.protect:
-            poke.protect = False
-            poke.invulnerable = False
-            if poke.last_successful_move not in ['protect', 'detect', 'endure']:
-                poke.protect_count = 0
-        if poke.endure:
-            poke.endure = False
-            if poke.last_successful_move not in ['protect', 'detect', 'endure']:
-                poke.protect_count = 0
-        if poke.magic_coat:
-            poke.magic_coat = False
-        if poke.snatch:
-            poke.snatch = False
-        if poke.v_status[DROWSY]:
-            poke.v_status[DROWSY] -= 1
-            if not poke.v_status[DROWSY] and not poke.nv_status:
-                poke.nv_status = ASLEEP
-                self._add_text(poke.nickname + ' fell asleep!')
-        if poke.perish_count:
+        if poke.perish_count and poke.is_alive:
             poke.perish_count -= 1
             if not poke.perish_count:
                 poke.faint()
                 return
-        if poke.v_status[FLINCHED]:
-            poke.v_status[FLINCHED] = 0
-        if poke.foresight_target and not poke.foresight_target is other.current_poke:
-            poke.foresight_target = None
+
+        if not poke.is_alive:
+            return
 
         if self.battlefield.weather == SANDSTORM and poke.is_alive:
             if not poke.in_ground and not poke.in_water and not any(type in poke.types for type in ['ground', 'steel', 'rock']):
@@ -414,7 +371,6 @@ class Battle:
         if poke.nv_status == BADLY_POISONED and poke.is_alive:
             poke.take_damage(max(1, poke.max_hp * poke.nv_counter // 16))
             poke.nv_counter += 1
-
         if poke.v_status[BINDING_COUNT] and poke.is_alive:
             if poke.binding_poke is other.current_poke and poke.binding_type:
                 self._add_text(poke.nickname + ' is hurt by ' + poke.binding_type + '!')
@@ -441,6 +397,64 @@ class Battle:
         if poke.v_status[CURSE] and poke.is_alive:
             self._add_text(poke.nickname + ' is afflicted by the curse!')
             poke.take_damage(max(1, poke.max_hp // 4))
+
+        if not poke.is_alive:
+            return
+
+        if poke.v_status[FLINCHED]:
+            poke.v_status[FLINCHED] = 0
+        if poke.foresight_target and not poke.foresight_target is other.current_poke:
+            poke.foresight_target = None
+        if poke.mist_count:
+            poke.mist_count -= 1
+        if poke.bide_count:
+            poke.bide_count -= 1
+        if poke.mr_count:
+            poke.mr_count -= 1
+        if poke.db_count:
+            poke.db_count -= 1
+            if not poke.mr_count:
+                poke.mr_target = None
+        if poke.charged:
+            poke.charged -= 1
+        if poke.taunt:
+            poke.taunt -= 1
+        if poke.r_types:
+            poke.types = poke.r_types
+            poke.r_types = None
+        if poke.encore_count:
+            poke.encore_count -= 1
+            if not poke.encore_count:
+                poke.encore_move = None
+                for move in poke.moves:
+                    move.encore_blocked = False
+                    self._add_text(poke.nickname + '\'s encore ended.')
+        if poke.embargo_count:
+            poke.embargo_count -= 1
+            if not poke.encore_count:
+                self._add_text(poke.nickname + ' can use items again!')
+        if poke.uproar:
+            poke.uproar -= 1
+            if not poke.uproar:
+                self._add_text(poke.nickname + ' calmed down.')
+        if poke.protect:
+            poke.protect = False
+            poke.invulnerable = False
+            if poke.last_successful_move not in ['protect', 'detect', 'endure']:
+                poke.protect_count = 0
+        if poke.endure:
+            poke.endure = False
+            if poke.last_successful_move not in ['protect', 'detect', 'endure']:
+                poke.protect_count = 0
+        if poke.magic_coat:
+            poke.magic_coat = False
+        if poke.snatch:
+            poke.snatch = False
+        if poke.v_status[DROWSY]:
+            poke.v_status[DROWSY] -= 1
+            if not poke.v_status[DROWSY] and not poke.nv_status:
+                poke.nv_status = ASLEEP
+                self._add_text(poke.nickname + ' fell asleep!')
 
     def _victory(self, winner: tr.Trainer, loser: tr.Trainer):
         self._process_end_battle()

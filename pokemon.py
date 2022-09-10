@@ -201,6 +201,7 @@ class Pokemon:
         self.bide_count = 0
         self.bide_dmg = 0
         self.protect_count = 0
+        self.embargo_count = 0
         self.uproar = 0
         self.stockpile = 0
         self.charged = 0
@@ -261,7 +262,7 @@ class Pokemon:
         self.enemy = self.cur_battle.t2 if self.cur_battle.t1 is self.trainer else self.cur_battle.t1
 
     def take_damage(self, damage: int, enemy_move: Move = None) -> int:
-        if damage < 0:
+        if damage <= 0:
             return 0
         if self.substitute:
             self.cur_battle._add_text('The substitute took damage for' + self.nickname + '!')

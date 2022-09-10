@@ -1511,6 +1511,66 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             _failed(battle)
             return
+    elif ef_id == 176:
+        if not is_first and defender.is_alive and defender.protect:
+            battle._add_text(defender.nickname + ' fell for the feint!')
+            _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        else:
+            _failed(battle)
+        return
+    elif ef_id == 177:
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if defender.is_alive and defender.item and defender.item in BERRY_DATA and defender.ability != 'sticky-hold' \
+                and attacker.ability != 'klutz':
+            battle._add_text(attacker.nickname + ' stole and ate ' + defender.nickname + '\'s ' + defender.item + '!')
+            # _consume_item(defender.item)
+            defender.give_item(None)
+        return
+    elif ef_id == 178:
+        if not attacker.trainer.tailwind_count:
+            battle._add_text('The tailwind blew from being ' + attacker.trainer.name + '\'s team!')
+            attacker.trainer.tailwind_count = 3
+            for poke in attacker.trainer.poke_list:
+                poke.stats_actual[SPD] *= 2
+        else:
+            _failed(battle)
+    elif ef_id == 179:
+        ef_stats = attacker.stat_stages + [attacker.accuracy_stage, attacker.evasion_stage]
+        ef_stats = [stat_i for stat_i in range(len(ef_stats)) if ef_stats[stat_i] < 6]
+        if len(ef_stats):
+            _give_stat_change(attacker, battle, random.randrange(len(ef_stats)), 2)
+        else:
+            _failed(battle)
+    elif ef_id == 180:
+        if not is_first and attacker.turn_damage and defender.is_alive:
+            defender.take_damage(int(attacker.last_damage_taken * 1.5))
+        else:
+            _failed(battle)
+        return
+    elif ef_id == 181:
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        t = attacker.trainer
+        if t.num_fainted < len(t.poke_list) - 1:
+            battle._process_selection(t)
+        return
+    elif ef_id == 182:
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if attacker.is_alive:
+            _give_stat_change(attacker, battle, DEF, -1)
+            _give_stat_change(attacker, battle, SP_DEF, -1)
+        return
+    elif ef_id == 183:
+        if not is_first:
+            move_data.power *= 2
+    elif ef_id == 184:
+        if not is_first and defender.turn_damage:
+            move_data.power *= 2
+    elif ef_id == 185:
+        if defender.is_alive and not defender.embargo_count:
+            defender.embargo_count = 5
+            battle._add_text(defender.nickname + ' can\'t use items anymore!')
+        else:
+            _failed(battle)
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
@@ -1653,20 +1713,22 @@ def _stat_text(recipient: pk.Pokemon, stat: int, amount: int) -> str:
         return
     base = recipient.nickname + '\'s ' + STAT_TO_NAME[stat]
     if amount > 0:
-        if cur_stage >= 6:
+        dif = min(6 - cur_stage, amount)
+        if dif <= 0:
             base += ' won\'t go any higher!'
-        elif amount == 1:
+        elif dif == 1:
             base += ' rose!'
-        elif amount == 2:
+        elif dif == 2:
             base += ' rose sharply!'
         else:
             base += ' rose drastically!'
     else:
-        if cur_stage <= -6:
+        dif = max(-6 - cur_stage, amount)
+        if dif >= 0:
             base += ' won\'t go any lower!'
-        elif amount == -1:
+        elif dif == -1:
             base += ' fell!'
-        elif amount == -2:
+        elif dif == -2:
             base += ' fell harshly!'
         else:
             base += ' fell severely!'
@@ -1793,7 +1855,7 @@ def _snatch_check(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefi
     return False
 
 def _protect_check(defender: pokemon.Pokemon, battle: bt.Battle, move_data: Move) -> bool:
-    if defender.is_alive and defender.protect and move_data.target in PROTECT_TARGETS:
+    if defender.is_alive and defender.protect and move_data.name != 'feint' and move_data.target in PROTECT_TARGETS:
         battle._add_text(defender.nickname + ' protected itself!')
         return True
     return False
