@@ -91,6 +91,8 @@ SNATCH_CHECK = ['acid-armor', 'acupressure', 'agility', 'amnesia', 'aromatherapy
 
 GROUNDED_CHECK = ['bounce', 'fly', 'high-jump-kick', 'jump-kick', 'magnet-rise', 'splash']
 
+FREEZE_CHECK = ['flame-wheel', 'sacred-fire', 'flare-blitz']
+
 BERRY_DATA = {'cheri-berry': ('fire', 60), 'chesto-berry': ('water', 60), 'pecha-berry': ('electric', 60), 'rawst-berry': ('grass', 60),
               'aspear-berry': ('ice', 60), 'leppa-berry': ('fighting', 60), 'oran-berry': ('poison', 60), 'persim-berry': ('ground', 60),
               'lum-berry': ('flying', 60), 'sitrus-berry': ('psychic', 60), 'figy-berry': ('bug', 60), 'wiki-berry': ('rock', 60),
@@ -1453,7 +1455,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             _give_stat_change(attacker, battle, ATK, 1)
             _give_stat_change(attacker, battle, SPD, 1)
         else:
-            _falied(battle)
+            _failed(battle)
     elif ef_id == 167:
         t = defender.trainer
         if defender.is_alive and not t.dd_count:
@@ -1686,6 +1688,13 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             battle._add_text(attacker.nickname + ' levitated on electromagnetism!')
         else:
             _failed(battle)
+    elif ef_id == 206:
+        dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if attacker.is_alive and dmg:
+            _recoil(attacker, battle, dmg // 3)
+        if defender.is_alive and random.randrange(10) < 1:
+            _burn(defender, battle)
+        return
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
@@ -1712,7 +1721,7 @@ def _invulnerability_check(attacker: pokemon.Pokemon, defender: pokemon.Pokemon,
 
 def _pre_process_status(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move) -> bool:
     if attacker.nv_status == FROZEN:
-        if move_data.ef_id == 75 or random.randrange(5) < 1:
+        if move_data.name in FREEZE_CHECK or random.randrange(5) < 1:
             attacker.nv_status = 0
             battle._add_text(attacker.nickname + ' thawed out!')
         else:

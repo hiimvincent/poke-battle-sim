@@ -521,7 +521,7 @@ class Battle:
         if selector.toxic_spikes and not selector.current_poke.nv_status and (selector.current_poke.grounded \
                     or (not 'flying' in selector.current_poke.types and not 'steel' in selector.current_poke.types \
                     and not selector.current_poke.magnet_rise and not selector.current_poke.ability in ['immunity', 'levitate', 'magic-guard'] \
-                    and not (selector.ability == 'leaf-guard' and battlefield.weather == HARSH_SUNLIGHT))):
+                    and not (selector.current_poke.ability == 'leaf-guard' and battlefield.weather == HARSH_SUNLIGHT))):
             if selector.toxic_spikes == 1:
                 selector.current_poke.nv_status = POISONED
                 battle._add_text(selector.current_poke.nickname + ' was poisoned!')
