@@ -27,6 +27,8 @@ class Trainer:
         self.light_screen = 0
         self.safeguard = 0
         self.reflect = 0
+        self.mist = 0
+        self.stealth_rock = 0
         self.fs_dmg = 0
         self.fs_count = 0
         self.dd_dmg = 0

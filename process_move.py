@@ -346,7 +346,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         if move_data.ef_stat == CONFUSED:
             _confuse(defender, battle, True)
     elif ef_id == 16 or ef_id == 17:
-        if ef_id == 17 and defender.mist_count:
+        if ef_id == 17 and defender.trainer.mist:
             battle._add_text(defender.nickname + '\'s protected by mist.')
             return
         _give_stat_change(recipient, battle, move_data.ef_stat, move_data.ef_amount)
@@ -476,11 +476,11 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             disabled_move.disabled = random.randrange(4, 8)
             battle._add_text(defender.trainer.name + '\'s ' + defender.nickname + '\'s ' + disabled_move.name + ' was disabled!')
     elif ef_id == 33:
-        if attacker.mist_count:
-            _failed(battle)
-        else:
+        if not attacker.trainer.mist:
             battle._add_text(attacker.trainer.name + '\'s team became shrouded in mist!')
-            attacker.mist_count = 5
+            attacker.trainer.mist = 5
+        else:
+            _failed(battle)
     elif ef_id == 34:
         attacker.recharging = True
     elif ef_id == 35:
@@ -1036,6 +1036,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             t = attacker.trainer
             t.spikes = 0
             t.toxic_spikes = 0
+            t.steal_rock = 0
         return
     elif ef_id == 105:
         if battlefield.weather == CLEAR:
@@ -1719,6 +1720,34 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             if random.randrange(10) < 1:
                 _flinch(defender, is_first)
         return
+    elif ef_id == 210:
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if defender.is_alive:
+            if random.randrange(10) < 1:
+                _burn(defender, battle)
+            if random.randrange(10) < 1:
+                _flinch(defender, is_first)
+        return
+    elif ef_id == 211:
+        if defender.is_alive:
+            battle._add_text(_stat_text(defender, EVA, -1))
+            if defender.evasion_stage > -6:
+                defender.evasion_stage -= 1
+        defender.trainer.spikes = 0
+        defender.trainer.toxic_spikes = 0
+        defender.stealth_rock = 0
+        defender.trainer.safeguard = 0
+        defender.trainer.light_screen = 0
+        defender.trainer.reflect = 0
+        defender.trainer.mist = 0
+        # battle._add_text(attacker.nickname + ' blew away ...')
+    elif ef_id == 212:
+        if not battlefield.trick_room_count:
+            battlefield.trick_room_count = 5
+            battle._add_text(attacker.nickname + ' twisted the dimensions!')
+        else:
+            battlefield.trick_room_count = 0
+            battle._add_text('The twisted dimensions returned to normal!')
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
@@ -1835,13 +1864,17 @@ def _give_stat_change(recipient: pokemon.Pokemon, battle: bt.Battle, stat: int, 
         if forced:
             _failed(battle)
         return
-    battle._add_text(_stat_text(recipient, stat, amount))
     if stat == 6:
+        r_stat = recipient.accuracy_stage
         recipient.accuracy_stage = _fit_stat_bounds(recipient.accuracy_stage + amount)
     elif stat == 7:
+        r_stat = recipient.evasion_stage
         recipient.evasion_stage = _fit_stat_bounds(recipient.evasion_stage + amount)
     else:
+        r_stat = recipient.stat_stages[stat]
         recipient.stat_stages[stat] = _fit_stat_bounds(recipient.stat_stages[stat] + amount)
+    if -6 < r_stat < 6 or forced:
+        battle._add_text(_stat_text(recipient, stat, amount))
     return
 
 def _fit_stat_bounds(stage: int):

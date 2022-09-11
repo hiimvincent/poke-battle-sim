@@ -219,6 +219,8 @@ class Battle:
                     t1_first = random.randrange(2) < 1
                 else:
                     t1_first = spd_dif > 0
+                    if self.battlefield.trick_room_count:
+                        t1_first = not t1_first
 
         self._add_text("Turn " + str(self.turn_count) + ":")
 
@@ -350,6 +352,10 @@ class Battle:
             trainer.safeguard -= 1
             if not trainer.safeguard:
                 self._add_text(trainer.name + ' is no longer protected by Safeguard.')
+        if trainer.mist:
+            trainer.mist -= 1
+            if not trainer.mist:
+                self._add_text(trainer.name + ' is no longer protected by mist!')
         if trainer.tailwind_count:
             trainer.tailwind_count -= 1
             if not trainer.tailwind_count:
@@ -422,8 +428,6 @@ class Battle:
             poke.v_status[FLINCHED] = 0
         if poke.foresight_target and not poke.foresight_target is other.current_poke:
             poke.foresight_target = None
-        if poke.mist_count:
-            poke.mist_count -= 1
         if poke.bide_count:
             poke.bide_count -= 1
         if poke.mr_count:
@@ -524,11 +528,11 @@ class Battle:
                     and not (selector.current_poke.ability == 'leaf-guard' and battlefield.weather == HARSH_SUNLIGHT))):
             if selector.toxic_spikes == 1:
                 selector.current_poke.nv_status = POISONED
-                battle._add_text(selector.current_poke.nickname + ' was poisoned!')
+                self._add_text(selector.current_poke.nickname + ' was poisoned!')
             else:
                 selector.current_poke.nv_status = BADLY_POISONED
                 selector.current_pokenv_counter = 1
-                battle._add_text(selector.current_poke.nickname + ' was badly poisoned!')
+                self._add_text(selector.current_poke.nickname + ' was badly poisoned!')
         return False
 
     def _faint_check(self):

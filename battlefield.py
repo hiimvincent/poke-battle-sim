@@ -14,6 +14,7 @@ class Battlefield:
         self.acc_modifier = 1
         self.weather_count = 0
         self.gravity_count = 0
+        self.trick_room_count = 0
         self.gravity_stats = None
         self.cur_battle = battle
 
@@ -44,6 +45,10 @@ class Battlefield:
                 self.acc_modifier = 1
                 self.cur_battle.t1.current_poke.grounded = False
                 self.cur_battle.t2.current_poke.grounded = False
+        if self.trick_room_count:
+            self.trick_room_count -= 1
+            if not self.trick_room_count:
+                self.cur_battle._add_text('The twisted dimensions returned to normal!')
 
 
 

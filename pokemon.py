@@ -196,7 +196,6 @@ class Pokemon:
         self.evasion_stage = 0
         self.crit_stage = 0
         self.substitute = 0
-        self.mist_count = 0
         self.mr_count = 0
         self.db_count = 0
         self.perish_count = 0
