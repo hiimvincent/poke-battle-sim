@@ -1216,13 +1216,17 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
     elif ef_id == 129:
         _failed(battle)
     elif ef_id == 130:
-        if attacker.item and defender.is_alive and defender.item and not defender.substitute:
+        if defender.is_alive and not defender.substitute and (attacker.item or defender.item) \
+                and attacker.item != 'griseous-orb' and defender.item != 'griseous-orb' and \
+            defender.ability not in ['sticky-hold', 'multitype'] and attacker.ability != 'multitype':
             a_item = attacker.item
             attacker.give_item(defender.item)
             defender.give_item(a_item)
             battle._add_text(attacker.nickname + ' switched items with its target!')
-            battle._add_text(attacker.nickname + ' obtained one ' + _cap_name(attacker.item) + '.')
-            battle._add_text(defender.nickname + ' obtained one ' + _cap_name(defender.item) + '.')
+            if attacker.item:
+                battle._add_text(attacker.nickname + ' obtained one ' + _cap_name(attacker.item) + '.')
+            if defender.item:
+                battle._add_text(defender.nickname + ' obtained one ' + _cap_name(defender.item) + '.')
         else:
             _failed(battle)
     elif ef_id == 131:
@@ -1699,6 +1703,22 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
         if dmg:
             _recoil(attacker, battle, dmg // 3)
+    elif ef_id == 208:
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if defender.is_alive:
+            if random.randrange(10) < 1:
+                _paralyze(defender, battle)
+            if random.randrange(10) < 1:
+                _flinch(defender, is_first)
+        return
+    elif ef_id == 209:
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if defender.is_alive:
+            if random.randrange(10) < 1:
+                _freeze(defender, battle)
+            if random.randrange(10) < 1:
+                _flinch(defender, is_first)
+        return
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
