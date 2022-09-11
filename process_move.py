@@ -32,6 +32,8 @@ SAND_TOMB = 6
 NIGHTMARE = 4
 CURSE = 5
 DROWSY = 6
+INGRAIN = 7
+AQUA_RING = 8
 
 CLEAR = 0
 HARSH_SUNLIGHT = 1
@@ -124,6 +126,9 @@ def process_move(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Bat
 def _calculate_type_ef(defender: pokemon.Pokemon, move_data: list):
     if move_data.type == 'typeless':
         return 1
+    if move_data.type == 'ground' and not defender.grounded and defender.magnet_rise:
+        return 0
+
     vulnerable_types = []
     if move_data.type == 'ground' and 'flying' in defender.types and defender.grounded:
         vulnerable_types.append('flying')
@@ -1028,6 +1033,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             attacker.v_status[LEECH_SEED] = 0
             t = attacker.trainer
             t.spikes = 0
+            t.toxic_spikes = 0
         return
     elif ef_id == 105:
         if battlefield.weather == CLEAR:
@@ -1238,10 +1244,11 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             _failed(battle)
         return
     elif ef_id == 134:
-        if not attacker.ingrain:
+        if not attacker.v_status[INGRAIN]:
             battle._add_text(attacker.nickname + ' planted its roots!')
-            attacker.ingrain = True
+            attacker.v_status[INGRAIN] = 1
             attacker.trapped = True
+            attacker.grounded = True
         else:
             _failed(battle)
     elif ef_id == 135:
@@ -1630,6 +1637,55 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             return
         else:
             _failed(battle)
+    elif ef_id == 196:
+        if defender.is_alive:
+            attacker.stat_stages[ATK], attacker.stat_stages[SP_ATK] = defender.stat_stages[ATK], defender.stat_stages[SP_ATK]
+            battle._add_text(attacker.nickname + ' switch all changes to its Attack and Sp. Atk with ' + defender.nickname + '!')
+        else:
+            _failed(battle)
+    elif ef_id == 197:
+        if defender.is_alive:
+            attacker.stat_stages[DEF], attacker.stat_stages[SP_DEF] = defender.stat_stages[DEF], defender.stat_stages[SP_DEF]
+            battle._add_text(attacker.nickname + ' switch all changes to its Defense and Sp. Def with ' + defender.nickname + '!')
+        else:
+            _failed(battle)
+    elif ef_id == 198:
+        move_data.power = max(200, 60 + 20 * sum([stat for stat in attacker.stat_stages if stat > 0]))
+    elif ef_id == 199:
+        if len(attacker.moves) < 2 or not all([attacker.moves[i].cur_pp < attacker.old_pp[i] or attacker.moves[i] == 'last-resort' for i in range(len(attacker.moves))]):
+            _failed(battle)
+            return
+    elif ef_id == 200:
+        if defender.is_alive and defender.ability != 'multitype' and defender.ability != 'truant':
+            battle._add_text(defender.nickname + ' acquired insomnia!')
+            defender.ability = 'insomnia'
+        else:
+            _failed(battle)
+    elif ef_id == 201:
+        if not is_first or not attacker.sp_check:
+            _failed(battle)
+            return
+    elif ef_id == 202:
+        defender.trainer.toxic_spikes += 1
+        battle._add_text('Poison spikes were scattered all around the feet of ' + defender.trainer.name + '\'s team!')
+    elif ef_id == 203:
+        if defender.is_alive:
+            attacker.stat_stages, defender.stat_stages = defender.stat_stages, attacker.stat_stages
+            battle._add_text(attacker.nickname + ' switched stat changes with ' + defender.nickname + '!')
+        else:
+            _failed(battle)
+    elif ef_id == 204:
+        if not attacker.v_status[AQUA_RING]:
+            battle._add_text(attacker.nickname + ' surrounded itself with a veil of water!')
+            attacker.v_status[AQUA_RING] = 1
+        else:
+            _failed(battle)
+    elif ef_id == 205:
+        if not attacker.magnet_rise:
+            attacker.magnet_rise = True
+            battle._add_text(attacker.nickname + ' levitated on electromagnetism!')
+        else:
+            _failed(battle)
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
@@ -1896,7 +1952,7 @@ def _badly_poison(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False
         battle._add_text(recipient.nickname + ' is already badly poisoned!')
     elif not recipient.nv_status:
         recipient.nv_status = BADLY_POISONED
-        recipient,nv_counter = 1
+        recipient.nv_counter = 1
         battle._add_text(recipient.nickname + ' was badly poisoned!')
 
 def _magic_coat_check(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool) -> bool:

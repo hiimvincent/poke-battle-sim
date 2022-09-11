@@ -28,7 +28,7 @@ EV_MIN, EV_MAX = 0, 255
 EV_TOTAL_MAX = 510
 NATURE_DEC, NATURE_INC = 0.9, 1.1
 
-V_STATUS_NUM = 7
+V_STATUS_NUM = 9
 POSSIBLE_GENDERS = ['male', 'female', 'genderless']
 
 # NON_VOLATILE_STATUSES
@@ -250,6 +250,8 @@ class Pokemon:
         self.water_sport = False
         self.power_trick = False
         self.ability_suppressed = False
+        self.sp_check = False
+        self.magnet_rise = False
         self.turn_damage = False
         self.moves = self.o_moves
         self.ability = self.o_ability
@@ -257,6 +259,7 @@ class Pokemon:
             self.reset_transform()
         self.item = self.o_item
         self.h_item = self.item
+        self.old_pp = [move.cur_pp for move in self.moves]
         self.next_moves = Queue()
         self.types = (self.stats_base[_TYPE1], self.stats_base[_TYPE2])
         self.stats_effective = self.stats_actual

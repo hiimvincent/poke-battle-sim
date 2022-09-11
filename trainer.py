@@ -35,6 +35,7 @@ class Trainer:
         self.wish = 0
         self.lucky_chant = 0
         self.spikes = 0
+        self.toxic_spikes = 0
         self.num_fainted = 0
         self.wish_poke = None
         self.imprisoned_poke = None

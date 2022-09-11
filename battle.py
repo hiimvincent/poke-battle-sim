@@ -40,6 +40,8 @@ SAND_TOMB = 6
 NIGHTMARE = 4
 CURSE = 5
 DROWSY = 6
+INGRAIN = 7
+AQUA_RING = 8
 
 # TURN_DATA
 ACTION_TYPE = 0
@@ -323,8 +325,11 @@ class Battle:
                 self._add_text(trainer.wish_poke + '\'s wish came true!')
                 trainer.current_poke.heal(trainer.current_poke.max_hp // 2)
                 trainer.wish_poke = None
-        if poke.ingrain:
+        if poke.v_status[INGRAIN]:
             self._add_text(poke.nickname + ' absorbed nutrients with its roots!')
+            poke.heal(poke.max_hp // 16, text_skip=True)
+        if poke.v_status[AQUA_RING]:
+            self._add_text('A veil of water restored ' + poke.nickname + '\'s HP!')
             poke.heal(poke.max_hp // 16, text_skip=True)
         if trainer.fs_count and poke.is_alive:
             trainer.fs_count -= 1
@@ -466,6 +471,8 @@ class Battle:
             poke.magic_coat = False
         if poke.snatch:
             poke.snatch = False
+        if poke.sp_check:
+            poke.sp_check = False
         if poke.v_status[DROWSY]:
             poke.v_status[DROWSY] -= 1
             if not poke.v_status[DROWSY] and not poke.nv_status:
@@ -498,7 +505,8 @@ class Battle:
         self._add_text(selector.name + ' sent out ' + selector.current_poke.nickname + '!')
         if self.battlefield.gravity_count:
             selector.current_poke.grounded = True
-        if selector.spikes and ('flying' not in selector.current_poke.types or selector.current_poke.grounded):
+        if selector.spikes and (selector.current_poke.grounded or ('flying' not in selector.current_poke.types \
+                and not selector.current_poke.magnet_rise and not selector.current_poke.ability in ['levitate', 'magic-guard'])):
             if selector.spikes == 1:
                 mult = 8
             elif selector.spikes == 2:
@@ -507,6 +515,20 @@ class Battle:
                 mult = 4
             selector.current_poke.take_damage(selector.current_poke.max_hp // mult)
             self._add_text(selector.current_poke.nickname + ' was hurt by the spikes!')
+        if selector.toxic_spikes and 'poison' in selector.current_poke.types:
+            selector.toxic_spikes = 0
+            self._add_text('The poison spikes disappeared from the ground around ' + selector.name + '.')
+        if selector.toxic_spikes and not selector.current_poke.nv_status and (selector.current_poke.grounded \
+                    or (not 'flying' in selector.current_poke.types and not 'steel' in selector.current_poke.types \
+                    and not selector.current_poke.magnet_rise and not selector.current_poke.ability in ['immunity', 'levitate', 'magic-guard'] \
+                    and not (selector.ability == 'leaf-guard' and battlefield.weather == HARSH_SUNLIGHT))):
+            if selector.toxic_spikes == 1:
+                selector.current_poke.nv_status = POISONED
+                battle._add_text(selector.current_poke.nickname + ' was poisoned!')
+            else:
+                selector.current_poke.nv_status = BADLY_POISONED
+                selector.current_pokenv_counter = 1
+                battle._add_text(selector.current_poke.nickname + ' was badly poisoned!')
         return False
 
     def _faint_check(self):
@@ -554,6 +576,14 @@ class Battle:
             self._add_text(self.t1.current_poke.nickname + ' is tightening its focus!')
         if t2_move == FOCUS_PUNCH:
             self._add_text(self.t2.current_poke.nickname + ' is tightening its focus!')
+
+    def _sucker_punch_check(self, t1_move_data: Move, t2_move_data: Move):
+        if not t1_move_data or not t2_move_data:
+            return
+        if t1_move_data.name == 'sucker-punch' and t2_move_data.category != STATUS:
+            self.t1.current_poke.sp_check = True
+        if t2_move_data.name == 'sucker-punch' and t1_move_data.category != STATUS:
+            self.t1.current_poke.sp_check = True
 
     def _add_text(self, txt: str):
         self.all_text.append(txt)
