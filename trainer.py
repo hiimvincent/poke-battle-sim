@@ -33,6 +33,7 @@ class Trainer:
         self.dd_count = 0
         self.tailwind_count = 0
         self.wish = 0
+        self.lucky_chant = 0
         self.spikes = 0
         self.num_fainted = 0
         self.wish_poke = None

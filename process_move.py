@@ -112,7 +112,7 @@ def process_move(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Bat
     if _pre_process_status(attacker, defender, battlefield, battle, move_data):
         return
     battle._add_text(attacker.nickname + ' used ' + _cap_name(move_data.name) + '!')
-    attacker.last_move_next = move_data
+    battle.last_move_next = attacker.last_move_next = move_data
     if not _calculate_hit_or_miss(attacker, defender, battlefield, battle, move_data):
         return
     attacker.last_successful_move_next = move_data
@@ -158,7 +158,7 @@ def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
         return
 
     cc = crit_chance + attacker.crit_stage if crit_chance else attacker.crit_stage
-    if _calculate_crit(cc):
+    if not defender.trainer.lucky_chant and _calculate_crit(cc):
         crit_mult = 2
         battle._add_text("A critical hit!")
     else:
@@ -1569,6 +1569,65 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         if defender.is_alive and not defender.embargo_count:
             defender.embargo_count = 5
             battle._add_text(defender.nickname + ' can\'t use items anymore!')
+        else:
+            _failed(battle)
+    elif ef_id == 186:
+        # move_data.power = FLING_CHECK[attacker.item]
+        move_data.power = 20
+    elif ef_id == 187:
+        if attacker.nv_status:
+            _give_nv_status(attacker.nv_status, defender, battle)
+            attacker.nv_status = 0
+        else:
+            _failed(battle)
+    elif ef_id == 188:
+        if move_data.cur_pp >= 4:
+            move_data.power = 40
+        elif move_data.cur_pp == 3:
+            move_data.power = 50
+        elif move_data.cur_pp == 2:
+            move_data.power = 60
+        elif move_data.cur_pp == 1:
+            move_data.power = 80
+        else:
+            move_data.power = 200
+    elif ef_id == 189:
+        if defender.is_alive and not defender.hb_count:
+            defender.hb_count = 5
+            battle._add_text(defender.nickname + ' was prevented from healing!')
+        else:
+            _failed(battle)
+    elif ef_id == 190:
+        move_data.power = int(1 + 120 * attacker.cur_hp / attacker.max_hp)
+    elif ef_id == 191:
+        attacker.stats_actual[ATK], attacker.stats_actual[DEF] = attacker.stats_actual[DEF], attacker.stats_actual[ATK]
+        battle._add_text(attacker.nickname + ' switched its Attack and Defense!')
+        attacker.power_trick = True
+    elif ef_id == 192:
+        if defender.is_alive and defender.ability and defender.ability != 'multitype' and not defender.ability_suppressed:
+            defender.ability_suppressed = True
+            battle._add_text(defender.nickname + '\'s ability was suppressed!')
+        else:
+            _failed(battle)
+    elif ef_id == 193:
+        if not attacker.trainer.lucky_chant:
+            attacker.trainer.lucky_chant = 5
+            battle._add_text('The Lucky Chant shielded' + attacker.trainer.name + '\'s team from critical hits!')
+        else:
+            _failed(battle)
+    elif ef_id == 194:
+        if attacker.mf_move:
+            attacker.mf_move.power *= 2
+            battle._add_text(attacker.nickname + ' used ' + _cap_name(attacker.mf_move.name) + '!')
+            _process_effect(attacker, defender, battlefield, battle, attacker.mf_move, is_first)
+            attacker.mf_move = None
+            return
+        else:
+            _failed(battle)
+    elif ef_id == 195:
+        if battle.last_move:
+            _process_effect(attacker, defender, battlefield, battle, Move(battle.last_move.md), is_first)
+            return
         else:
             _failed(battle)
 

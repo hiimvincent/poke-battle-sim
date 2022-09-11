@@ -57,6 +57,9 @@ HP_TYPES = ['fighting', 'flying', 'poison', 'ground', 'rock', 'bug', 'ghost', 's
 
 GROUNDED_CHECK = ['bounce', 'fly', 'high-jump-kick', 'jump-kick', 'magnet-rise', 'splash']
 
+HEAL_BLOCK_CHECK = ['heal-order', 'milk-drink', 'moonlight', 'morning-sun', 'recover', 'rest', 'roost', 'slack-off',
+                    'soft-boiled', 'synthesis', 'wish', 'lunar-dance', 'healing-wish']
+
 # need item, ability
 class Pokemon:
     def __init__(
@@ -202,6 +205,7 @@ class Pokemon:
         self.bide_dmg = 0
         self.protect_count = 0
         self.embargo_count = 0
+        self.hb_count = 0
         self.uproar = 0
         self.stockpile = 0
         self.charged = 0
@@ -220,6 +224,7 @@ class Pokemon:
         self.mr_target = None
         self.infatuation = None
         self.r_types = None
+        self.mf_move = None
         self.in_air = False
         self.in_ground = False
         self.in_water = False
@@ -243,6 +248,8 @@ class Pokemon:
         self.snatch = False
         self.mud_sport = False
         self.water_sport = False
+        self.power_trick = False
+        self.ability_suppressed = False
         self.turn_damage = False
         self.moves = self.o_moves
         self.ability = self.o_ability
@@ -352,6 +359,8 @@ class Pokemon:
             av_moves = [move for move in av_moves if move.category != STATUS]
         if self.grounded:
             av_moves = [move for move in av_moves if move not in GROUNDED_CHECK]
+        if self.hb_count:
+            av_moves = [move for move in av_moves if move not in HEAL_BLOCK_CHECK]
         if self.trainer.imprisoned_poke and self.trainer.imprisoned_poke is self.enemy.current_poke and av_moves:
             i_moves = [move.name for move in self.trainer.imprisoned_poke.moves]
             av_moves = [move for move in av_moves if move.name not in i_moves]

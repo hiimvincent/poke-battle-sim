@@ -48,6 +48,10 @@ ACTION_VALUE = 1
 MOVE_PRIORITY = 7
 MOVE_NAME = 1
 
+STATUS = 1
+PHYSICAL = 2
+SPECIAL = 3
+
 RECHARDING = ('other', 'recharging')
 BIDING = ('other', 'biding')
 RAGE = ('move', 'rage')
@@ -56,6 +60,7 @@ PURSUIT = ('move', 'pursuit')
 SWITCH = ('other', 'switch')
 UPROAR = ('move', 'uproar')
 FOCUS_PUNCH = ('move', 'focus-punch')
+ME_FIRST = ('move', 'me-first')
 
 PURSUIT_CHECK = ['baton-pass', 'teleport', 'u-turn', 'volt-switch', 'parting-shot']
 
@@ -106,6 +111,8 @@ class Battle:
         self.battlefield = bf.Battlefield(self)
         self.battle_started = True
         self.winner = None
+        self.last_move = None
+        self.last_move_next = None
         self.turn_count = 0
         self._add_text(self.t1.name + ' sent out ' + self.t1.current_poke.nickname + '!')
         self._add_text(self.t2.name + ' sent out ' + self.t2.current_poke.nickname + '!')
@@ -213,12 +220,11 @@ class Battle:
 
         self._add_text("Turn " + str(self.turn_count) + ":")
 
-        if self._pursuit_check(t1_move, t2_move, t1_first):
+        if self._pursuit_check(t1_move, t2_move, t1_move_data, t2_move_data, t1_first):
             t1_first = t1_move == PURSUIT
-            p_move = t1_move_data if t1_first else t2_move_data
-            p_move.cur_pp -= 1
-            p_move.get_tcopy()
-            p_move.power *= 2
+
+        if self._me_first_check(t1_move_data, t2_move_data):
+            t1_first = t1_move == ME_FIRST
 
         self._focus_punch_check(t1_move, t2_move)
 
@@ -289,6 +295,8 @@ class Battle:
         elif self._process_pp(attacker.current_poke, a_move_data):
             pm.process_move(attacker.current_poke, defender.current_poke, self.battlefield, self,
                             a_move_data.get_tcopy(), not defender.has_moved)
+            if self.last_move_next:
+                self.last_move, self.last_move_next = self.last_move_next, None
             attacker.current_poke.update_last_moves()
         attacker.has_moved = True
 
@@ -343,6 +351,10 @@ class Battle:
                 self._add_text(trainer.name + '\'s ' + 'tailwind petered out!')
                 for poke in trainer.poke_list:
                     poke.stats_actual[SPD] //= 2
+        if trainer.lucky_chant:
+            trainer.lucky_chant -= 1
+            if not trainer.lucky_chant:
+                self._add_text(trainer.name + '\'s Lucky Chant wore off!')
         if trainer.imprisoned_poke and not trainer.imprisoned_poke is other.current_poke:
             trainer.imprisoned_poke = None
         if poke.perish_count and poke.is_alive:
@@ -433,6 +445,10 @@ class Battle:
             poke.embargo_count -= 1
             if not poke.encore_count:
                 self._add_text(poke.nickname + ' can use items again!')
+        if poke.hb_count:
+            poke.hb_count -= 1
+            if not poke.hb_count:
+                self._add_text(poke.nickname + '\'s Heal Block wore off!')
         if poke.uproar:
             poke.uproar -= 1
             if not poke.uproar:
@@ -509,10 +525,27 @@ class Battle:
         self.t1.in_battle = False
         self.t2.in_battle = False
 
-    def _pursuit_check(self, t1_move: tuple[str, str], t2_move: tuple[str, str], t1_first: bool) -> True:
+    def _pursuit_check(self, t1_move: tuple[str, str], t2_move: tuple[str, str], t1_move_data: Move, t2_move_data: Move, t1_first: bool) -> bool:
         if t1_move == PURSUIT and (t2_move == SWITCH or (t2_move[ACTION_TYPE] == MOVE and t2_move[ACTION_VALUE] in PURSUIT_CHECK and not t1_first)):
+            t1_move_data.cur_pp -= 1
+            t1_move_data = t1_move_data.get_tcopy()
+            t1_move_data.power *= 2
             return True
         elif t2_move == PURSUIT and (t1_move == SWITCH or (t1_move[ACTION_TYPE] == MOVE and t1_move[ACTION_VALUE] in PURSUIT_CHECK and t1_first)):
+            t2_move_data.cur_pp -= 1
+            t2_move_data = t2_move_data.get_tcopy()
+            t2_move_data.power *= 2
+            return True
+        return False
+
+    def _me_first_check(self, t1_move_data: Move, t2_move_data: Move) -> bool:
+        if not t1_move_data or not t2_move_data:
+            return False
+        if t1_move_data.name == 'me-first' and t2_move_data.category != STATUS:
+            self.t1.current_poke.mf_move = t2_move_data.get_tcopy()
+            return True
+        if t2_move_data.name == 'me-first' and t1_move_data.category != STATUS:
+            self.t2.current_poke.mf_move = t1_move_data.get_tcopy()
             return True
         return False
 
