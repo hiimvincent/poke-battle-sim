@@ -434,7 +434,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             inv_bypass = True
     elif ef_id == 27 or ef_id == 29:
         dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if dmg and dmg > 0:
+        if dmg:
             recoil = dmg // 4 if ef_id == 27 else dmg // 3
             _recoil(attacker, battle, max(1, recoil))
         return
@@ -1695,6 +1695,10 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         if defender.is_alive and random.randrange(10) < 1:
             _burn(defender, battle)
         return
+    elif ef_id == 207:
+        dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if dmg:
+            _recoil(attacker, battle, dmg // 3)
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
@@ -1993,7 +1997,7 @@ def _special_move_acc(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
     return False
 
 def _recoil(attacker: pokemon.Pokemon, battle: bt.Battle, damage: int):
-    if not attacker.is_alive:
+    if not attacker.is_alive or not damage:
         return
     attacker.take_damage(damage)
     battle._add_text(attacker.nickname + ' is hit with recoil!')
