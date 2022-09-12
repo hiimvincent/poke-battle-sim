@@ -28,6 +28,7 @@ FIRE_SPIN = 3
 CLAMP = 4
 WHIRLPOOL = 5
 SAND_TOMB = 6
+MAGMA_STORM = 7
 
 NIGHTMARE = 4
 CURSE = 5
@@ -109,6 +110,11 @@ BERRY_DATA = {'cheri-berry': ('fire', 60), 'chesto-berry': ('water', 60), 'pecha
               'liechi-berry': ('grass', 80), 'ganlon-berry': ('ice', 80), 'salac-berry': ('fighting', 80), 'petaya-berry': ('poison', 80),
               'apricot-berry': ('ground', 80), 'lansat-berry': ('flying', 80), 'starf-berry': ('psychic', 80), 'enigma-berry': ('bug', 80),
               'micle-berry': ('rock', 80), 'custap-berry': ('ghost', 80), 'jacoba-berry': ('dragon', 80), 'rowap-berry': ('dark', 80)}
+
+PLATE_DATA = {'draco-plate': 'dragon', 'dread-plate': 'dark', 'earth-plate': 'ground', 'fist-plate': 'fighting',
+              'flame-plate': 'fire', 'icicle-plate': 'ice', 'insect-plate': 'bug', 'iron-plate': 'steel',
+              'meadow-plate': 'grass', 'mind-plate': 'psychic', 'sky-plate': 'flying', 'spooky-plate': 'ghost',
+              'stone-plate': 'rock', 'toxic-plate': 'poison', 'zap-plate': 'electric'}
 
 PROTECT_TARGETS = [8, 9, 10, 11]
 
@@ -387,11 +393,10 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             attacker.next_moves.put(move_data)
             attacker.in_air = True
             attacker.invulnerable = True
+            attacker.inv_count = 1
             battle._pop_text()
             battle._add_text(attacker.nickname + ' flew up high!')
             return
-        attacker.in_air = False
-        attacker.invulnerable = False
     elif ef_id == 24:
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
         if defender.is_alive and not defender.substitute and not defender.v_status[BINDING_COUNT]:
@@ -416,6 +421,9 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             elif move_data.ef_stat == SAND_TOMB:
                 defender.binding_type = 'Sand Tomb'
                 battle._add_text(defender.nickname + ' was trapped by Sand Tomb!')
+            elif move_data.ef_stat == MAGMA_STORM:
+                defender.binding_type = 'Magma Storm'
+                battle._add_text(defender.nickname + ' became trapped by swirling magma!')
         return
     elif ef_id == 25:
         if not defender.is_alive:
@@ -537,11 +545,10 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             attacker.next_moves.put(move_data)
             attacker.in_ground = True
             attacker.invulnerable = True
+            attacker.inv_count = 1
             battle._pop_text()
             battle._add_text(attacker.nickname + ' burrowed its way under the ground!')
             return
-        attacker.in_ground = False
-        attacker.invulnerable = False
     elif ef_id == 43:
         if not attacker.rage:
             attacker.rage = True
@@ -1352,13 +1359,12 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         if not move_data.ef_stat:
             move_data.ef_stat = 1
             attacker.next_moves.put(move_data)
-            attacker.in_ground = True
+            attacker.in_water = True
             attacker.invulnerable = True
+            attacker.inv_count = 1
             battle._pop_text()
             battle._add_text(attacker.nickname + ' hid underwater!')
             return
-        attacker.in_ground = False
-        attacker.invulnerable = False
     elif ef_id == 151:
         attacker.type = ('normal', None)
         battle._add_text(attacker.nickname + ' transformed into the ' + attacker.types[0].upper() + ' type!')
@@ -1423,11 +1429,10 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             attacker.next_moves.put(move_data)
             attacker.in_air = True
             attacker.invulnerable = True
+            attacker.inv_count = 1
             battle._pop_text()
             battle._add_text(attacker.nickname + ' sprang up!')
             return
-        attacker.in_air = False
-        attacker.invulnerable = False
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
         if random.randrange(10) < 3:
             _paralyze(defender, battle)
@@ -1748,6 +1753,46 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             battlefield.trick_room_count = 0
             battle._add_text('The twisted dimensions returned to normal!')
+    elif ef_id == 213:
+        if defender.is_alive and (attacker.gender == 'male' and defender.gender == 'female') or (attacker.gender == 'female' and defender.gender == 'male'):
+            _give_stat_change(defender, battle, SP_ATK, -2, forced=True)
+        else:
+            _failed(battle)
+    elif ef_id == 214:
+        if not defender.trainer.stealth_rock:
+            defender.trainer.steal_rock = 1
+            battle._add_text('Pointed stones float in the air around ' + defender.trainer.name + '\'s team!')
+        else:
+            _failed(battle)
+    elif ef_id == 215:
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if defender.is_alive and random.randrange(100) < 1:
+            _confuse(defender, battle)
+        return
+    elif ef_id == 216:
+        if attacker.item and attacker.item in PLATE_DATA:
+            move_data.type = PLATE_DATA[attacker.item]
+    elif ef_id == 217:
+        dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if dmg:
+            _recoil(attacker, battle, dmg // 2)
+    elif ef_id == 218:
+        t = attacker.trainer
+        if t.num_fainted >= len(t.poke_list) - 1 or battle._process_selection(t):
+            _failed(battle)
+        battle._add_text(t.current_poke.nickname + 'became cloaked in mystical moonlight!')
+        t.current_poke.heal(t.current_poke.max_hp)
+        t.current_poke.nv_status = 0
+        for move in t.current_poke.moves:
+            move.cur_pp = move.max_pp
+    elif ef_id == 219:
+        if not move_data.ef_stat:
+            move_data.ef_stat = 1
+            attacker.next_moves.put(move_data)
+            attacker.invulnerable = True
+            attacker.inv_count = 1
+            battle._add_text(attacker.nickname + ' vanished instantly!')
+        attacker.invulnerable = False
 
     _calculate_damage(attacker, defender, battlefield, battle, move_data, crit_chance, inv_bypass)
 
@@ -1773,6 +1818,13 @@ def _invulnerability_check(attacker: pokemon.Pokemon, defender: pokemon.Pokemon,
     return False
 
 def _pre_process_status(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move) -> bool:
+    if attacker.inv_count:
+        attacker.inv_count -= 1
+        if not attacker.inv_count:
+            attacker.invulnerable = False
+            attacker.in_ground = False
+            attacker.in_air = False
+            attacker.in_water = False
     if attacker.nv_status == FROZEN:
         if move_data.name in FREEZE_CHECK or random.randrange(5) < 1:
             attacker.nv_status = 0
@@ -2036,7 +2088,7 @@ def _snatch_check(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefi
     return False
 
 def _protect_check(defender: pokemon.Pokemon, battle: bt.Battle, move_data: Move) -> bool:
-    if defender.is_alive and defender.protect and move_data.name != 'feint' and move_data.target in PROTECT_TARGETS:
+    if defender.is_alive and defender.protect and not move_data.name in ['feint', 'shadow-force'] and move_data.target in PROTECT_TARGETS:
         battle._add_text(defender.nickname + ' protected itself!')
         return True
     return False

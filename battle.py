@@ -36,6 +36,7 @@ FIRE_SPIN = 3
 CLAMP = 4
 WHIRLPOOL = 5
 SAND_TOMB = 6
+MAGMA_STORM = 7
 
 NIGHTMARE = 4
 CURSE = 5
@@ -533,6 +534,13 @@ class Battle:
                 selector.current_poke.nv_status = BADLY_POISONED
                 selector.current_pokenv_counter = 1
                 self._add_text(selector.current_poke.nickname + ' was badly poisoned!')
+        if selector.stealth_rock and selector.current_poke.ability != 'magic-guard':
+            t_mult = PokeSim.get_type_effectiveness('rock', selector.current_poke.types[0])
+            if selector.current_poke.types[1]:
+                t_mult *= PokeSim.get_type_effectiveness('rock', selector.current_poke.types[1])
+            if t_mult:
+                selector.current_poke.take_damage(int(selector.current_poke.max_hp * 0.125 * t_mult))
+                self._add_text('Pointed stones dug into ' + selector.current_poke.nickname + '!')
         return False
 
     def _faint_check(self):
