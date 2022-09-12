@@ -1,14 +1,13 @@
 from __future__ import annotations
 import pokemon as pk
 import battle as bt
-
-POKE_NUM_MIN, POKE_NUM_MAX = 1, 6
+import global_settings as gs
 
 class Trainer:
     def __init__(self, name: str, poke_list: [pk.Pokemon], selection: callable = None):
         if not isinstance(poke_list, list) or not all([isinstance(p, pk.Pokemon) for p in poke_list]):
             raise Exception
-        if len(poke_list) < POKE_NUM_MIN or len(poke_list) > POKE_NUM_MAX:
+        if len(poke_list) < gs.POKE_NUM_MIN or len(poke_list) > gs.POKE_NUM_MAX:
             raise Exception
         if not name or not isinstance(name, str):
             raise Exception
@@ -43,4 +42,3 @@ class Trainer:
         self.imprisoned_poke = None
         self.in_battle = False
         self.has_moved = False
-

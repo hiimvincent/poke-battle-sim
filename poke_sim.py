@@ -1,15 +1,6 @@
 import csv
 import random
-
-POKEMON_STATS_PATH = './csv/pokemon_stats.csv'
-NATURES_PATH = './csv/natures.csv'
-MOVES_PATH = './csv/move_list.csv'
-TYPE_EF_PATH = './csv/type_effectiveness.csv'
-
-POKEMON_STATS_NUMS = [0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-MOVES_NUM = [0, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-
-COMPLETED_MOVES = 467
+import global_settings as gs
 
 class PokeSim:
     _pokemon_stats = []
@@ -23,32 +14,32 @@ class PokeSim:
     @classmethod
     def start(cls):
         #error handling?
-        with open(POKEMON_STATS_PATH) as csv_file:
+        with open(gs.POKEMON_STATS_PATH) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             next(csv_reader)
             for row in csv_reader:
-                for num in POKEMON_STATS_NUMS:
+                for num in gs.POKEMON_STATS_NUMS:
                     row[num] = int(row[num])
                 cls._pokemon_stats.append(row)
                 cls._name_to_id[row[1]] = row[0]
 
-        with open(NATURES_PATH) as csv_file:
+        with open(gs.NATURES_PATH) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             next(csv_reader)
             for row in csv_reader:
                 cls._natures[row[0]] = (int(row[1]), int(row[2]))
 
-        with open(MOVES_PATH) as csv_file:
+        with open(gs.MOVES_PATH) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             next(csv_reader)
             for row in csv_reader:
-                for num in MOVES_NUM:
+                for num in gs.MOVES_NUM:
                     if row[num]:
                         row[num] = int(row[num])
                 cls._move_list.append(row)
                 cls._move_name_to_id[row[1]] = row[0]
 
-        with open(TYPE_EF_PATH) as csv_file:
+        with open(gs.TYPE_EF_PATH) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             next(csv_reader)
             line_count = 0
@@ -57,7 +48,6 @@ class PokeSim:
                 row = [float(row[i]) for i in range(1, len(row))]
                 cls._type_effectives.append(row)
                 line_count += 1
-
 
     @classmethod
     def _convert_name_to_id(cls, name: str) -> int:
@@ -120,4 +110,4 @@ class PokeSim:
 
     @classmethod
     def get_rand_move(cls) -> list:
-        return cls._move_list[random.randrange(COMPLETED_MOVES + 1)]
+        return cls._move_list[random.randrange(gs.COMPLETED_MOVES + 1)]

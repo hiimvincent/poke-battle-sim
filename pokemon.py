@@ -6,61 +6,9 @@ import battlefield
 import battle as bt
 from move import Move
 import random
+import global_settings as gs
+import global_data as gd
 
-# STAT_ORDERING_FORMAT
-HP = 0
-ATK = 1
-DEF = 2
-SP_ATK = 3
-SP_DEF = 4
-SPD = 5
-STAT_NUM = 6
-
-STATUS = 1
-PHYSICAL = 2
-SPECIAL = 3
-
-# STAT_RANGES
-LEVEL_MIN, LEVEL_MAX = 1, 100
-STAT_ACTUAL_MIN, STAT_ACTUAL_MAX = 1, 500
-IV_MIN, IV_MAX = 0, 31
-EV_MIN, EV_MAX = 0, 255
-EV_TOTAL_MAX = 510
-NATURE_DEC, NATURE_INC = 0.9, 1.1
-
-V_STATUS_NUM = 9
-POSSIBLE_GENDERS = ['male', 'female', 'genderless']
-
-# NON_VOLATILE_STATUSES
-NV_STATUSES = {
-    'burned': 1,
-    'frozen': 2,
-    'paralyzed': 3,
-    'poisoned': 4,
-    'asleep': 5,
-    'badly poisoned': 6
-}
-
-# STATS_BASE_FORMAT
-_NDEX = 0
-_NAME = 1
-_TYPE1 = 2
-_TYPE2 = 3
-_STAT_START = 4
-_HEIGHT = 10
-_WEIGHT = 11
-_BASE_EXP = 12
-_GEN = 13
-
-HP_TYPES = ['fighting', 'flying', 'poison', 'ground', 'rock', 'bug', 'ghost', 'steel', 'fire', 'water', 'grass',
-            'electric', 'psychic', 'ice', 'dragon', 'dark']
-
-GROUNDED_CHECK = ['bounce', 'fly', 'high-jump-kick', 'jump-kick', 'magnet-rise', 'splash']
-
-HEAL_BLOCK_CHECK = ['heal-order', 'milk-drink', 'moonlight', 'morning-sun', 'recover', 'rest', 'roost', 'slack-off',
-                    'soft-boiled', 'synthesis', 'wish', 'lunar-dance', 'healing-wish']
-
-# need item, ability
 class Pokemon:
     def __init__(
             self, name_or_id: str | int, level: int, moves: [str], gender: str, ability = None, nature: str = None,
@@ -71,20 +19,20 @@ class Pokemon:
         if not self.stats_base:
             raise Exception
 
-        self.id = int(self.stats_base[_NDEX])
-        self.name = self.stats_base[_NAME]
-        self.types = (self.stats_base[_TYPE1], self.stats_base[_TYPE2])
-        self.base = [int(self.stats_base[i]) for i in range(_STAT_START, _STAT_START + STAT_NUM)]
-        self.height = int(self.stats_base[_HEIGHT])
-        self.weight = int(self.stats_base[_WEIGHT])
-        self.base_exp = int(self.stats_base[_BASE_EXP])
-        self.gen = int(self.stats_base[_GEN])
+        self.id = int(self.stats_base[gs.NDEX])
+        self.name = self.stats_base[gs.NAME]
+        self.types = (self.stats_base[gs.TYPE1], self.stats_base[gs.TYPE2])
+        self.base = [int(self.stats_base[i]) for i in range(gs.STAT_START, gs.STAT_START + gs.STAT_NUM)]
+        self.height = int(self.stats_base[gs.HEIGHT])
+        self.weight = int(self.stats_base[gs.WEIGHT])
+        self.base_exp = int(self.stats_base[gs.BASE_EXP])
+        self.gen = int(self.stats_base[gs.GEN])
 
-        if not isinstance(level, int) or level < LEVEL_MIN or level > LEVEL_MAX:
+        if not isinstance(level, int) or level < gs.LEVEL_MIN or level > gs.LEVEL_MAX:
             raise Exception
         self.level = level
 
-        if not gender or not isinstance(gender, str) or gender.lower() not in POSSIBLE_GENDERS:
+        if not gender or not isinstance(gender, str) or gender.lower() not in gs.POSSIBLE_GENDERS:
             raise Exception
         self.gender = gender
 
@@ -95,9 +43,9 @@ class Pokemon:
             raise Exception
 
         if stats_actual:
-            if not isinstance(stats_actual, list) or len(stats_actual) != STAT_NUM:
+            if not isinstance(stats_actual, list) or len(stats_actual) != gs.STAT_NUM:
                 raise Exception
-            if not all([isinstance(s, int) and STAT_ACTUAL_MIN < s < STAT_ACTUAL_MAX for s in stats_actual]):
+            if not all([isinstance(s, int) and gs.STAT_ACTUAL_MIN < s < gs.STAT_ACTUAL_MAX for s in stats_actual]):
                 raise Exception
             self.stats_actual = stats_actual
             self.ivs = None
@@ -105,12 +53,12 @@ class Pokemon:
             self.nature = None
             self.nature_effect = None
         else:
-            if not isinstance(ivs, list) or not isinstance(evs, list) or len(ivs) != STAT_NUM or len(evs) != STAT_NUM:
+            if not isinstance(ivs, list) or not isinstance(evs, list) or len(ivs) != gs.STAT_NUM or len(evs) != gs.STAT_NUM:
                 raise Exception
-            if not all([isinstance(iv, int) and IV_MIN <= iv <= IV_MAX for iv in ivs]):
+            if not all([isinstance(iv, int) and gs.IV_MIN <= iv <= gs.IV_MAX for iv in ivs]):
                 raise Exception
             self.ivs = ivs
-            if not all([isinstance(ev, int) and EV_MIN <= ev <= EV_MAX for ev in evs]) or sum(evs) > EV_TOTAL_MAX:
+            if not all([isinstance(ev, int) and gs.EV_MIN <= ev <= gs.EV_MAX for ev in evs]) or sum(evs) > gs.EV_TOTAL_MAX:
                 raise Exception
             self.evs = evs
             self.nature_effect = PokeSim.nature_conversion(nature.lower())
@@ -119,11 +67,11 @@ class Pokemon:
             self.nature = nature.lower()
             self.calculate_stats_actual()
 
-        self.max_hp = self.stats_actual[HP]
+        self.max_hp = self.stats_actual[gs.HP]
         if cur_hp and (cur_hp < 0 or cur_hp > self.max_hp):
             raise Exception
         if not cur_hp:
-            cur_hp = self.stats_actual[HP]
+            cur_hp = self.stats_actual[gs.HP]
         self.cur_hp = cur_hp
 
         self.o_item = item
@@ -143,25 +91,17 @@ class Pokemon:
         self.nickname = nickname if nickname else self.name
         self.nickname = self.nickname.upper()
 
-        self.id = int(self.stats_base[_NDEX])
-        self.name = self.stats_base[_NAME]
-        self.types = (self.stats_base[_TYPE1], self.stats_base[_TYPE2])
-        self.base = [int(self.stats_base[i]) for i in range(_STAT_START, _STAT_START + STAT_NUM)]
-        self.height = int(self.stats_base[_HEIGHT])
-        self.weight = int(self.stats_base[_WEIGHT])
-        self.base_exp = int(self.stats_base[_BASE_EXP])
-        self.gen = int(self.stats_base[_GEN])
         self.original = None
         self.trainer = None
         if status:
-            if status not in NV_STATUSES:
+            if status not in gs.NV_STATUSES:
                 raise Exception
-            self.nv_status = NV_STATUSES[status]
+            self.nv_status = gs.NV_STATUSES[status]
         else:
             self.nv_status = 0
-        if self.nv_status ==  NV_STATUSES['asleep']:
+        if self.nv_status ==  gs.NV_STATUSES['asleep']:
             self.nv_counter = random.randrange(2,6)
-        if self.nv_status ==  NV_STATUSES['badly poisoned']:
+        if self.nv_status ==  gs.NV_STATUSES['badly poisoned']:
             self.nv_counter = 1
         else:
             self.nv_counter = 0
@@ -178,10 +118,10 @@ class Pokemon:
     def calculate_stats_actual(self):
         stats_actual = []
         nature_stat_changes = [1.0 for _ in range(6)]
-        nature_stat_changes[self.nature_effect[0]] = NATURE_INC
-        nature_stat_changes[self.nature_effect[1]] = NATURE_DEC
+        nature_stat_changes[self.nature_effect[0]] = gs.NATURE_INC
+        nature_stat_changes[self.nature_effect[1]] = gs.NATURE_DEC
         stats_actual.append(((2 * self.base[0] + self.ivs[0] + self.evs[0] // 4) * self.level) // 100 + 10)
-        for s in range(1, STAT_NUM):
+        for s in range(1, gs.STAT_NUM):
             stats_actual.append((((2 * self.base[s] + self.ivs[s] + self.evs[s] // 4) * self.level) // 100 + 5) * nature_stat_changes[s])
         self.stats_actual = [int(stat) for stat in stats_actual]
 
@@ -190,8 +130,8 @@ class Pokemon:
             self.stats_effective[s] = max(1, int(self.stats_actual[s] * max(2, 2 + self.stat_stages[s]) / max(2, 2 - self.stat_stages[s])))
 
     def reset_stats(self):
-        self.v_status = [0 for _ in range(V_STATUS_NUM)]
-        self.stat_stages = [0 for _ in range(STAT_NUM)]
+        self.v_status = [0 for _ in range(gs.V_STATUS_NUM)]
+        self.stat_stages = [0 for _ in range(gs.STAT_NUM)]
         self.accuracy_stage = 0
         self.evasion_stage = 0
         self.crit_stage = 0
@@ -261,7 +201,7 @@ class Pokemon:
         self.h_item = self.item
         self.old_pp = [move.cur_pp for move in self.moves]
         self.next_moves = Queue()
-        self.types = (self.stats_base[_TYPE1], self.stats_base[_TYPE2])
+        self.types = (self.stats_base[gs.TYPE1], self.stats_base[gs.TYPE2])
         self.stats_effective = self.stats_actual
         self.calculate_stats_effective()
 
@@ -299,8 +239,8 @@ class Pokemon:
             self.is_alive = False
             self.reset_stats()
             return self.last_damage_taken
-        if self.rage and self.stat_stages[ATK] < 6:
-            self.stat_stages[ATK] += 1
+        if self.rage and self.stat_stages[gs.ATK] < 6:
+            self.stat_stages[gs.ATK] += 1
             self.cur_battle._add_text(self.nickname + '\'s rage is building!')
         self.turn_damage = True
         self.cur_hp -= damage
@@ -359,11 +299,11 @@ class Pokemon:
         if self.tormented and av_moves and self.last_move:
             av_moves = [move for move in av_moves if move.name != self.last_move.name]
         if self.taunt and av_moves:
-            av_moves = [move for move in av_moves if move.category != STATUS]
+            av_moves = [move for move in av_moves if move.category != gs.STATUS]
         if self.grounded:
-            av_moves = [move for move in av_moves if move not in GROUNDED_CHECK]
+            av_moves = [move for move in av_moves if move not in gd.GROUNDED_CHECK]
         if self.hb_count:
-            av_moves = [move for move in av_moves if move not in HEAL_BLOCK_CHECK]
+            av_moves = [move for move in av_moves if move not in gd.HEAL_BLOCK_CHECK]
         if self.trainer.imprisoned_poke and self.trainer.imprisoned_poke is self.enemy.current_poke and av_moves:
             i_moves = [move.name for move in self.trainer.imprisoned_poke.moves]
             av_moves = [move for move in av_moves if move.name not in i_moves]
@@ -436,11 +376,6 @@ class Pokemon:
             self.last_successful_move = self.last_successful_move_next
             self.last_successful_move_next = None
 
-    def print_all_data(self):
-        print('Name:', self.name)
-        print('\nNDex:', self.id)
-        print('\nLvl:', self.level)
-
     def reduce_disabled_count(self):
         for move in self.moves:
             if move.disabled:
@@ -453,7 +388,7 @@ class Pokemon:
         self.accuracy_stage = 0
         self.evasion_stage = 0
         self.crit_stage = 0
-        self.stat_stages = [0 for _ in range(STAT_NUM)]
+        self.stat_stages = [0 for _ in range(gs.STAT_NUM)]
 
     def _endure_check(self) -> bool:
         if self.endure:
@@ -485,7 +420,4 @@ class Pokemon:
         for i in range(6):
             hp_power += 2 ** i * ((self.ivs[i] >> 1) & 1)
         hp_power = (hp_type * 40) // 63 + 30
-        return (HP_TYPES[hp_type], hp_power)
-
-
-
+        return (gd.HP_TYPES[hp_type], hp_power)
