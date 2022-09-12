@@ -283,13 +283,6 @@ def _meta_effect_check(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, bat
     return False
 
 def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool):
-    if move_data.ef_chance:
-        ef_pr = move_data.ef_chance
-    else:
-        ef_pr = 100
-    if random.randrange(1, 101) > ef_pr:
-        return True
-
     ef_id = move_data.ef_id
 
     if ef_id & 1:
@@ -305,21 +298,24 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         return
     elif ef_id == 2 or ef_id == 3:
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if not recipient.is_alive:
-            return
-        _give_stat_change(recipient, battle, move_data.ef_stat, move_data.ef_amount)
+        if recipient.is_alive and random.randrange(1, 101) < move_data.ef_chance:
+            _give_stat_change(recipient, battle, move_data.ef_stat, move_data.ef_amount)
+        return
     elif ef_id == 4 or ef_id == 5:
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        _give_nv_status(move_data.ef_stat, recipient, battle)
+        if recipient.is_alive and random.randrange(1, 101) < move_data.ef_chance:
+            _give_nv_status(move_data.ef_stat, recipient, battle)
         return
-    elif ef_id == 6 or ef_id == 7:
-        if not recipient.is_alive:
-            _failed(battle)
-            return
-        if move_data.ef_stat == FLINCHED:
-            _flinch(recipient, is_first)
-        else:
-            _confuse(recipient, battle)
+    elif ef_id == 6:
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if defender.is_alive and random.randrange(1, 101) < move_data.ef_chance:
+            _confuse(defender, battle)
+        return
+    elif ef_id == 7:
+        _calculate_damage(attacker, defender, battlefield, battle, move_data)
+        if defender.is_alive and random.randrange(1, 101) < move_data.ef_chance:
+            _flinch(defender, battle)
+        return
     elif ef_id == 8:
         crit_chance = 1
     elif ef_id == 10:
@@ -1881,11 +1877,11 @@ def _generate_2_to_5() -> int:
     return num_hits
 
 def _confuse(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
-    if _safeguard_check(recipient, battle):
-        return
-    if recipient.substitute:
+    if not recipient.is_alive or recipient.substitute:
         if forced:
             _failed(battle)
+        return
+    if _safeguard_check(recipient, battle):
         return
     if forced and recipient.v_status[CONFUSED]:
         battle._add_text(recipient.nickname + ' is already confused!')
@@ -1895,7 +1891,7 @@ def _confuse(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
 
 
 def _flinch(recipient: pk.Pokemon, is_first: bool):
-    if recipient.substitute:
+    if not recipient.is_alive or recipient.substitute:
         return
     if is_first and recipient.is_alive and not recipient.v_status[FLINCHED]:
         recipient.v_status[FLINCHED] = 1
