@@ -321,7 +321,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             _confuse(recipient, battle)
     elif ef_id == 8:
-        crit_chance = move_data.ef_amount
+        crit_chance = 1
     elif ef_id == 10:
         if not defender.is_alive:
             _missed(attacker, battle)

@@ -1,6 +1,6 @@
 id,identifier,generation_id,type_id,power,pp,accuracy,priority,target_id,move_class,effect_id,effect_chance,effect_amt,effect_stat
 1,pound,1,normal,40,35,100,0,10,2,1,,,
-2,karate-chop,1,fighting,50,25,100,0,10,2,8,,1,
+2,karate-chop,1,fighting,50,25,100,0,10,2,8,,,
 3,double-slap,1,normal,15,10,85,0,10,2,10,,,
 4,comet-punch,1,normal,18,15,85,0,10,2,10,,,
 5,mega-punch,1,normal,80,20,85,0,10,2,1,,,
@@ -73,7 +73,7 @@ id,identifier,generation_id,type_id,power,pp,accuracy,priority,target_id,move_cl
 72,mega-drain,1,grass,40,15,100,0,10,3,38,,,
 73,leech-seed,1,grass,,10,90,0,10,1,39,,,
 74,growth,1,normal,,20,,0,7,1,16,,1,3
-75,razor-leaf,1,grass,55,25,95,0,11,2,8,,1,
+75,razor-leaf,1,grass,55,25,95,0,11,2,8,,,
 76,solar-beam,1,grass,120,10,100,0,10,3,40,,,
 77,poison-powder,1,poison,,35,75,0,10,1,13,,,4
 78,stun-spore,1,grass,,30,75,0,10,1,13,,,3
@@ -150,7 +150,7 @@ id,identifier,generation_id,type_id,power,pp,accuracy,priority,target_id,move_cl
 149,psywave,1,psychic,,15,100,0,10,3,60,,,
 150,splash,1,normal,,40,,0,7,1,61,,,
 151,acid-armor,1,poison,,20,,0,7,1,16,,2,2
-152,crabhammer,1,water,100,10,90,0,10,2,8,,1,
+152,crabhammer,1,water,100,10,90,0,10,2,8,,,
 153,explosion,1,normal,250,5,100,0,9,2,62,,,
 154,fury-swipes,1,normal,18,15,80,0,10,2,10,,,
 155,bonemerang,1,ground,50,10,90,0,10,2,11,,,
@@ -161,7 +161,7 @@ id,identifier,generation_id,type_id,power,pp,accuracy,priority,target_id,move_cl
 160,conversion,1,normal,,30,,0,7,1,64,,,
 161,tri-attack,1,normal,80,10,100,0,10,3,65,100,,
 162,super-fang,1,normal,,10,90,0,10,2,66,,,
-163,slash,1,normal,70,20,100,0,10,2,8,,1,
+163,slash,1,normal,70,20,100,0,10,2,8,,,
 164,substitute,1,normal,,10,,0,7,1,67,,,
 165,struggle,1,normal,50,1,,0,8,2,68,,,
 166,sketch,2,normal,,1,,0,10,1,69,,,
@@ -175,7 +175,7 @@ id,identifier,generation_id,type_id,power,pp,accuracy,priority,target_id,move_cl
 174,curse,2,ghost,,10,,0,1,1,77,,,
 175,flail,2,normal,,15,100,0,10,2,78,,,
 176,conversion-2,2,normal,,30,,0,10,1,79,,,
-177,aeroblast,2,flying,100,5,95,0,10,3,8,,1,
+177,aeroblast,2,flying,100,5,95,0,10,3,8,,,
 178,cotton-spore,2,grass,,40,100,0,11,1,17,,-2,5
 179,reversal,2,fighting,,15,100,0,10,2,78,,,
 180,spite,2,ghost,,10,100,0,10,1,80,,,
@@ -236,7 +236,7 @@ id,identifier,generation_id,type_id,power,pp,accuracy,priority,target_id,move_cl
 235,synthesis,2,grass,,5,,0,7,1,105,,,
 236,moonlight,2,normal,,5,,0,7,1,105,,,
 237,hidden-power,2,normal,60,15,100,0,10,3,106,,,
-238,cross-chop,2,fighting,100,5,80,0,10,2,8,,1,
+238,cross-chop,2,fighting,100,5,80,0,10,2,8,,,
 239,twister,2,dragon,40,20,100,0,11,3,107,100,,
 240,rain-dance,2,water,,5,,0,12,1,108,,,
 241,sunny-day,2,fire,,5,,0,12,1,109,,,
@@ -312,7 +312,7 @@ id,identifier,generation_id,type_id,power,pp,accuracy,priority,target_id,move_cl
 311,weather-ball,3,normal,50,10,100,0,10,3,154,,,
 312,aromatherapy,3,grass,,5,,0,13,1,95,,,2
 313,fake-tears,3,dark,,20,100,0,10,1,17,,-2,4
-314,air-cutter,3,flying,60,25,95,0,11,3,8,,1,
+314,air-cutter,3,flying,60,25,95,0,11,3,8,,,
 315,overheat,3,fire,130,5,90,0,10,3,2,100,-2,3
 316,odor-sleuth,3,normal,,40,,0,10,1,84,,,
 317,rock-tomb,3,rock,60,15,95,0,10,2,3,100,-1,5
@@ -346,7 +346,7 @@ id,identifier,generation_id,type_id,power,pp,accuracy,priority,target_id,move_cl
 345,magical-leaf,3,grass,60,20,,0,10,3,1,,,
 346,water-sport,3,water,,15,,0,12,1,164,,,
 347,calm-mind,3,psychic,,20,,0,7,1,165,,,
-348,leaf-blade,3,grass,90,15,100,0,10,2,8,,1,
+348,leaf-blade,3,grass,90,15,100,0,10,2,8,,,
 349,dragon-dance,3,dragon,,20,,0,7,1,166,,,
 350,rock-blast,3,rock,25,10,90,0,10,2,10,,,
 351,shock-wave,3,electric,60,20,,0,10,3,1,,,
@@ -419,7 +419,7 @@ id,identifier,generation_id,type_id,power,pp,accuracy,priority,target_id,move_cl
 418,bullet-punch,4,steel,40,30,100,1,10,2,1,,,
 419,avalanche,4,ice,60,10,100,-4,10,2,138,,,
 420,ice-shard,4,ice,40,30,100,1,10,2,1,,,
-421,shadow-claw,4,ghost,70,15,100,0,10,2,8,,1,
+421,shadow-claw,4,ghost,70,15,100,0,10,2,8,,,
 422,thunder-fang,4,electric,65,15,95,0,10,2,208,100,,
 423,ice-fang,4,ice,65,15,95,0,10,2,209,100,,
 424,fire-fang,4,fire,65,15,95,0,10,2,210,100,,
@@ -442,7 +442,7 @@ id,identifier,generation_id,type_id,power,pp,accuracy,priority,target_id,move_cl
 441,gunk-shot,4,poison,120,5,80,0,10,2,5,30,,4
 442,iron-head,4,steel,80,15,100,0,10,2,7,30,,1
 443,magnet-bomb,4,steel,60,20,,0,10,2,1,,,
-444,stone-edge,4,rock,100,5,80,0,10,2,8,,1,
+444,stone-edge,4,rock,100,5,80,0,10,2,8,,,
 445,captivate,4,normal,,20,100,0,11,1,213,,,
 446,stealth-rock,4,rock,,20,,0,6,1,214,,,
 447,grass-knot,4,grass,,20,100,0,10,3,35,,,
@@ -452,13 +452,13 @@ id,identifier,generation_id,type_id,power,pp,accuracy,priority,target_id,move_cl
 451,charge-beam,4,electric,50,10,90,0,10,3,2,70,1,3
 452,wood-hammer,4,grass,120,15,100,0,10,2,207,,,
 453,aqua-jet,4,water,40,20,100,1,10,2,1,,,
-454,attack-order,4,bug,90,15,100,0,10,2,8,,1,
+454,attack-order,4,bug,90,15,100,0,10,2,8,,,
 455,defend-order,4,bug,,10,,0,7,1,158,,,
 456,heal-order,4,bug,,10,,0,7,1,46,,,
 457,head-smash,4,rock,150,5,80,0,10,2,217,,,
 458,double-hit,4,normal,35,10,90,0,10,2,11,,,
 459,roar-of-time,4,dragon,150,5,90,0,10,3,34,,,
-460,spacial-rend,4,dragon,100,5,95,0,10,3,8,,1,
+460,spacial-rend,4,dragon,100,5,95,0,10,3,8,,,
 461,lunar-dance,4,psychic,,10,,0,7,1,218,,,
 462,crush-grip,4,normal,,5,100,0,10,2,190,,,
 463,magma-storm,4,fire,100,5,75,0,10,3,24,100,,7
