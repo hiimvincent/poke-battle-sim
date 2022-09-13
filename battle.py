@@ -7,6 +7,7 @@ import battlefield as bf
 import process_move as pm
 import global_settings as gs
 import global_data as gd
+import process_ability as pa
 
 class Battle:
     def __init__(self, t1: tr.Trainer, t2: tr.Trainer):
@@ -305,10 +306,10 @@ class Battle:
         if not poke.is_alive:
             return
 
-        if self.battlefield.weather == gs.SANDSTORM and poke.is_alive:
-            if not poke.in_ground and not poke.in_water and not any(type in poke.types for type in ['ground', 'steel', 'rock']):
-                self._add_text(poke.nickname + ' is buffeted by the Sandstorm!')
-                poke.take_damage(max(1, poke.max_hp // 16))
+        if self.battlefield.weather == gs.SANDSTORM and poke.is_alive and not poke.has_ability('sand-veil') and \
+                not poke.in_ground and not poke.in_water and not any(type in poke.types for type in ['ground', 'steel', 'rock']):
+            self._add_text(poke.nickname + ' is buffeted by the Sandstorm!')
+            poke.take_damage(max(1, poke.max_hp // 16))
         if self.battlefield.weather == gs.HAIL and poke.is_alive:
             if not poke.in_ground and not poke.in_water and not any(type in poke.types for type in ['ice']):
                 self._add_text(poke.nickname + ' is buffeted by the Hail!')
@@ -351,6 +352,8 @@ class Battle:
 
         if not poke.is_alive:
             return
+
+        pa.end_turn_abilities(poke, self)
 
         if poke.v_status[gs.FLINCHED]:
             poke.v_status[gs.FLINCHED] = 0
@@ -435,10 +438,12 @@ class Battle:
         if not selector.current_poke.is_alive or selector.current_poke is old_poke:
             return True
         self._add_text(selector.name + ' sent out ' + selector.current_poke.nickname + '!')
+        pa.selection_abilities(selector.current_poke, self.battlefield, self)
         if self.battlefield.gravity_count:
             selector.current_poke.grounded = True
         if selector.spikes and (selector.current_poke.grounded or ('flying' not in selector.current_poke.types \
-                and not selector.current_poke.magnet_rise and not selector.current_poke.ability in ['levitate', 'magic-guard'])):
+                and not selector.current_poke.magnet_rise and not selector.current_poke.has_ability('levitate') \
+                and not selector.current_poke.has_ability('magic-guard'))):
             if selector.spikes == 1:
                 mult = 8
             elif selector.spikes == 2:
@@ -452,8 +457,9 @@ class Battle:
             self._add_text('The poison spikes disappeared from the ground around ' + selector.name + '.')
         if selector.toxic_spikes and not selector.current_poke.nv_status and (selector.current_poke.grounded \
                     or (not 'flying' in selector.current_poke.types and not 'steel' in selector.current_poke.types \
-                    and not selector.current_poke.magnet_rise and not selector.current_poke.ability in ['immunity', 'levitate', 'magic-guard'] \
-                    and not (selector.current_poke.ability == 'leaf-guard' and battlefield.weather == gs.HARSH_SUNLIGHT))):
+                    and not selector.current_poke.magnet_rise and not selector.current_poke.has_ability('immunity') \
+                    and not selector.current_poke.has_ability('levitate') and not selector.current_poke.has_ability('magic-guard') \
+                    and not (selector.current_poke.has_ability('leaf-guard') and battlefield.weather == gs.HARSH_SUNLIGHT))):
             if selector.toxic_spikes == 1:
                 selector.current_poke.nv_status = gs.POISONED
                 self._add_text(selector.current_poke.nickname + ' was poisoned!')
@@ -461,7 +467,7 @@ class Battle:
                 selector.current_poke.nv_status = gs.BADLY_POISONED
                 selector.current_pokenv_counter = 1
                 self._add_text(selector.current_poke.nickname + ' was badly poisoned!')
-        if selector.stealth_rock and selector.current_poke.ability != 'magic-guard':
+        if selector.stealth_rock and not selector.current_poke.has_ability('magic-guard'):
             t_mult = PokeSim.get_type_effectiveness('rock', selector.current_poke.types[0])
             if selector.current_poke.types[1]:
                 t_mult *= PokeSim.get_type_effectiveness('rock', selector.current_poke.types[1])

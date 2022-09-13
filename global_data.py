@@ -13,44 +13,44 @@ ME_FIRST = ('move', 'me-first')
 # Check Data for Moves and Statuses
 PROTECT_TARGETS = [8, 9, 10, 11]
 
-PURSUIT_CHECK = ['baton-pass', 'teleport', 'u-turn', 'volt-switch', 'parting-shot']
+PURSUIT_CHECK = {'baton-pass', 'teleport', 'u-turn', 'volt-switch', 'parting-shot'}
 
-HP_TYPES = ['fighting', 'flying', 'poison', 'ground', 'rock', 'bug', 'ghost', 'steel', 'fire', 'water', 'grass',
-            'electric', 'psychic', 'ice', 'dragon', 'dark']
+HP_TYPES = {'fighting', 'flying', 'poison', 'ground', 'rock', 'bug', 'ghost', 'steel', 'fire', 'water', 'grass',
+            'electric', 'psychic', 'ice', 'dragon', 'dark'}
 
-GROUNDED_CHECK = ['bounce', 'fly', 'high-jump-kick', 'jump-kick', 'magnet-rise', 'splash']
+GROUNDED_CHECK = {'bounce', 'fly', 'high-jump-kick', 'jump-kick', 'magnet-rise', 'splash'}
 
-HEAL_BLOCK_CHECK = ['heal-order', 'milk-drink', 'moonlight', 'morning-sun', 'recover', 'rest', 'roost', 'slack-off',
-                    'soft-boiled', 'synthesis', 'wish', 'lunar-dance', 'healing-wish']
+HEAL_BLOCK_CHECK = {'heal-order', 'milk-drink', 'moonlight', 'morning-sun', 'recover', 'rest', 'roost', 'slack-off',
+                    'soft-boiled', 'synthesis', 'wish', 'lunar-dance', 'healing-wish'}
 
-METRONOME_CHECK = ['assist', 'chatter', 'copycat', 'counter', 'covet', 'destiny-bond', 'detect', 'endure', 'feint',
+METRONOME_CHECK = {'assist', 'chatter', 'copycat', 'counter', 'covet', 'destiny-bond', 'detect', 'endure', 'feint',
                    'focus-punch', 'follow-me', 'helping-hand', 'me-first', 'mimic', 'mirror-coat', 'mirror-move',
-                   'protect', 'sketch', 'sleep-talk', 'snatch', 'struggle', 'switcheroo', 'thief', 'trick']
+                   'protect', 'sketch', 'sleep-talk', 'snatch', 'struggle', 'switcheroo', 'thief', 'trick'}
 
-ENCORE_CHECK = ['transform', 'mimic', 'sketch', 'mirror-move', 'sleep-talk', 'encore', 'struggle']
+ENCORE_CHECK = {'transform', 'mimic', 'sketch', 'mirror-move', 'sleep-talk', 'encore', 'struggle'}
 
-ASSIST_CHECK = ['chatter', 'copycat', 'counter', 'covet', 'destiny-bond', 'detect', 'endure', 'feint', 'focus-punch',
+ASSIST_CHECK = {'chatter', 'copycat', 'counter', 'covet', 'destiny-bond', 'detect', 'endure', 'feint', 'focus-punch',
                 'follow-me', 'helping-hand', 'me-first', 'metronome', 'mimic', 'mirror-coat', 'mirror-move', 'protect'
-                'sketch', 'sleep-talk', 'snatch', 'struggle', 'switcheroo', 'thief', 'trick']
+                'sketch', 'sleep-talk', 'snatch', 'struggle', 'switcheroo', 'thief', 'trick'}
 
-MAGIC_COAT_CHECK = ['attract', 'block', 'captivate', 'charm', 'confuse-ray', 'cotton-spore', 'dark-void', 'fake-tears',
+MAGIC_COAT_CHECK = {'attract', 'block', 'captivate', 'charm', 'confuse-ray', 'cotton-spore', 'dark-void', 'fake-tears',
                     'feather-dance', 'flash', 'flatter', 'gastro-acid', 'glare', 'grass-whistle', 'growl', 'hypnosis',
                     'kinesis', 'leech-seed', 'leer', 'lovely-kiss', 'mean-look', 'metal-sound', 'poison-gas', 'poison-powder',
                     'sand-attack', 'scary-face', 'screech', 'sing', 'sleep-powder', 'smokescreen', 'spider-web', 'spore',
                     'string-shot', 'stun-spore', 'supersonic', 'swagger', 'sweet-kiss', 'sweet-scent', 'tail-whip',
-                    'thunder-wave', 'tickle', 'toxic', 'will-o-wisp', 'worry-seed', 'yawn']
+                    'thunder-wave', 'tickle', 'toxic', 'will-o-wisp', 'worry-seed', 'yawn'}
 
-SNATCH_CHECK = ['acid-armor', 'acupressure', 'agility', 'amnesia', 'aromatherapy', 'barrier', 'belly-drum', 'bulk-up',
+SNATCH_CHECK = {'acid-armor', 'acupressure', 'agility', 'amnesia', 'aromatherapy', 'barrier', 'belly-drum', 'bulk-up',
                 'calm-mind', 'camouflage', 'charge', 'cosmic-power', 'defender-order', 'defender-curl', 'double-team',
                 'dragon-dance', 'focus-energy', 'growth', 'harden', 'heal-bell', 'heal-order', 'howl', 'ingrain',
                 'iron-defense', 'light-screen', 'meditate', 'milk-drink', 'minimize', 'mist', 'moonlight', 'morning-sun',
                 'nasty-plot', 'psych-up', 'recover', 'reflect', 'refresh', 'rest', 'rock-polish', 'roost', 'safeguard',
                 'sharpen', 'slack-off', 'soft-boiled', 'stockpile', 'substitute', 'swallow', 'swords-dance', 'synthesis',
-                'tail-glow', 'tailwind', 'withdraw']
+                'tail-glow', 'tailwind', 'withdraw'}
 
-GROUNDED_CHECK = ['bounce', 'fly', 'high-jump-kick', 'jump-kick', 'magnet-rise', 'splash']
+GROUNDED_CHECK = {'bounce', 'fly', 'high-jump-kick', 'jump-kick', 'magnet-rise', 'splash'}
 
-FREEZE_CHECK = ['flame-wheel', 'sacred-fire', 'flare-blitz']
+FREEZE_CHECK = {'flame-wheel', 'sacred-fire', 'flare-blitz'}
 
 BERRY_DATA = {'cheri-berry': ('fire', 60), 'chesto-berry': ('water', 60), 'pecha-berry': ('electric', 60), 'rawst-berry': ('grass', 60),
               'aspear-berry': ('ice', 60), 'leppa-berry': ('fighting', 60), 'oran-berry': ('poison', 60), 'persim-berry': ('ground', 60),
@@ -73,3 +73,9 @@ PLATE_DATA = {'draco-plate': 'dragon', 'dread-plate': 'dark', 'earth-plate': 'gr
               'flame-plate': 'fire', 'icicle-plate': 'ice', 'insect-plate': 'bug', 'iron-plate': 'steel',
               'meadow-plate': 'grass', 'mind-plate': 'psychic', 'sky-plate': 'flying', 'spooky-plate': 'ghost',
               'stone-plate': 'rock', 'toxic-plate': 'poison', 'zap-plate': 'electric'}
+
+ABILITY_CHECK = {'stench', 'drizzle', 'speed-boost', 'battle-armor', 'sturdy', 'damp', 'limber', 'sand-veil', 'static',
+                 'vold-absorb', 'water-absorb', 'oblivious', 'cloud-nine', 'compound-eyes', 'insomnia', 'color-change',
+                 'immunity', 'flash-fire', 'shield-dust', 'own-tempo'}
+
+CONTACT_CHECK = {'pound', 'karate-chop', 'double-slap', 'comet-punch', 'mega-punch', 'fire-punch', 'ice-punch', 'thunder-punch', 'scratch', 'vise-grip', 'guillotine', 'cut', 'wing-attack', 'fly', 'bind', 'slam', 'vine-whip', 'stomp', 'double-kick', 'mega-kick', 'jump-kick', 'rolling-kick', 'headbutt', 'horn-attack', 'fury-attack', 'horn-drill', 'tackle', 'body-slam', 'wrap', 'take-down', 'thrash', 'double-edge', 'bite', 'peck', 'drill-peck', 'submission', 'low-kick', 'counter', 'seismic-toss', 'strength', 'petal-dance', 'dig', 'quick-attack', 'rage', 'bide', 'lick', 'waterfall', 'clamp', 'skull-bash', 'constrict', 'high-jump-kick', 'leech-life', 'dizzy-punch', 'crabhammer', 'fury-swipes', 'hyper-fang', 'super-fang', 'slash', 'struggle', 'triple-kick', 'thief', 'flame-wheel', 'flail', 'reversal', 'mach-punch', 'feint-attack', 'outrage', 'rollout', 'false-swipe', 'spark', 'fury-cutter', 'steel-wing', 'return', 'frustration', 'dynamic-punch', 'megahorn', 'pursuit', 'rapid-spin', 'iron-tail', 'metal-claw', 'vital-throw', 'cross-chop', 'crunch', 'extreme-speed', 'rock-smash', 'fake-out', 'facade', 'focus-punch', 'smelling-salts', 'superpower', 'revenge', 'brick-break', 'knock-off', 'endeavor', 'dive', 'arm-thrust', 'blaze-kick', 'ice-ball', 'needle-arm', 'poison-fang', 'crush-claw', 'meteor-mash', 'astonish', 'shadow-punch', 'sky-uppercut', 'aerial-ace', 'dragon-claw', 'bounce', 'poison-tail', 'covet', 'volt-tackle', 'leaf-blade', 'wake-up-slap', 'hammer-arm', 'gyro-ball', 'pluck', 'u-turn', 'close-combat', 'payback', 'assurance', 'trump-card', 'wring-out', 'punishment', 'last-resort', 'sucker-punch', 'flare-blitz', 'force-palm', 'poison-jab', 'night-slash', 'aqua-tail', 'x-scissor', 'dragon-rush', 'drain-punch', 'brave-bird', 'giga-impact', 'bullet-punch', 'avalanche', 'shadow-claw', 'thunder-fang', 'ice-fang', 'fire-fang', 'shadow-sneak', 'zen-headbutt', 'rock-climb', 'power-whip', 'cross-poison', 'iron-head', 'grass-knot', 'bug-bite', 'wood-hammer', 'aqua-jet', 'head-smash', 'double-hit', 'crush-grip', 'shadow-force'}

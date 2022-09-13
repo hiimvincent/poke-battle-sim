@@ -8,6 +8,7 @@ from move import Move
 import random
 import global_settings as gs
 import global_data as gd
+import process_ability as pa
 
 class Pokemon:
     def __init__(
@@ -190,6 +191,7 @@ class Pokemon:
         self.water_sport = False
         self.power_trick = False
         self.ability_suppressed = False
+        self.ability_activated = False
         self.sp_check = False
         self.magnet_rise = False
         self.turn_damage = False
@@ -224,6 +226,7 @@ class Pokemon:
             return
         if enemy_move:
             self.last_move_hit_by = enemy_move
+            pa.on_hit_abilities(self.enemy.current_poke, self, enemy_move, self.cur_battle)
         if self.bide_count:
             self.bide_dmg += damage
         if self.cur_hp - damage <= 0:
@@ -357,6 +360,10 @@ class Pokemon:
         self.original = None
         self.transformed = False
 
+    def give_ability(self, ability: str):
+        self.ability = ability
+        pa.selection_abilities(self, self.cur_battle.battlefield, self.cur_battle)
+
     def battle_end_reset(self):
         if self.transformed:
             self.reset_transform()
@@ -383,6 +390,9 @@ class Pokemon:
 
     def no_pp(self) -> bool:
         return all(not move.cur_pp or move.disabled or move.encore_blocked for move in self.get_available_moves())
+
+    def has_ability(self, ability_name: str) -> bool:
+        return not self.ability_suppressed and self.ability == ability_name
 
     def reset_stages(self):
         self.accuracy_stage = 0
