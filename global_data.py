@@ -23,9 +23,9 @@ GROUNDED_CHECK = {'bounce', 'fly', 'high-jump-kick', 'jump-kick', 'magnet-rise',
 HEAL_BLOCK_CHECK = {'heal-order', 'milk-drink', 'moonlight', 'morning-sun', 'recover', 'rest', 'roost', 'slack-off',
                     'soft-boiled', 'synthesis', 'wish', 'lunar-dance', 'healing-wish'}
 
-METRONOME_CHECK = {'assist', 'chatter', 'copycat', 'counter', 'covet', 'destiny-bond', 'detect', 'endure', 'feint',
+METRONOME_CHECK = ['assist', 'chatter', 'copycat', 'counter', 'covet', 'destiny-bond', 'detect', 'endure', 'feint',
                    'focus-punch', 'follow-me', 'helping-hand', 'me-first', 'mimic', 'mirror-coat', 'mirror-move',
-                   'protect', 'sketch', 'sleep-talk', 'snatch', 'struggle', 'switcheroo', 'thief', 'trick'}
+                   'protect', 'sketch', 'sleep-talk', 'snatch', 'struggle', 'switcheroo', 'thief', 'trick']
 
 ENCORE_CHECK = {'transform', 'mimic', 'sketch', 'mirror-move', 'sleep-talk', 'encore', 'struggle'}
 

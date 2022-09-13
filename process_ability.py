@@ -30,6 +30,11 @@ def selection_abilities(poke: pokemon.Pokemon, battlefield: bf.Battlefield, batt
         battle._add_text(attacker.nickname + ' snapped out of its confusion!')
         poke.v_status[gs.CONFUSED] = 0
 
+def enemy_selection_abilities(enemy_poke: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle):
+    poke = enemy_poke.enemy.current_poke
+    if poke.has_ability('intimidate'):
+        pm._give_stat_change(enemy, battle, gs.ATK, -1, forced=True)
+
 def end_turn_abilities(poke: pk.Pokemon, battle: bt.Battle):
     if poke.has_ability('speed-boost'):
         pm._give_stat_change(poke, battle, gs.SPD, 1)
@@ -51,11 +56,20 @@ def type_protection_abilities(defender: pk.Pokemon, move_data: Move, battle: bt.
         return True
     return False
 
-def on_hit_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, move_data: Move, battle: bt.Battle):
+def on_hit_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, move_data: Move, battle: bt.Battle) -> bool:
     made_contact = move_data.name in gd.CONTACT_CHECK
-    if made_contact and defender.has_ability('static') and random.randrange(10) < 3:
+    if defender.has_ability('static') and made_contact and random.randrange(10) < 3:
         pm._paralyze(attacker, battle)
-    if defender.has_ability('color-change') and move_data.type not in defender.types:
+    elif defender.has_ability('rough-skin') and made_contact:
+        attacker.take_damage(attacker.max_hp // 16)
+        battle._add_text(attacker.nickname + ' was hurt!')
+    elif defender.has_ability('effect-spore') and made_contact and random.randrange(10) < 3:
+        pm._give_nv_status(random.randrange(3, 6), attacker, battle)
+    elif defender.has_ability('color-change') and move_data.type not in defender.types:
         defender.types = (move_data.type, None)
         battle._add_text(defender.nickname + ' transformed into the ' + move_data.type.upper() + ' type!')
+    elif defender.has_ability('wonder-guard') and pm._calculate_type_ef(defender, move_data) < 2:
+        battle._add_text('It doesn\'t affect ' + defender.nickname)
+        return True
+    return False
 

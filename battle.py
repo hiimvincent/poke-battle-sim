@@ -290,7 +290,7 @@ class Battle:
             if not trainer.tailwind_count:
                 self._add_text(trainer.name + '\'s ' + 'tailwind petered out!')
                 for poke in trainer.poke_list:
-                    poke.stats_actual[SPD] //= 2
+                    poke.stats_actual[gs.SPD] //= 2
         if trainer.lucky_chant:
             trainer.lucky_chant -= 1
             if not trainer.lucky_chant:
@@ -438,6 +438,7 @@ class Battle:
         if not selector.current_poke.is_alive or selector.current_poke is old_poke:
             return True
         self._add_text(selector.name + ' sent out ' + selector.current_poke.nickname + '!')
+        pa.enemy_selection_abilities(selector.current_poke, self.battlefield, self)
         pa.selection_abilities(selector.current_poke, self.battlefield, self)
         if self.battlefield.gravity_count:
             selector.current_poke.grounded = True

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from queue import Queue
 from poke_sim import PokeSim
-import process_move
+import process_move as pm
 import battlefield
 import battle as bt
 from move import Move
@@ -226,7 +226,8 @@ class Pokemon:
             return
         if enemy_move:
             self.last_move_hit_by = enemy_move
-            pa.on_hit_abilities(self.enemy.current_poke, self, enemy_move, self.cur_battle)
+            if pa.on_hit_abilities(self.enemy.current_poke, self, enemy_move, self.cur_battle):
+                return
         if self.bide_count:
             self.bide_dmg += damage
         if self.cur_hp - damage <= 0:
@@ -374,6 +375,8 @@ class Pokemon:
         if self.transformed:
             self.reset_transform()
         self.reset_stats()
+        if self.has_ability('natural-cure') and self.nv_status:
+            pm._cure_nv_status(self.nv_status, self, self.cur_battle)
 
     def update_last_moves(self):
         if self.last_move_next:
