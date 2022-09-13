@@ -133,7 +133,7 @@ class Pokemon:
             self.stats_effective[gs.SPD] *= 2
         elif self.has_ability('chlorophyll') and self.cur_battle.battlefield.weather == gs.HARSH_SUNLIGHT:
             self.stats_effective[gs.SPD] *= 2
-        elif self.has_ability('huge-power'):
+        elif self.has_ability('huge-power') or self.has_ability('pure-power'):
             self.stats_effective[gs.ATK] *= 2
         elif self.has_ability('hustle') or (self.has_ability('guts') and self.nv_status):
             self.stats_effective[gs.ATK] = int(self.stats_effective[gs.ATK] * 1.5)
@@ -414,6 +414,9 @@ class Pokemon:
         if enemy_poke.is_alive and enemy_poke.has_ability('shadow-tag'):
             return False
         if 'steel' in self.types and enemy_poke.is_alive and enemy_poke.has_ability('magnet_pull'):
+            return False
+        if (grounded or (not 'flying' in self.types and not self.has_ability('levitate'))) and enemy_poke.is_alive \
+                and enemy_poke.has_ability('arena-trap'):
             return False
         return True
 

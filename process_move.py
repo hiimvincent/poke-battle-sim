@@ -64,7 +64,8 @@ def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
         return
 
     cc = crit_chance + attacker.crit_stage if crit_chance else attacker.crit_stage
-    if not defender.trainer.lucky_chant and not defender.has_ability('battle-armor') and _calculate_crit(cc):
+    if not defender.trainer.lucky_chant and not defender.has_ability('battle-armor') \
+            and not defender.has_ability('shell-armor') and _calculate_crit(cc):
         crit_mult = 2
         battle._add_text("A critical hit!")
     else:
@@ -118,6 +119,12 @@ def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
         move_data.power = int(move_data.power * 1.5)
     if move_data.type == 'bug' and attacker.cur_hp <= attacker.max_hp // 3 and attacker.has_ability('swarm'):
         move_data.power = int(move_data.power * 1.5)
+    if attacker.has_ability('rivalry'):
+        if attacker.gender == defender.gender and (attacker.gender == 'male' or attacker.gender == 'female'):
+            move_data.power = int(move_data.power * 1.25)
+        elif (attacker.gender == 'female' and defender.gender == 'male') or (attacker.gender == 'male' and defender.gender == 'female'):
+            move_data.power = int(move_data.power * 0.75)
+
     screen = 1
     weather_mult = 1
     ff = 1
@@ -161,6 +168,8 @@ def _calculate_hit_or_miss(attacker: pokemon.Pokemon, defender: pokemon.Pokemon,
         ability_mult *= 1.3
     if defender.has_ability('hustle') and move_data.category == gs.PHYSICAL:
         ability_mult *= 0.8
+    if defender.has_ability('tangled-feet') and defender.v_status[gs.CONFUSED]:
+        ability_mult *= 0.5
 
     ma = move_data.acc
     if _special_move_acc(attacker, defender, battlefield, battle, move_data):
@@ -643,10 +652,13 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         defender.stats_actual[gs.DEF] = old_def
         return
     elif ef_id == 63:
-        attacker.nv_status = gs.ASLEEP
-        attacker.nv_counter = 3
-        battle._add_text(attacker.nickname + ' went to sleep!')
-        attacker.heal(attacker.max_hp)
+        if not attacker.has_ability('insomnia') and not attacker.has_ability('vital-spirit'):
+            attacker.nv_status = gs.ASLEEP
+            attacker.nv_counter = 3
+            battle._add_text(attacker.nickname + ' went to sleep!')
+            attacker.heal(attacker.max_hp)
+        else:
+            _failed(battle)
     elif ef_id == 64:
         move_types = [move.type for move in attacker.moves if move.type not in attacker.types]
         if not len(move_types):
@@ -1188,7 +1200,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             _failed(battle)
     elif ef_id == 131:
-        if defender.is_alive and not defender.has_ability('wonder-guard') and not defender.has_ability('multitype'):
+        if defender.is_alive and defender.ability and not defender.has_ability('wonder-guard') and not defender.has_ability('multitype'):
             attacker.give_ability(defender.ability)
             battle._add_text(attacker.nickname + ' copied ' + defender.nickname + '\'s ' + defender.ability + '!')
         else:
@@ -1347,10 +1359,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
     elif ef_id == 155:
         return
     elif ef_id == 156:
-        if not defender.has_ability('insomnia') and not defender.has_ability('vital-spirit'):
-            _sleep(defender, battle, forced=True)
-        else:
-            _failed(battle)
+        _sleep(defender, battle, forced=True)
     elif ef_id == 157:
         if defender.is_alive and (defender.stat_stages[gs.ATK] > -6 or defender.stat_stages[gs.DEF] > -6):
             _give_stat_change(defender, battle, gs.ATK, -1)
@@ -1794,6 +1803,8 @@ def _pre_process_status(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, ba
     if attacker.v_status[gs.FLINCHED]:
         attacker.v_status[gs.FLINCHED] = 0
         battle._add_text(attacker.nickname + ' flinched and couldn\'t move')
+        if attacker.has_ability('steadfast'):
+            _give_stat_change(attacker, battle, gs.ATK, 1)
         return True
     if attacker.nv_status == gs.PARALYZED:
         if random.randrange(4) < 1:
@@ -1869,11 +1880,11 @@ def _give_stat_change(recipient: pokemon.Pokemon, battle: bt.Battle, stat: int, 
         if forced:
             _failed(battle)
         return
-    if amount < 0 and not bypass and (recipient.substitute or recipient.has_ability('clear-body')):
+    if amount < 0 and not bypass and (recipient.substitute or recipient.has_ability('clear-body') or recipient.has_ability('white-smoke')):
         if forced:
             _failed(battle)
         return
-    if not forced and not bypass and recipient.has_ability('shield-dust'):
+    if amount < 0 and not forced and not bypass and recipient.has_ability('shield-dust'):
         return
     if stat == 6:
         r_stat = recipient.accuracy_stage
@@ -2029,7 +2040,7 @@ def _poison(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
             _poison(recipient.enemy.current_poke)
 
 def _sleep(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
-    if not recipient.is_alive or recipient.substitute or recipient.has_ability('insomnia'):
+    if not recipient.is_alive or recipient.substitute or recipient.has_ability('insomnia') or recipient.has_ability('vital-spirit'):
         if forced:
             _failed(battle)
         return

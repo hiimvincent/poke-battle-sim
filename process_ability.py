@@ -35,7 +35,7 @@ def selection_abilities(poke: pokemon.Pokemon, battlefield: bf.Battlefield, batt
             pm._cure_nv_status(gs.POISONED, poke, battle)
         if poke.nv_status == gs.BADLY_POISONED:
             pm._cure_nv_status(gs.BADLY_POISONED, poke, battle)
-    elif poke.has_ability('cloud-nine') and battlefield.weather != gs.CLEAR:
+    elif (poke.has_ability('cloud-nine') or poke.has_ability('air-lock')) and battlefield.weather != gs.CLEAR:
             battle._add_text('The effects of weather disappeared.')
             battlefield.change_weather(gs.CLEAR)
     elif poke.has_ability('own-tempo') and poke.v_status[gs.CONFUSED]:
@@ -100,6 +100,9 @@ def on_hit_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Batt
         pm._poison(attacker, battle)
     elif defender.has_ability('cute-charm') and made_contact and random.randrange(10) < 3:
         pm._infatuate(defender, attacker, battle)
+    elif defender.has_ability('motor-drive') and move_data.type == 'electric':
+        pm._give_stat_change(defender, battle, gs.SPD, 1)
+        return True
 
     return False
 
