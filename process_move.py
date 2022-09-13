@@ -152,6 +152,8 @@ def _calculate_hit_or_miss(attacker: pokemon.Pokemon, defender: pokemon.Pokemon,
         ability_mult *= 0.8
     if defender.has_ability('compound-eyes'):
         ability_mult *= 1.3
+    if defender.has_ability('hustle') and move_data.category == gs.PHYSICAL:
+        ability_mult *= 0.8
 
     ma = move_data.acc
     if _special_move_acc(attacker, defender, battlefield, battle, move_data):
@@ -183,10 +185,12 @@ def _meta_effect_check(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, bat
         return True
     if _grounded_check(attacker, battle, move_data):
         return True
+    if _truant_check(attacker, battle, move_data):
+        return True
     return False
 
 def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool):
-    pa.pre_move_abilities(attacker ,defender, battle, move_data)
+    pa.pre_move_abilities(attacker, defender, battle, move_data)
     ef_id = move_data.ef_id
 
     if ef_id & 1:
@@ -823,7 +827,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         battle._add_text('All pokemon hearing the song will faint in three turns!')
     elif ef_id == 87:
         if battlefield.weather != gs.SANDSTORM:
-            battlefield.weather = gs.SANDSTORM
+            battlefield.change_weather(gs.SANDSTORM)
             battlefield.weather_count = 5
             battle._add_text('A sandstorm brewed')
         else:
@@ -1006,14 +1010,14 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         return
     elif ef_id == 108:
         if battlefield.weather != gs.RAIN:
-            battlefield.weather = gs.RAIN
+            battlefield.change_weather(gs.RAIN)
             battlefield.weather_count = 5
             battle._add_text('It started to rain!')
         else:
             _failed(battle)
     elif ef_id == 109:
         if battlefield.weather != gs.HARSH_SUNLIGHT:
-            battlefield.weather = gs.HARSH_SUNLIGHT
+            battlefield.change_weather(gs.HARSH_SUNLIGHT)
             battlefield.weather_count = 5
             battle._add_text('The sunlight turned harsh!')
         else:
@@ -1100,7 +1104,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             _failed(battle)
     elif ef_id == 119:
         if battlefield.weather != gs.HAIL:
-            battlefield.weather = gs.HAIL
+            battlefield.change_weather(gs.HAIL)
             battlefield.weather_count = 5
             battle._add_text('It started to hail!')
         else:
@@ -1873,6 +1877,10 @@ def _give_stat_change(recipient: pokemon.Pokemon, battle: bt.Battle, stat: int, 
         recipient.evasion_stage = _fit_stat_bounds(recipient.evasion_stage + amount)
     else:
         r_stat = recipient.stat_stages[stat]
+        if stat == gs.ATK and amount < 0 and recipient.has_ability('hyper-cutter'):
+            if forced:
+                _failed(battle)
+            return
         recipient.stat_stages[stat] = _fit_stat_bounds(recipient.stat_stages[stat] + amount)
     if -6 < r_stat < 6 or forced:
         battle._add_text(_stat_text(recipient, stat, amount))
@@ -2091,6 +2099,12 @@ def _soundproof_check(defender: pokemon.Pokemon, battle: bt.Battle, move_data: M
 def _grounded_check(attacker: pokemon.Pokemon, battle: bt.Battle, move_data: Move) -> bool:
     if attacker.grounded and move_data.name in gd.GROUNDED_CHECK:
         _failed(battle)
+        return True
+    return False
+
+def _truant_check(attacker: pokemon.Pokemon, battle: bt.Battle, move_data: Move) -> bool:
+    if attacker.has_ability('truant') and attacker.last_move and move_data.name == attacker.last_move.name:
+        battle._add_text(attacker.nickname + ' loafed around!')
         return True
     return False
 

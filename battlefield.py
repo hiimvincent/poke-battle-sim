@@ -1,6 +1,7 @@
 from __future__ import annotations
 import battle as bt
 import global_settings as gs
+import process_ability as pa
 
 class Battlefield:
     def __init__(self, battle: bt.Battle):
@@ -43,3 +44,8 @@ class Battlefield:
             self.trick_room_count -= 1
             if not self.trick_room_count:
                 self.cur_battle._add_text('The twisted dimensions returned to normal!')
+
+    def change_weather(self, weather: int):
+        if self.weather != weather:
+            self.weather = weather
+            pa.weather_change_abilities(self.cur_battle, self)

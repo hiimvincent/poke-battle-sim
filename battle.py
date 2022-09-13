@@ -443,8 +443,7 @@ class Battle:
         if not selector.current_poke.is_alive or selector.current_poke is old_poke:
             return True
         self._add_text(selector.name + ' sent out ' + selector.current_poke.nickname + '!')
-        pa.enemy_selection_abilities(selector.current_poke, self.battlefield, self)
-        pa.selection_abilities(selector.current_poke, self.battlefield, self)
+
         if self.battlefield.gravity_count:
             selector.current_poke.grounded = True
         if selector.spikes and (selector.current_poke.grounded or ('flying' not in selector.current_poke.types \
@@ -480,6 +479,9 @@ class Battle:
             if t_mult:
                 selector.current_poke.take_damage(int(selector.current_poke.max_hp * 0.125 * t_mult))
                 self._add_text('Pointed stones dug into ' + selector.current_poke.nickname + '!')
+
+        pa.enemy_selection_abilities(selector.current_poke, self.battlefield, self)
+        pa.selection_abilities(selector.current_poke, self.battlefield, self)
         return False
 
     def _faint_check(self):

@@ -135,6 +135,8 @@ class Pokemon:
             self.stats_effective[gs.SPD] *= 2
         elif self.has_ability('huge-power'):
             self.stats_effective[gs.ATK] *= 2
+        elif self.has_ability('hustle'):
+            self.stats_effective[gs.ATK] = int(self.stats_effective[gs.ATK] * 1.5)
 
     def reset_stats(self):
         self.v_status = [0 for _ in range(gs.V_STATUS_NUM)]
@@ -318,6 +320,8 @@ class Pokemon:
         if self.trainer.imprisoned_poke and self.trainer.imprisoned_poke is self.enemy.current_poke and av_moves:
             i_moves = [move.name for move in self.trainer.imprisoned_poke.moves]
             av_moves = [move for move in av_moves if move.name not in i_moves]
+        if self.has_ability('truant') and self.last_move:
+            av_moves = [move for move in av_moves if move.name != self.last_move.name]
         return av_moves
 
     def transform(self, target: Pokemon):
