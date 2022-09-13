@@ -233,18 +233,19 @@ class Battle:
             attacker.current_poke.update_last_moves()
         attacker.has_moved = True
 
-    def _process_pp(self, attacker: pk.Pokemon, move: Move) -> bool:
-        if move.name == 'struggle':
+    def _process_pp(self, attacker: pk.Pokemon, move_data: Move) -> bool:
+        if move_data.name == 'struggle':
             return True
-        if move.cur_pp <= 0:
+        if move_data.cur_pp <= 0:
             raise Exception
-        is_disabled = move.disabled
+        is_disabled = move_data.disabled
         attacker.reduce_disabled_count()
         if is_disabled:
-            self._add_text(move.name + ' is disabled!')
+            self._add_text(move_data.name + ' is disabled!')
             return False
-        move.cur_pp -= 1
-        if move.cur_pp == 0 and attacker.copied and move.name == attacker.copied.name:
+        move_data.cur_pp -= 1
+        self._pressure_check(attacker, move_data)
+        if move_data.cur_pp == 0 and attacker.copied and move_data.name == attacker.copied.name:
             attacker.copied = None
         return True
 
@@ -262,6 +263,8 @@ class Battle:
         if poke.v_status[gs.AQUA_RING]:
             self._add_text('A veil of water restored ' + poke.nickname + '\'s HP!')
             poke.heal(poke.max_hp // 16, text_skip=True)
+        if self.battlefield.weather == gs.RAIN and poke.has_ability('rain-dish'):
+            poke.heal(poke.max_hp // 16)
         if trainer.fs_count and poke.is_alive:
             trainer.fs_count -= 1
             if not trainer.fs_count:
@@ -498,11 +501,13 @@ class Battle:
     def _pursuit_check(self, t1_move: tuple[str, str], t2_move: tuple[str, str], t1_move_data: Move, t2_move_data: Move, t1_first: bool) -> bool:
         if t1_move == gd.PURSUIT and (t2_move == SWITCH or (t2_move[gs.ACTION_TYPE] == gd.MOVE and t2_move[gs.ACTION_VALUE] in gd.PURSUIT_CHECK and not t1_first)):
             t1_move_data.cur_pp -= 1
+            self._pressure_check(t1.current_poke, t1_move_data)
             t1_move_data = t1_move_data.get_tcopy()
             t1_move_data.power *= 2
             return True
         elif t2_move == gd.PURSUIT and (t1_move == gd.SWITCH or (t1_move[gs.ACTION_TYPE] == gd.MOVE and t1_move[gs.ACTION_VALUE] in gd.PURSUIT_CHECK and t1_first)):
             t2_move_data.cur_pp -= 1
+            self._pressure_check(t2.current_poke, t2_move_data)
             t2_move_data = t2_move_data.get_tcopy()
             t2_move_data.power *= 2
             return True
@@ -532,6 +537,10 @@ class Battle:
             self.t1.current_poke.sp_check = True
         if t2_move_data.name == 'sucker-punch' and t1_move_data.category != gs.STATUS:
             self.t1.current_poke.sp_check = True
+
+    def _pressure_check(self, attacker: pk.Pokemon, move_data: Move):
+        if move_data.cur_pp and attacker.enemy.current_poke.is_alive and attacker.enemy.current_poke.has_ability('pressure'):
+            move_data.cur_pp -= 1
 
     def _add_text(self, txt: str):
         self.all_text.append(txt)

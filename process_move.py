@@ -107,7 +107,9 @@ def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
     if move_data.type == 'fire' and (attacker.water_sport or defender.water_sport):
         move_data.power //= 2
     if move_data.type == 'fire' and attacker.has_ability('flash-fire') and attacker.ability_activated:
-        move_data.power *= 1.5
+        move_data.power = int(move_data.power * 1.5)
+    if (move_data.type == 'fire' or move_data.type == 'ice') and defender.has_ability('thick-fat'):
+        ad_ratio /= 2
     screen = 1
     targets = 1
     weather_mult = 1
@@ -177,8 +179,9 @@ def _meta_effect_check(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, bat
         return True
     if _protect_check(defender, battle, move_data):
         return True
-    if attacker.grounded and move_data.name in gd.GROUNDED_CHECK:
-        _failed(battle)
+    if _soundproof_check(defender, battle, move_data):
+        return True
+    if _grounded_check(attacker, battle, move_data):
         return True
     return False
 
@@ -488,8 +491,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         else:
             _failed(battle)
     elif ef_id == 45:
-        # ability check
-        _give_stat_change(defender, battle, gs.DEF, -2)
+        return
     elif ef_id == 46:
         attacker.heal(attacker.max_hp // 2)
     elif ef_id == 47:
@@ -1329,12 +1331,9 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         if battlefield.weather != gs.CLEAR:
             move_data.power *= 2
     elif ef_id == 155:
-        if defender.is_alive and not defender.has_ability('soundproof'):
-            _give_stat_change(defender, battle, gs.SP_DEF, -2, forced=True)
-        else:
-            _failed(battle)
+        return
     elif ef_id == 156:
-        if not defender.has_ability('insomnia') and not defender.has_ability('vital-spirit') and not defender.has_ability('soundproof'):
+        if not defender.has_ability('insomnia') and not defender.has_ability('vital-spirit'):
             _sleep(defender, battle, forced=True)
         else:
             _failed(battle)
@@ -1770,6 +1769,8 @@ def _pre_process_status(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, ba
         if not attacker.nv_counter:
             attacker.nv_status = 0
         attacker.nv_counter -= 1
+        if attacker.nv_counter and attacker.has_ability('early-bird'):
+            attacker.nv_counter -= 1
         if attacker.nv_counter:
             battle._add_text(attacker.nickname + ' is fast asleep!')
             if move_data.name == 'snore' or move_data.name == 'sleep-talk':
@@ -1862,6 +1863,10 @@ def _give_stat_change(recipient: pokemon.Pokemon, battle: bt.Battle, stat: int, 
         return
     if stat == 6:
         r_stat = recipient.accuracy_stage
+        if amount < 0 and recipient.has_ability('keen-eye'):
+            if forced:
+                _failed(battle)
+            return
         recipient.accuracy_stage = _fit_stat_bounds(recipient.accuracy_stage + amount)
     elif stat == 7:
         r_stat = recipient.evasion_stage
@@ -1926,7 +1931,7 @@ def _give_nv_status(status: int, recipient: pk.Pokemon, battle: bt.Battle, force
         _badly_poison(recipient, battle, forced)
 
 def _burn(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
-    if not recipient.is_alive or recipient.substitute:
+    if not recipient.is_alive or recipient.substitute or recipient.has_ability('water-veil'):
         if forced:
             _failed(battle)
         return
@@ -2074,6 +2079,18 @@ def _snatch_check(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battlefi
 def _protect_check(defender: pokemon.Pokemon, battle: bt.Battle, move_data: Move) -> bool:
     if defender.is_alive and defender.protect and not move_data.name in ['feint', 'shadow-force'] and move_data.target in gd.PROTECT_TARGETS:
         battle._add_text(defender.nickname + ' protected itself!')
+        return True
+    return False
+
+def _soundproof_check(defender: pokemon.Pokemon, battle: bt.Battle, move_data: Move) -> bool:
+    if defender.is_alive and defender.has_ability('soundproof') and move_data in SOUNDPROOF_CHECK:
+        battle._add_text("It doesn't affect " + defender.nickname)
+        return True
+    return False
+
+def _grounded_check(attacker: pokemon.Pokemon, battle: bt.Battle, move_data: Move) -> bool:
+    if attacker.grounded and move_data.name in gd.GROUNDED_CHECK:
+        _failed(battle)
         return True
     return False
 

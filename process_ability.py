@@ -14,6 +14,12 @@ def selection_abilities(poke: pokemon.Pokemon, battlefield: bf.Battlefield, batt
         battlefield.weather = gs.RAIN
         battlefield.weather_count = 999
         battle._add_text('It started to rain!')
+    elif poke.has_ability('sand-stream') and battlefield.weather != gs.SANDSTORM:
+        battlefield.weather = gs.SANDSTORM
+        battlefield.weather_count = 999
+        battle._add_text('A sandstorm brewed')
+    elif poke.has_ability('water-veil') and poke.nv_status == gs.BURNED:
+        pm._cure_nv_status(gs.BURNED, poke, battle)
     elif poke.has_ability('magma-armor') and poke.nv_status == gs.FROZEN:
         pm._cure_nv_status(gs.FROZEN, poke, battle)
     elif poke.has_ability('limber') and poke.nv_status == gs.PARALYZED:
@@ -81,6 +87,8 @@ def on_hit_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Batt
     elif defender.has_ability('wonder-guard') and pm._calculate_type_ef(defender, move_data) < 2:
         battle._add_text('It doesn\'t affect ' + defender.nickname)
         return True
+    elif defender.has_ability('flame-body') and made_contact and random.randrange(10) < 3:
+        pm._burn(attacker, battle)
     elif defender.has_ability('poison-point') and made_contact and not 'steel' in attacker.types \
             and not 'poison' in attacker.types and random.randrange(10) < 3:
         pm._poison(attacker, battle)

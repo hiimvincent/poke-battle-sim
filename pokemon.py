@@ -401,6 +401,16 @@ class Pokemon:
     def no_pp(self) -> bool:
         return all(not move.cur_pp or move.disabled or move.encore_blocked for move in self.get_available_moves())
 
+    def can_switch_out(self) -> bool:
+        if self.trapped or self.perma_trapped or self.recharging or not self.next_moves.empty():
+            return False
+        enemy_poke = self.enemy.current_poke
+        if enemy_poke.is_alive and enemy_poke.has_ability('shadow-tag'):
+            return False
+        if 'steel' in self.types and enemy_poke.is_alive and enemy_poke.has_ability('magnet_pull'):
+            return False
+        return True
+
     def has_ability(self, ability_name: str) -> bool:
         return not self.ability_suppressed and self.ability == ability_name
 

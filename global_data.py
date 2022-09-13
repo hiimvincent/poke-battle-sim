@@ -50,6 +50,9 @@ SNATCH_CHECK = {'acid-armor', 'acupressure', 'agility', 'amnesia', 'aromatherapy
 
 GROUNDED_CHECK = {'bounce', 'fly', 'high-jump-kick', 'jump-kick', 'magnet-rise', 'splash'}
 
+SOUNDPROOF_CHECK = {'bug-buzz', 'chatter', 'grass-whistle', 'growl', 'heal-bell', 'hyper-voice', 'metal-sound', 'perish-song',
+                    'roar', 'screech', 'sing', 'snore', 'supersonic', 'uproar'}
+
 FREEZE_CHECK = {'flame-wheel', 'sacred-fire', 'flare-blitz'}
 
 BERRY_DATA = {'cheri-berry': ('fire', 60), 'chesto-berry': ('water', 60), 'pecha-berry': ('electric', 60), 'rawst-berry': ('grass', 60),

@@ -101,7 +101,7 @@ id,identifier,generation_id,type_id,power,pp,accuracy,priority,target_id,move_cl
 100,teleport,1,psychic,,20,,-6,7,1,0,,,
 101,night-shade,1,ghost,,15,100,0,10,3,37,,,
 102,mimic,1,normal,,10,,0,10,1,44,,,
-103,screech,1,normal,,40,85,0,10,1,45,,,
+103,screech,1,normal,,40,85,0,10,1,17,,-2,2
 104,double-team,1,normal,,15,,0,7,1,16,,1,7
 105,recover,1,normal,,10,,0,7,1,46,,,
 106,harden,1,normal,,30,,0,7,1,16,,1,2
@@ -317,7 +317,7 @@ id,identifier,generation_id,type_id,power,pp,accuracy,priority,target_id,move_cl
 316,odor-sleuth,3,normal,,40,,0,10,1,84,,,
 317,rock-tomb,3,rock,60,15,95,0,10,2,3,100,-1,5
 318,silver-wind,3,bug,60,5,100,0,10,3,112,10,,
-319,metal-sound,3,steel,,40,85,0,10,1,155,,,
+319,metal-sound,3,steel,,40,85,0,10,1,17,,-2,4
 320,grass-whistle,3,grass,,15,55,0,10,1,156,,,
 321,tickle,3,normal,,20,100,0,10,1,157,,,
 322,cosmic-power,3,psychic,,20,,0,7,1,158,,,
