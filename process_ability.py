@@ -14,6 +14,8 @@ def selection_abilities(poke: pokemon.Pokemon, battlefield: bf.Battlefield, batt
         battlefield.weather = gs.RAIN
         battlefield.weather_count = 999
         battle._add_text('It started to rain!')
+    elif poke.has_ability('magma-armor') and poke.nv_status == gs.FROZEN:
+        pm._cure_nv_status(gs.FROZEN, poke, battle)
     elif poke.has_ability('limber') and poke.nv_status == gs.PARALYZED:
         pm._cure_nv_status(gs.PARALYZED, poke, battle)
     elif poke.has_ability('insomnia') and poke.nv_status == gs.ASLEEP:
@@ -29,11 +31,19 @@ def selection_abilities(poke: pokemon.Pokemon, battlefield: bf.Battlefield, batt
     elif poke.has_ability('own-tempo') and poke.v_status[gs.CONFUSED]:
         battle._add_text(attacker.nickname + ' snapped out of its confusion!')
         poke.v_status[gs.CONFUSED] = 0
+    elif poke.has_ability('trace') and poke.enemy.current_poke.is_alive and poke.enemy.current_poke.ability:
+        battle._add_text(poke.nickname + ' copied ' + poke.enemy.current_poke.nickname + '\'s ' + poke.enemy.current_poke.ability + '!')
+        poke.give_ability(poke.enemy.current_poke.ability)
 
 def enemy_selection_abilities(enemy_poke: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle):
     poke = enemy_poke.enemy.current_poke
+    if not poke.is_alive:
+        return
     if poke.has_ability('intimidate'):
-        pm._give_stat_change(enemy, battle, gs.ATK, -1, forced=True)
+        pm._give_stat_change(enemy_poke, battle, gs.ATK, -1, forced=True)
+    elif poke.has_ability('trace') and enemy_poke.ability:
+        battle._add_text(poke.nickname + ' copied ' + enemy_poke.nickname + '\'s ' + enemy_poke.ability + '!')
+        poke.give_ability(enemy_poke.ability)
 
 def end_turn_abilities(poke: pk.Pokemon, battle: bt.Battle):
     if poke.has_ability('speed-boost'):
@@ -56,7 +66,7 @@ def type_protection_abilities(defender: pk.Pokemon, move_data: Move, battle: bt.
         return True
     return False
 
-def on_hit_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, move_data: Move, battle: bt.Battle) -> bool:
+def on_hit_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, move_data: Move) -> bool:
     made_contact = move_data.name in gd.CONTACT_CHECK
     if defender.has_ability('static') and made_contact and random.randrange(10) < 3:
         pm._paralyze(attacker, battle)
@@ -71,5 +81,12 @@ def on_hit_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, move_data: Move
     elif defender.has_ability('wonder-guard') and pm._calculate_type_ef(defender, move_data) < 2:
         battle._add_text('It doesn\'t affect ' + defender.nickname)
         return True
+    elif defender.has_ability('poison-point') and made_contact and not 'steel' in attacker.types \
+            and not 'poison' in attacker.types and random.randrange(10) < 3:
+        pm._poison(attacker, battle)
+
     return False
 
+def pre_move_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, move_data: Move, ):
+    if attacker.has_ability('serene-grace') and move_data.ef_chance:
+        move_data.ef_chance *= 2

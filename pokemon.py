@@ -129,6 +129,12 @@ class Pokemon:
     def calculate_stats_effective(self):
         for s in range(1, 6):
             self.stats_effective[s] = max(1, int(self.stats_actual[s] * max(2, 2 + self.stat_stages[s]) / max(2, 2 - self.stat_stages[s])))
+        if self.has_ability('swift-swim') and self.cur_battle.battlefield.weather == gs.RAIN:
+            self.stats_effective[gs.SPD] *= 2
+        elif self.has_ability('chlorophyll') and self.cur_battle.battlefield.weather == gs.HARSH_SUNLIGHT:
+            self.stats_effective[gs.SPD] *= 2
+        elif self.has_ability('huge-power'):
+            self.stats_effective[gs.ATK] *= 2
 
     def reset_stats(self):
         self.v_status = [0 for _ in range(gs.V_STATUS_NUM)]
@@ -194,6 +200,7 @@ class Pokemon:
         self.ability_activated = False
         self.sp_check = False
         self.magnet_rise = False
+        self.has_moved = False
         self.turn_damage = False
         self.moves = self.o_moves
         self.ability = self.o_ability
@@ -226,7 +233,7 @@ class Pokemon:
             return
         if enemy_move:
             self.last_move_hit_by = enemy_move
-            if pa.on_hit_abilities(self.enemy.current_poke, self, enemy_move, self.cur_battle):
+            if pa.on_hit_abilities(self.enemy.current_poke, self, self.cur_battle, enemy_move):
                 return
         if self.bide_count:
             self.bide_dmg += damage

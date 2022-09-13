@@ -408,6 +408,8 @@ class Battle:
             poke.snatch = False
         if poke.sp_check:
             poke.sp_check = False
+        if not poke.has_moved:
+            poke.has_moved = True
         if poke.v_status[gs.DROWSY]:
             poke.v_status[gs.DROWSY] -= 1
             if not poke.v_status[gs.DROWSY] and not poke.nv_status:
