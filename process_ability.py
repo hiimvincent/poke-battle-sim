@@ -14,6 +14,10 @@ def selection_abilities(poke: pokemon.Pokemon, battlefield: bf.Battlefield, batt
         battlefield.change_weather(gs.RAIN)
         battlefield.weather_count = 999
         battle._add_text('It started to rain!')
+    elif poke.has_ability('drought') and battlefield.weather != gs.HARSH_SUNLIGHT:
+        battlefield.change_weather(gs.HARSH_SUNLIGHT)
+        battlefield.weather_count = 999
+        battle._add_text('The sunlight turned harsh!')
     elif poke.has_ability('sand-stream') and battlefield.weather != gs.SANDSTORM:
         battlefield.change_weather(gs.SANDSTORM)
         battlefield.weather_count = 999

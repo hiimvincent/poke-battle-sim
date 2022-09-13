@@ -317,6 +317,8 @@ class Battle:
             if not poke.in_ground and not poke.in_water and not any(type in poke.types for type in ['ice']):
                 self._add_text(poke.nickname + ' is buffeted by the Hail!')
                 poke.take_damage(max(1, poke.max_hp // 16))
+        if poke.nv_status and poke.has_ability('shed-skin') and random.randrange(10) < 3:
+            pm._cure_nv_status(poke.nv_status, poke, battle)
         if poke.nv_status == gs.BURNED and poke.is_alive:
             self._add_text(poke.nickname + ' was hurt by its burn!')
             poke.take_damage(max(1, poke.max_hp // 8))
@@ -345,7 +347,11 @@ class Battle:
             heal_amt = poke.take_damage(max(1, poke.max_hp // 8))
             other = self.t2.current_poke if poke is self.t1.current_poke else self.t1.current_poke
             if other.is_alive:
-                other.heal(heal_amt)
+                if not poke.has_ability('liquid-ooze'):
+                    other.heal(heal_amt)
+                else:
+                    other.take_damage(heal_amt)
+                    self._add_text(other.nickname + ' sucked up the liquid ooze!')
         if poke.v_status[gs.NIGHTMARE] and poke.is_alive:
             self._add_text(poke.nickname + ' is locked in a nightmare!')
             poke.take_damage(max(1, poke.max_hp // 4))

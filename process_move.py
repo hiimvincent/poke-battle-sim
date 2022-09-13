@@ -96,7 +96,7 @@ def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
             sp_atk_ig = max(attacker.stats_actual[gs.SP_ATK], attacker.stats_effective[gs.SP_ATK])
             sp_def_ig = min(defender.stats_actual[gs.SP_DEF], defender.stats_effective[gs.SP_DEF])
             ad_ratio = sp_atk_ig / sp_def_ig
-    if attacker.nv_status == gs.BURNED:
+    if attacker.nv_status == gs.BURNED and not attacker.has_ability('guts'):
         burn = 0.5
     else:
         burn = 1
@@ -110,8 +110,15 @@ def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
         move_data.power = int(move_data.power * 1.5)
     if (move_data.type == 'fire' or move_data.type == 'ice') and defender.has_ability('thick-fat'):
         ad_ratio /= 2
+    if move_data.type == 'grass' and attacker.cur_hp <= attacker.max_hp // 3 and attacker.has_ability('overgrow'):
+        move_data.power = int(move_data.power * 1.5)
+    if move_data.type == 'fire' and attacker.cur_hp <= attacker.max_hp // 3 and attacker.has_ability('blaze'):
+        move_data.power = int(move_data.power * 1.5)
+    if move_data.type == 'water' and attacker.cur_hp <= attacker.max_hp // 3 and attacker.has_ability('torrent'):
+        move_data.power = int(move_data.power * 1.5)
+    if move_data.type == 'bug' and attacker.cur_hp <= attacker.max_hp // 3 and attacker.has_ability('swarm'):
+        move_data.power = int(move_data.power * 1.5)
     screen = 1
-    targets = 1
     weather_mult = 1
     ff = 1
     if move_data.type == attacker.types[0] or move_data.type == attacker.types[1]:
@@ -127,7 +134,7 @@ def _calculate_damage(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, batt
     item_mult = 1
     first = 1
 
-    damage = ((2 * attacker.level / 5 + 2) * move_data.power * ad_ratio) / 50 * burn * screen * targets * weather_mult * ff + 2
+    damage = ((2 * attacker.level / 5 + 2) * move_data.power * ad_ratio) / 50 * burn * screen * weather_mult * ff + 2
     damage *= crit_mult * item_mult * first * random_mult * stab * t_mult * srf * eb * tl * berry_mult
     damage = int(damage)
     if skip_dmg:
@@ -369,7 +376,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             inv_bypass = True
     elif ef_id == 27:
         dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if dmg:
+        if dmg and not attacker.has_ability('rock-head'):
             _recoil(attacker, battle, max(1, dmg // 4))
         return
     elif ef_id == 28:
@@ -387,7 +394,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
                 attacker.next_moves.put(move_data)
     elif ef_id == 29:
         dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if dmg:
+        if dmg and not attacker.has_ability('rock-head'):
             _recoil(attacker, battle, max(1, dmg // 3))
         return
     elif ef_id == 30:
@@ -452,9 +459,12 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
     elif ef_id == 38:
         dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
         if dmg:
-            heal_amount = dmg // 2 if dmg != 1 else 1
-            attacker.heal(heal_amount)
-            battle._add_text(defender.nickname + ' had it\'s energy drained!')
+            if not defender.has_ability('liquid-ooze'):
+                attacker.heal(max(1, dmg // 2))
+                battle._add_text(defender.nickname + ' had it\'s energy drained!')
+            else:
+                attacker.take_damage(max(1, dmg // 2))
+                battle._add_text(defender.nickname + ' sucked up the liquid ooze!')
         return
     elif ef_id == 39:
         if defender.is_alive and not defender.substitute and not defender.v_status[gs.LEECH_SEED]:
@@ -1385,7 +1395,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
         dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
         if random.randrange(10) < 10:
             _paralyze(defender, battle)
-        if dmg:
+        if dmg and not attacker.has_ability('rock-head'):
             _recoil(attacker, battle, dmg // 3)
     elif ef_id == 164:
         if not attacker.water_sport and not (defender.is_alive and defender.water_sport):
@@ -1638,14 +1648,14 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             _failed(battle)
     elif ef_id == 206:
         dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if attacker.is_alive and dmg:
+        if dmg and not attacker.has_ability('rock-head'):
             _recoil(attacker, battle, dmg // 3)
         if defender.is_alive and random.randrange(10) < 1:
             _burn(defender, battle)
         return
     elif ef_id == 207:
         dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if dmg:
+        if dmg and not attacker.has_ability('rock-head'):
             _recoil(attacker, battle, dmg // 3)
     elif ef_id == 208:
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
@@ -1712,7 +1722,7 @@ def _process_effect(attacker: pokemon.Pokemon, defender: pokemon.Pokemon, battle
             move_data.type = gd.PLATE_DATA[attacker.item]
     elif ef_id == 217:
         dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
-        if dmg:
+        if dmg and not attacker.has_ability('rock-head'):
             _recoil(attacker, battle, dmg // 2)
     elif ef_id == 218:
         t = attacker.trainer

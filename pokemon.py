@@ -135,8 +135,10 @@ class Pokemon:
             self.stats_effective[gs.SPD] *= 2
         elif self.has_ability('huge-power'):
             self.stats_effective[gs.ATK] *= 2
-        elif self.has_ability('hustle'):
+        elif self.has_ability('hustle') or (self.has_ability('guts') and self.nv_status):
             self.stats_effective[gs.ATK] = int(self.stats_effective[gs.ATK] * 1.5)
+        elif self.has_ability('marvel-scale') and self.nv_status:
+            self.stats_effective[gs.DEF] = int(self.stats_effective[gs.DEF] * 1.5)
 
     def reset_stats(self):
         self.v_status = [0 for _ in range(gs.V_STATUS_NUM)]
