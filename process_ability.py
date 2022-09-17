@@ -9,7 +9,7 @@ import global_settings as gs
 import global_data as gd
 import process_move as pm
 
-def selection_abilities(poke: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle):
+def selection_abilities(poke: pk.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle):
     if poke.has_ability('drizzle') and battlefield.weather != gs.RAIN:
         battlefield.change_weather(gs.RAIN)
         battlefield.weather_count = 999
@@ -18,6 +18,10 @@ def selection_abilities(poke: pokemon.Pokemon, battlefield: bf.Battlefield, batt
         battlefield.change_weather(gs.HARSH_SUNLIGHT)
         battlefield.weather_count = 999
         battle._add_text('The sunlight turned harsh!')
+    elif poke.has_ability('snow-warning') and battlefield.weather != gs.HAIL:
+        battlefield.change_weather(gs.HAIL)
+        battlefield.weather_count = 999
+        battle._add_text('It started to hail!')
     elif poke.has_ability('sand-stream') and battlefield.weather != gs.SANDSTORM:
         battlefield.change_weather(gs.SANDSTORM)
         battlefield.weather_count = 999
@@ -46,8 +50,26 @@ def selection_abilities(poke: pokemon.Pokemon, battlefield: bf.Battlefield, batt
         poke.give_ability(poke.enemy.current_poke.ability)
     elif poke.has_ability('forecast'):
         _forecast_check(poke, battle, battlefield)
+    elif poke.has_ability('download') and not poke.ability_activated and poke.enemy.current_poke.is_alive:
+        poke.enemy.current_poke.calculate_stats_effective()
+        if poke.enemy.current_poke.stats_effective[DEF] < poke.enemy.current_poke.stats_effective[SP_DEF]:
+            pm._give_stat_change(poke, battle, gs.ATK, 1)
+        else:
+            pm._give_stat_change(poke, battle, gs.SP_ATK, 1)
+        poke.ability_activated = True
+    elif poke.has_ability('anticipation') and poke.enemy.current_poke.is_alive:
+        if any([pm._calculate_type_ef(poke, move) > 1 or move.id in [20, 55, 62] for move in poke.enemy.current_poke.moves]):
+            battle._add_text(poke.nickname + ' shuddered!')
+    elif poke.has_ability('forewarn') and poke.enemy.current_poke.is_alive:
+        alert = _rand_max_power(poke.enemy.current_poke)
+        battle._add_text(poke.nickname + '\'s Forewarn alerted it to ' + alert.name)
+    elif poke.has_ability('frisk') and poke.enemy.current_poke.ability and poke.enemy.current_poke.item:
+        battle._add_text(poke.nickname + ' frisked ' + poke.enemy.current_poke.nickname + ' and found its ' + poke.enemy.current_poke.item + '!')
+    elif poke.has_ability('multitype') and poke.item in gd.PLATE_DATA:
+        poke.types = (gd.PLATE_DATA[poke.item], None)
+        battle._add_text(poke.nickname + ' transformed into the ' + poke.types[0].upper() + ' type!')
 
-def enemy_selection_abilities(enemy_poke: pokemon.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle):
+def enemy_selection_abilities(enemy_poke: pk.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle):
     poke = enemy_poke.enemy.current_poke
     if not poke.is_alive:
         return
@@ -56,10 +78,30 @@ def enemy_selection_abilities(enemy_poke: pokemon.Pokemon, battlefield: bf.Battl
     elif poke.has_ability('trace') and enemy_poke.ability:
         battle._add_text(poke.nickname + ' copied ' + enemy_poke.nickname + '\'s ' + enemy_poke.ability + '!')
         poke.give_ability(enemy_poke.ability)
+    elif poke.has_ability('download') and not poke.ability_activated:
+        enemy_poke.calculate_stats_effective()
+        if enemy_poke.stats_effective[DEF] < enemy_poke.stats_effective[SP_DEF]:
+            pm._give_stat_change(poke, battle, gs.ATK, 1)
+        else:
+            pm._give_stat_change(poke, battle, gs.SP_ATK, 1)
+        poke.ability_activated = True
+    elif poke.has_ability('anticipation') and poke.enemy.current_poke.is_alive:
+        if any([pm._calculate_type_ef(poke, move) > 1 or move.id in [20, 55, 62] for move in poke.enemy.current_poke.moves]):
+            battle._add_text(poke.nickname + ' shuddered!')
+    elif poke.has_ability('forewarn'):
+        alert = _rand_max_power(enemy_poke)
+        battle._add_text(poke.nickname + '\'s Forewarn alerted it to ' + alert.name)
+    elif poke.has_ability('frisk') and poke.enemy.current_poke.ability and poke.enemy.current_poke.item:
+        battle._add_text(poke.nickname + ' frisked ' + poke.enemy.current_poke.nickname + ' and found its ' + poke.enemy.current_poke.item + '!')
 
 def end_turn_abilities(poke: pk.Pokemon, battle: bt.Battle):
     if poke.has_ability('speed-boost'):
         pm._give_stat_change(poke, battle, gs.SPD, 1)
+    elif poke.has_ability('slow-start'):
+        poke.ability_count += 1
+    elif poke.has_ability('bad-dreams') and poke.enemy.current_poke.is_alive and poke.enemy.current_poke.nv_status == gs.ASLEEP:
+        battle._add_text(poke.enemy.current_poke.nickname + ' is tormented!')
+        poke.enemy.current_poke.take_damage(max(1, poke.enemy.current_poke.max_hp // 8))
 
 def type_protection_abilities(defender: pk.Pokemon, move_data: Move, battle: bt.Battle) -> bool:
     if defender.has_ability('volt-absorb') and move_data.type == 'electric':
@@ -67,12 +109,12 @@ def type_protection_abilities(defender: pk.Pokemon, move_data: Move, battle: bt.
         if not defender.cur_hp == defender.max_hp:
             defender.heal(defender.max_hp // 4)
         return True
-    if defender.has_ability('water-absorb') and move_data.type == 'water':
+    elif defender.has_ability('water-absorb') and move_data.type == 'water':
         battle._add_text(defender.nickname + ' absorbed ' + move_data.name + ' with Water Absorb!')
         if not defender.cur_hp == defender.max_hp:
             defender.heal(defender.max_hp // 4)
         return True
-    if defender.has_ability('flash-fire') and move_data.type == 'fire':
+    elif defender.has_ability('flash-fire') and move_data.type == 'fire':
         battle._add_text('It doesn\'t affect ' + defender.nickname)
         defender.ability_activated = True
         return True
@@ -83,7 +125,7 @@ def on_hit_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Batt
     if defender.has_ability('static') and made_contact and random.randrange(10) < 3:
         pm._paralyze(attacker, battle)
     elif defender.has_ability('rough-skin') and made_contact:
-        attacker.take_damage(attacker.max_hp // 16)
+        attacker.take_damage(max(1, attacker.max_hp // 16))
         battle._add_text(attacker.nickname + ' was hurt!')
     elif defender.has_ability('effect-spore') and made_contact and random.randrange(10) < 3:
         pm._give_nv_status(random.randrange(3, 6), attacker, battle)
@@ -103,8 +145,77 @@ def on_hit_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Batt
     elif defender.has_ability('motor-drive') and move_data.type == 'electric':
         pm._give_stat_change(defender, battle, gs.SPD, 1)
         return True
-
     return False
+
+def stat_calc_abilities(poke: pk.Pokemon):
+    if poke.has_ability('swift-swim') and poke.cur_battle.battlefield.weather == gs.RAIN:
+        poke.stats_effective[gs.SPD] *= 2
+    elif poke.has_ability('chlorophyll') and poke.cur_battle.battlefield.weather == gs.HARSH_SUNLIGHT:
+        poke.stats_effective[gs.SPD] *= 2
+    elif poke.has_ability('huge-power') or poke.has_ability('pure-power'):
+        poke.stats_effective[gs.ATK] *= 2
+    elif poke.has_ability('hustle') or (poke.has_ability('guts') and poke.nv_status):
+        poke.stats_effective[gs.ATK] = int(poke.stats_effective[gs.ATK] * 1.5)
+    elif poke.has_ability('marvel-scale') and poke.nv_status:
+        poke.stats_effective[gs.DEF] = int(poke.stats_effective[gs.DEF] * 1.5)
+    elif poke.has_ability('solar-power') and poke.cur_battle.battlefield.weather == gs.HARSH_SUNLIGHT:
+        poke.stats_effective[gs.SP_ATK] = int(poke.stats_effective[gs.SP_ATK] * 1.5)
+    elif poke.has_ability('quick-feet') and poke.nv_status:
+        poke.stats_effective[gs.SPD] = int(poke.stats_effective[gs.SPD] * 1.5)
+    elif poke.has_ability('slow-start') and poke.ability_count < 5:
+        poke.stats_effective[gs.ATK] //= 2
+        poke.stats_effective[gs.SPD] //= 2
+    elif poke.has_ability('flower-gift') and poke.cur_battle.battlefield.weather == gs.HARSH_SUNLIGHT:
+        poke.stats_effective[gs.ATK] = int(poke.stats_effective[gs.ATK] * 1.5)
+        poke.stats_effective[gs.SP_DEF] = int(poke.stats_effective[gs.SPD_DEF] * 1.5)
+
+def damage_calc_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, move_data: Move):
+    if attacker.has_ability('flash-fire') and attacker.ability_activated and move_data.type == 'fire':
+        move_data.power = int(move_data.power * 1.5)
+    elif attacker.has_ability('overgrow') and move_data.type == 'grass' and attacker.cur_hp <= attacker.max_hp // 3:
+        move_data.power = int(move_data.power * 1.5)
+    elif attacker.has_ability('blaze') and move_data.type == 'fire' and attacker.cur_hp <= attacker.max_hp // 3:
+        move_data.power = int(move_data.power * 1.5)
+    elif attacker.has_ability('torrent') and move_data.type == 'water' and attacker.cur_hp <= attacker.max_hp // 3:
+        move_data.power = int(move_data.power * 1.5)
+    elif attacker.has_ability('swarm') and move_data.type == 'bug' and attacker.cur_hp <= attacker.max_hp // 3:
+        move_data.power = int(move_data.power * 1.5)
+    elif attacker.has_ability('rivalry'):
+        if attacker.gender == defender.gender and (attacker.gender == 'male' or attacker.gender == 'female'):
+            move_data.power = int(move_data.power * 1.25)
+        elif (attacker.gender == 'female' and defender.gender == 'male') or (attacker.gender == 'male' and defender.gender == 'female'):
+            move_data.power = int(move_data.power * 0.75)
+    elif attacker.has_ability('iron-fist') and move_data.name in gd.PUNCH_CHECK:
+        move_data.power *= int(move_data.power * 1.2)
+    elif attacker.has_ability('normalize'):
+        move_data.type = 'normal'
+    elif attacker.has_ability('technician') and move_data.power <= 60:
+        move_data.power = int(move_data.power * 1.5)
+    elif attacker.has_ability('tinted-lens') and t_mult < 1:
+        move_data.power *= 2
+    elif attacker.has_ability('reckless') and move_data.name in gd.RECOIL_CHECK:
+        move_data.power = int(move_data.power * 1.2)
+
+    if defender.has_ability('thick-fat') and (move_data.type == 'fire' or move_data.type == 'ice'):
+        ad_ratio /= 2
+    elif defender.has_ability('heatproof') and move_data.type == 'fire':
+        move_data.power //= 2
+    elif (defender.has_ability('filter') or defender.has_ability('solid-rock')) and t_mult > 1:
+        move_data.power *= 0.75
+
+def hit_or_miss_calc_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move) -> float:
+    ability_mult = 1
+    if defender.has_ability('sand-veil') and battlefield.weather == gs.SANDSTORM:
+        ability_mult *= 0.8
+    elif defender.has_ability('snow-cloak') and battlefield.weather == gs.HAIL:
+        ability_mult *= 0.8
+    elif defender.has_ability('compound-eyes'):
+        ability_mult *= 1.3
+    elif defender.has_ability('hustle') and move_data.category == gs.PHYSICAL:
+        ability_mult *= 0.8
+    elif defender.has_ability('tangled-feet') and defender.v_status[gs.CONFUSED]:
+        ability_mult *= 0.5
+    return ability_mult
 
 def pre_move_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, move_data: Move):
     if attacker.has_ability('serene-grace') and move_data.ef_chance:
@@ -125,3 +236,15 @@ def _forecast_check(poke: pk.Pokemon, battle: bt.Battle, battlefield: bf.Battlef
         else:
             poke.types = ('normal', None)
         battle._add_text(poke.nickname + ' transformed into the ' + poke.types[0].upper() + ' type!')
+
+def _rand_max_power(poke: pk.Pokemon) -> Move:
+    p_max, p_moves = None, []
+    for move in poke.moves:
+        if not move.power and not p_max:
+            p_moves.append(move)
+        elif (move.power and not p_max) or move.power > p_max:
+            p_max = move.power
+            p_moves = [move]
+        elif move.power == p_max:
+            p_moves.append(move)
+    return p_moves[random.randrange(len(p_moves))]

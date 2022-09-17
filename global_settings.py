@@ -3,6 +3,7 @@ POKEMON_STATS_PATH = './csv/pokemon_stats.csv'
 NATURES_PATH = './csv/natures.csv'
 MOVES_PATH = './csv/move_list.csv'
 TYPE_EF_PATH = './csv/type_effectiveness.csv'
+ABILITIES_PATH = './csv/abilities.csv'
 
 # Stat Ranges
 LEVEL_MIN, LEVEL_MAX = 1, 100

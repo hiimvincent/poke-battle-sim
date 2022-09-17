@@ -85,7 +85,9 @@ class Pokemon:
             self.moves[i].pos = i
         self.o_moves = self.moves
 
-        self.o_ability = ability
+        if ability and (not isinstance(ability, str) or not PokeSim.check_ability(ability.lower())):
+            raise Exception
+        self.o_ability = ability.lower() if ability else None
         self.ability = self.o_ability
         if nickname and not isinstance(nickname, str):
             raise Exception
@@ -126,19 +128,15 @@ class Pokemon:
             stats_actual.append((((2 * self.base[s] + self.ivs[s] + self.evs[s] // 4) * self.level) // 100 + 5) * nature_stat_changes[s])
         self.stats_actual = [int(stat) for stat in stats_actual]
 
-    def calculate_stats_effective(self):
-        for s in range(1, 6):
-            self.stats_effective[s] = max(1, int(self.stats_actual[s] * max(2, 2 + self.stat_stages[s]) / max(2, 2 - self.stat_stages[s])))
-        if self.has_ability('swift-swim') and self.cur_battle.battlefield.weather == gs.RAIN:
-            self.stats_effective[gs.SPD] *= 2
-        elif self.has_ability('chlorophyll') and self.cur_battle.battlefield.weather == gs.HARSH_SUNLIGHT:
-            self.stats_effective[gs.SPD] *= 2
-        elif self.has_ability('huge-power') or self.has_ability('pure-power'):
-            self.stats_effective[gs.ATK] *= 2
-        elif self.has_ability('hustle') or (self.has_ability('guts') and self.nv_status):
-            self.stats_effective[gs.ATK] = int(self.stats_effective[gs.ATK] * 1.5)
-        elif self.has_ability('marvel-scale') and self.nv_status:
-            self.stats_effective[gs.DEF] = int(self.stats_effective[gs.DEF] * 1.5)
+    def calculate_stats_effective(self, ignore_stats: bool = False):
+        if not ignore_stats:
+            for s in range(1, 6):
+                self.stats_effective[s] = max(1, int(self.stats_actual[s] * max(2, 2 + self.stat_stages[s]) / max(2, 2 - self.stat_stages[s])))
+        else:
+            self.stats_effective = [s for s in self.stats_actual]
+        pa.stat_calc_abilities(self)
+        if self.nv_status == gs.PARALYZED and not self.has_ability('quick-feet'):
+            self.stats_effective[gs.SPD] //= 4
 
     def reset_stats(self):
         self.v_status = [0 for _ in range(gs.V_STATUS_NUM)]
@@ -161,6 +159,7 @@ class Pokemon:
         self.charged = 0
         self.taunt = 0
         self.inv_count = 0
+        self.ability_count = 0
         self.last_damage_taken = 0
         self.last_move = None
         self.last_successful_move = None
@@ -253,6 +252,8 @@ class Pokemon:
             self.cur_hp = 0
             self.is_alive = False
             self.reset_stats()
+            self.cur_battle._faint_check()
+            self._aftermath_check()
             return self.last_damage_taken
         if self.rage and self.stat_stages[gs.ATK] < 6:
             self.stat_stages[gs.ATK] += 1
@@ -376,6 +377,9 @@ class Pokemon:
 
     def give_ability(self, ability: str):
         self.ability = ability
+        self.ability_activated = False
+        self.ability_suppressed = False
+        self.ability_count = 0
         pa.selection_abilities(self, self.cur_battle.battlefield, self.cur_battle)
 
     def battle_end_reset(self):
@@ -443,6 +447,12 @@ class Pokemon:
         self.cur_battle._add_text(self.nickname + ' took down ' + enemy_poke.nickname + ' down with it!')
         enemy_poke.faint()
         return True
+
+    def _aftermath_check(self):
+        if self.has_ability('aftermath') and enemy_move in gd.CONTACT_CHECK and self.enemy.current_poke.is_alive \
+                and not self.enemy.current_poke.has_ability('damp'):
+            self.enemy.current_poke.take_damage(max(1, self.enemy.current_poke.max_hp // 4))
+            self.cur_battle._add_text(self.enemy.current_poke.nickname + ' was hurt by ' + self.nickname + '\'s Aftermath!')
 
     def give_item(self, item: str):
         self.item = item

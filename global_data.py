@@ -55,6 +55,11 @@ SOUNDPROOF_CHECK = {'bug-buzz', 'chatter', 'grass-whistle', 'growl', 'heal-bell'
 
 FREEZE_CHECK = {'flame-wheel', 'sacred-fire', 'flare-blitz'}
 
+PUNCH_CHECK = {'bullet-punch', 'comet-punch', 'dizzy-punch', 'drain-punch', 'dynamic-punch', 'fire-punch', 'focus-punch',
+               'hammer-arm', 'ice-punch', 'match-punch', 'mega-punch', 'meteor-mash', 'shadow-punch', 'sky-uppercut', 'thunder-punch'}
+
+RECOIL_CHECK = ['brave-bird', 'double-edge', 'flare-blitz', 'head-smash', 'high-jump-kick', 'jump-kick', 'submission', 'take-down', 'volt-tackle', 'wood-hammer']
+
 BERRY_DATA = {'cheri-berry': ('fire', 60), 'chesto-berry': ('water', 60), 'pecha-berry': ('electric', 60), 'rawst-berry': ('grass', 60),
               'aspear-berry': ('ice', 60), 'leppa-berry': ('fighting', 60), 'oran-berry': ('poison', 60), 'persim-berry': ('ground', 60),
               'lum-berry': ('flying', 60), 'sitrus-berry': ('psychic', 60), 'figy-berry': ('bug', 60), 'wiki-berry': ('rock', 60),

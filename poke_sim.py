@@ -10,6 +10,7 @@ class PokeSim:
     _move_name_to_id = {}
     _type_effectives = []
     _type_to_id = {}
+    _abilities = {}
 
     @classmethod
     def start(cls):
@@ -48,6 +49,12 @@ class PokeSim:
                 row = [float(row[i]) for i in range(1, len(row))]
                 cls._type_effectives.append(row)
                 line_count += 1
+
+        with open(gs.ABILITIES_PATH) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            next(csv_reader)
+            for row in csv_reader:
+                cls._abilities[row[1]] = (row[0], row[2])
 
     @classmethod
     def _convert_name_to_id(cls, name: str) -> int:
@@ -111,3 +118,7 @@ class PokeSim:
     @classmethod
     def get_rand_move(cls) -> list:
         return cls._move_list[random.randrange(gs.COMPLETED_MOVES + 1)]
+
+    @classmethod
+    def check_ability(cls, ability: str) -> bool:
+        return ability in cls._abilities

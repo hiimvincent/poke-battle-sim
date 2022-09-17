@@ -143,13 +143,15 @@ class Battle:
             if t1_move_data.prio != t2_move_data.prio:
                 t1_first = t1_move_data.prio > t2_move_data.prio
             else:
-                spd_dif = self.t1.current_poke.stats_effective[5] - self.t2.current_poke.stats_effective[5]
+                spd_dif = self.t1.current_poke.stats_effective[gs.SPD] - self.t2.current_poke.stats_effective[gs.SPD]
                 if spd_dif == 0:
                     t1_first = random.randrange(2) < 1
                 else:
                     t1_first = spd_dif > 0
                     if self.battlefield.trick_room_count:
                         t1_first = not t1_first
+                    if self._stall_check():
+                        t1_first = self._calculate_stall()
 
         self._add_text("Turn " + str(self.turn_count) + ":")
 
@@ -226,8 +228,7 @@ class Battle:
         elif a_move[gs.ACTION_TYPE] == 'item':
             process_item()
         elif self._process_pp(attacker.current_poke, a_move_data):
-            pm.process_move(attacker.current_poke, defender.current_poke, self.battlefield, self,
-                            a_move_data.get_tcopy(), not defender.has_moved)
+            pm.process_move(attacker.current_poke, defender.current_poke, self.battlefield, self, a_move_data.get_tcopy(), not defender.has_moved)
             if self.last_move_next:
                 self.last_move, self.last_move_next = self.last_move_next, None
             attacker.current_poke.update_last_moves()
@@ -309,24 +310,29 @@ class Battle:
         if not poke.is_alive:
             return
 
-        if self.battlefield.weather == gs.SANDSTORM and poke.is_alive and not poke.has_ability('sand-veil') and \
-                not poke.in_ground and not poke.in_water and not any(type in poke.types for type in ['ground', 'steel', 'rock']):
-            self._add_text(poke.nickname + ' is buffeted by the Sandstorm!')
-            poke.take_damage(max(1, poke.max_hp // 16))
-        if self.battlefield.weather == gs.HAIL and poke.is_alive:
-            if not poke.in_ground and not poke.in_water and not any(type in poke.types for type in ['ice']):
-                self._add_text(poke.nickname + ' is buffeted by the Hail!')
-                poke.take_damage(max(1, poke.max_hp // 16))
-        if poke.nv_status and poke.has_ability('shed-skin') and random.randrange(10) < 3:
+        if poke.nv_status and ((poke.has_ability('shed-skin') and random.randrange(10) < 3) \
+                or (poke.has_ability('hydration') and self.battlefield.weather == gs.RAIN)):
             pm._cure_nv_status(poke.nv_status, poke, battle)
         if poke.nv_status == gs.BURNED and poke.is_alive:
             self._add_text(poke.nickname + ' was hurt by its burn!')
-            poke.take_damage(max(1, poke.max_hp // 8))
+            if not poke.has_ability('heatproof'):
+                poke.take_damage(max(1, poke.max_hp // 8))
+            else:
+                poke.take_damage(max(1, poke.max_hp // 16))
         if poke.nv_status == gs.POISONED and poke.is_alive:
-            self._add_text(poke.nickname + ' was hurt by poison!')
-            poke.take_damage(max(1, poke.max_hp // 8))
+            if not poke.has_ability('poison-heal'):
+                self._add_text(poke.nickname + ' was hurt by poison!')
+                poke.take_damage(max(1, poke.max_hp // 8))
+            else:
+                self._add_text(poke.nickname + ' was healed by its Poison Heal!')
+                poke.heal(max(1, poke.max_hp // 8))
         if poke.nv_status == gs.BADLY_POISONED and poke.is_alive:
-            poke.take_damage(max(1, poke.max_hp * poke.nv_counter // 16))
+            if not poke.has_ability('poison-heal'):
+                self._add_text(poke.nickname + ' was hurt by poison!')
+                poke.take_damage(max(1, poke.max_hp * poke.nv_counter // 16))
+            else:
+                self._add_text(poke.nickname + ' was healed by its Poison Heal!')
+                poke.heal(max(1, poke.max_hp // 8))
             poke.nv_counter += 1
         if poke.v_status[gs.BINDING_COUNT] and poke.is_alive:
             if poke.binding_poke is other.current_poke and poke.binding_type:
@@ -358,6 +364,29 @@ class Battle:
         if poke.v_status[gs.CURSE] and poke.is_alive:
             self._add_text(poke.nickname + ' is afflicted by the curse!')
             poke.take_damage(max(1, poke.max_hp // 4))
+        if poke.has_ability('solar-power'):
+            self._add_text(poke.nickname + 'was hurt by its Solar Power!')
+            poke.take_damage(max(1, poke.max_hp // 8))
+        if not poke.is_alive:
+            return
+
+        if self.battlefield.weather == gs.SANDSTORM and poke.is_alive and not poke.has_ability('sand-veil') and \
+                not poke.in_ground and not poke.in_water and not any(type in poke.types for type in ['ground', 'steel', 'rock']):
+            self._add_text(poke.nickname + ' is buffeted by the Sandstorm!')
+            poke.take_damage(max(1, poke.max_hp // 16))
+        if self.battlefield.weather == gs.HAIL and poke.is_alive and not poke.has_ability('ice-body'):
+            if not poke.in_ground and not poke.in_water and not any(type in poke.types for type in ['ice']):
+                self._add_text(poke.nickname + ' is buffeted by the Hail!')
+                poke.take_damage(max(1, poke.max_hp // 16))
+        if self.battlefield.weather == gs.HAIL and poke.is_alive and poke.has_ability('ice-body'):
+            self._add_text(poke.nickname + ' was healed by its Ice Body!')
+            poke.heal(max(1, poke.max_hp // 16), text_skip=True)
+        if self.battlefield.weather == gs.RAIN and poke.is_alive and poke.has_ability('dry-skin'):
+            self._add_text(poke.nickname + ' was healed by its Dry Skin!')
+            poke.heal(max(1, poke.max_hp // 8), text_skip=True)
+        if self.battlefield.weather == gs.HARSH_SUNLIGHT and poke.is_alive and poke.has_ability('dry-skin'):
+            self._add_text(poke.nickname + ' was hurt by its Dry Skin!')
+            poke.take_damage(max(1, poke.max_hp // 8))
 
         if not poke.is_alive:
             return
@@ -507,7 +536,7 @@ class Battle:
         self.t2.in_battle = False
 
     def _pursuit_check(self, t1_move: tuple[str, str], t2_move: tuple[str, str], t1_move_data: Move, t2_move_data: Move, t1_first: bool) -> bool:
-        if t1_move == gd.PURSUIT and (t2_move == SWITCH or (t2_move[gs.ACTION_TYPE] == gd.MOVE and t2_move[gs.ACTION_VALUE] in gd.PURSUIT_CHECK and not t1_first)):
+        if t1_move == gd.PURSUIT and (t2_move == gd.SWITCH or (t2_move[gs.ACTION_TYPE] == gd.MOVE and t2_move[gs.ACTION_VALUE] in gd.PURSUIT_CHECK and not t1_first)):
             t1_move_data.cur_pp -= 1
             self._pressure_check(t1.current_poke, t1_move_data)
             t1_move_data = t1_move_data.get_tcopy()
@@ -537,6 +566,17 @@ class Battle:
             self._add_text(self.t1.current_poke.nickname + ' is tightening its focus!')
         if t2_move == gd.FOCUS_PUNCH:
             self._add_text(self.t2.current_poke.nickname + ' is tightening its focus!')
+
+    def _stall_check(self) -> bool:
+        return self.t1.current_poke.has_ability('stall') or self.t2.current_poke.has_ability('stall')
+
+    def _calculate_stall(self) -> bool:
+        if self.t1.current_poke.has_ability('stall') and self.t2.current_poke.has_ability('stall'):
+            if self.t1.current_poke.stats_effective[gs.SPD] != self.t2.current_poke.stats_effective[gs.SPD]:
+                return self.t1.current_poke.stats_effective[gs.SPD] < self.t2.current_poke.stats_effective[gs.SPD]
+            else:
+                return random.randrange(2) < 1
+        return self.t2.current_poke.has_ability('stall')
 
     def _sucker_punch_check(self, t1_move_data: Move, t2_move_data: Move):
         if not t1_move_data or not t2_move_data:
