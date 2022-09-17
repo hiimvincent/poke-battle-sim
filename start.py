@@ -30,11 +30,13 @@ pikachu1 = pk.Pokemon(name_or_id="pikachu", level=100, ivs=[31,31,0,10,21,30], e
 
 pikachu2 = pk.Pokemon(name_or_id="pikachu", level=100, ivs=[31,31,0,10,21,30], evs=[255,0,100,5,5,10],
                      moves=m1, nature="timid", nickname='pikachu2', gender='male')
+charizard3 = pk.Pokemon("charizard", level=100, stats_actual=[200,200,200,200,200,200], moves=m1, nickname='charizard3', gender='female')
+charizard4 = pk.Pokemon("charizard", level=100, stats_actual=[200,200,200,200,200,200], moves=m1, nickname='charizard4', gender='female')
 
 charizard1 = pk.Pokemon("charizard", level=100, stats_actual=[200,200,200,200,200,200], moves=m2, nickname='charizard1', gender='female')
 charizard2 = pk.Pokemon("charizard", level=100, stats_actual=[200,200,200,200,200,200], moves=m2, nickname='charizard2', gender='female')
 
-me = tr.Trainer("player", [pikachu1, pikachu2])
+me = tr.Trainer("player", [pikachu1, pikachu2, charizard3, charizard4])
 you = tr.Trainer("enemy", [charizard1, charizard2])
 battle = bt.Battle(me, you)
 battle.start()

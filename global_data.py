@@ -15,8 +15,8 @@ PROTECT_TARGETS = [8, 9, 10, 11]
 
 PURSUIT_CHECK = {'baton-pass', 'teleport', 'u-turn', 'volt-switch', 'parting-shot'}
 
-HP_TYPES = {'fighting', 'flying', 'poison', 'ground', 'rock', 'bug', 'ghost', 'steel', 'fire', 'water', 'grass',
-            'electric', 'psychic', 'ice', 'dragon', 'dark'}
+HP_TYPES = ['fighting', 'flying', 'poison', 'ground', 'rock', 'bug', 'ghost', 'steel', 'fire', 'water', 'grass',
+            'electric', 'psychic', 'ice', 'dragon', 'dark']
 
 GROUNDED_CHECK = {'bounce', 'fly', 'high-jump-kick', 'jump-kick', 'magnet-rise', 'splash'}
 

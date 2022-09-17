@@ -169,7 +169,7 @@ class Battle:
                 self._half_turn(self.t1, self.t2, t1_move, t1_move_data)
             self._faint_check()
             if self.t2.current_poke.is_alive:
-                #trainer 2 turn
+                # trainer 2 turn
                 self._half_turn(self.t2, self.t1, t2_move, t2_move_data)
             self._faint_check()
         else:
@@ -182,9 +182,11 @@ class Battle:
                 self._half_turn(self.t1, self.t2, t1_move, t1_move_data)
             self._faint_check()
 
+        if self.winner:
+            return
         self.battlefield.update()
 
-        dif = self.t1.current_poke.stats_actual[gs.SPD] - self.t2.current_poke.stats_actual[gs.SPD]
+        dif = self.t1.current_poke.stats_effective[gs.SPD] - self.t2.current_poke.stats_effective[gs.SPD]
         if dif > 0:
             faster = self.t1
             slower = self.t2
@@ -198,20 +200,16 @@ class Battle:
         if faster.current_poke.is_alive:
             self._post_process_status(faster, slower)
         self._faint_check()
+        if self.winner:
+            return
         if not faster.current_poke.is_alive:
-            faster.num_fainted += 1
-            if faster.num_fainted == len(faster.poke_list):
-                self._victory(slower, faster)
-                return
             self._process_selection(faster)
         if slower.current_poke.is_alive:
             self._post_process_status(slower, faster)
         self._faint_check()
+        if self.winner:
+            return
         if not slower.current_poke.is_alive:
-            slower.num_fainted += 1
-            if slower.num_fainted == len(slower.poke_list):
-                self._victory(faster, slower)
-                return
             self._process_selection(slower)
 
     def get_cur_text(self) -> list:
@@ -223,6 +221,8 @@ class Battle:
         return self.all_text
 
     def _half_turn(self, attacker: tr.Trainer, defender: tr.Trainer, a_move: tuple[str, str], a_move_data: Move = None):
+        if self.winner:
+            return
         if a_move[gs.ACTION_TYPE] == 'other':
             self._process_other(attacker, defender, a_move)
         elif a_move[gs.ACTION_TYPE] == 'item':
@@ -456,8 +456,8 @@ class Battle:
 
     def _victory(self, winner: tr.Trainer, loser: tr.Trainer):
         self._process_end_battle()
-        self.winner = winner
         self._add_text(winner.name + ' has defeated ' + loser.name + '!')
+        self.winner = winner
 
     def _process_other(self, attacker: tr.Trainer, defender: tr.Trainer, a_move: tuple[str, str]):
         if a_move[gs.ACTION_VALUE] == 'recharging':
@@ -520,12 +520,22 @@ class Battle:
         return False
 
     def _faint_check(self):
+        if self.winner:
+            return
         if not self.t1_fainted and not self.t1.current_poke.is_alive:
             self._add_text(self.t1.current_poke.nickname + " fainted!")
             self.t1_fainted = True
+            self.t1.num_fainted += 1
+            if self.t1.num_fainted == len(self.t1.poke_list):
+                self._victory(self.t2, self.t1)
+                return
         if not self.t2_fainted and not self.t2.current_poke.is_alive:
             self._add_text(self.t2.current_poke.nickname + " fainted!")
             self.t2_fainted = True
+            self.t2.num_fainted += 1
+            if self.t2.num_fainted == len(self.t2.poke_list):
+                self._victory(self.t1, self.t2)
+                return
 
     def _process_end_battle(self):
         for poke in self.t1.poke_list:
@@ -591,8 +601,9 @@ class Battle:
             move_data.cur_pp -= 1
 
     def _add_text(self, txt: str):
-        self.all_text.append(txt)
-        self.cur_text.append(txt)
+        if not self.winner:
+            self.all_text.append(txt)
+            self.cur_text.append(txt)
 
     def _pop_text(self):
         self.all_text.pop()
