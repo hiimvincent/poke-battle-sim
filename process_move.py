@@ -2072,7 +2072,9 @@ def _badly_poison(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False
             _poison(recipient.enemy.current_poke)
 
 def _cure_nv_status(status: int, recipient: pk.Pokemon, battle: bt.Battle):
-    if not recipient.is_alive or recipient.nv_status != status:
+    if not recipient.is_alive or not status:
+        return
+    if recipient.nv_status != status and not (status == gs.POISONED and recipient.nv_status == gs.BADLY_POISONED):
         return
     if status == gs.BURNED:
         text = '\'s burn was healed!'
@@ -2086,6 +2088,16 @@ def _cure_nv_status(status: int, recipient: pk.Pokemon, battle: bt.Battle):
         text = ' woke up!'
     recipient.nv_status = 0
     battle._add_text(recipient.nickname + text)
+
+def _cure_confusion(recipient: pk.Pokemon, battle: bt.Battle):
+    if recipient.is_alive and recipient.v_status[gs.CONFUSED]:
+        recipient.v_status[gs.CONFUSED] = 0
+        battle._add_text(recipient.nickname + ' snapped out of its confusion!')
+
+def _cure_infatuation(recipient: pk.Pokemon, battle: bt.Battle):
+    if recipient.is_alive and recipient.infatuation:
+        recipient.infatuation = None
+        battle._add_text(recipient.nickname + ' got over its infatuation!')
 
 def _magic_coat_check(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool) -> bool:
     if defender.is_alive and defender.magic_coat and move_data.name in gd.MAGIC_COAT_CHECK:

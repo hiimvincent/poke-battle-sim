@@ -1,0 +1,537 @@
+item_id,item_name,bag_pocket
+0,none,unknown pocket
+1,master-ball,poke balls pocket
+2,ultra-ball,poke balls pocket
+3,great-ball,poke balls pocket
+4,poke-ball,poke balls pocket
+5,safari-ball,poke balls pocket
+6,net-ball,poke balls pocket
+7,dive-ball,poke balls pocket
+8,nest-ball,poke balls pocket
+9,repeat-ball,poke balls pocket
+10,timer-ball,poke balls pocket
+11,luxury-ball,poke balls pocket
+12,premier-ball,poke balls pocket
+13,dusk-ball,poke balls pocket
+14,heal-ball,poke balls pocket
+15,quick-ball,poke balls pocket
+16,cherish-ball,poke balls pocket
+17,potion,medicine pocket
+18,antidote,medicine pocket
+19,burn-heal,medicine pocket
+20,ice-heal,medicine pocket
+21,awakening,medicine pocket
+22,parlyz-heal,medicine pocket
+23,full-restore,medicine pocket
+24,max-potion,medicine pocket
+25,hyper-potion,medicine pocket
+26,super-potion,medicine pocket
+27,full-heal,medicine pocket
+28,revive,medicine pocket
+29,max-revive,medicine pocket
+30,fresh-water,medicine pocket
+31,soda-pop,medicine pocket
+32,lemonade,medicine pocket
+33,moomoo-milk,medicine pocket
+34,energypowder,medicine pocket
+35,energy-root,medicine pocket
+36,heal-powder,medicine pocket
+37,revival-herb,medicine pocket
+38,ether,medicine pocket
+39,max-ether,medicine pocket
+40,elixir,medicine pocket
+41,max-elixir,medicine pocket
+42,lava-cookie,medicine pocket
+43,berry-juice,medicine pocket
+44,sacred-ash,medicine pocket
+45,hp-up,medicine pocket
+46,protein,medicine pocket
+47,iron,medicine pocket
+48,carbos,medicine pocket
+49,calcium,medicine pocket
+50,rare-candy,medicine pocket
+51,pp-up,medicine pocket
+52,zinc,medicine pocket
+53,pp-max,medicine pocket
+54,old-gateau,medicine pocket
+55,guard-spec.,battle items pocket
+56,dire-hit,battle items pocket
+57,x-attack,battle items pocket
+58,x-defense,battle items pocket
+59,x-speed,battle items pocket
+60,x-accuracy,battle items pocket
+61,x-special,battle items pocket
+62,x-sp.-def,battle items pocket
+63,poke-doll,battle items pocket
+64,fluffy-tail,battle items pocket
+65,blue-flute,battle items pocket
+66,yellow-flute,battle items pocket
+67,red-flute,battle items pocket
+68,black-flute,items pocket
+69,white-flute,items pocket
+70,shoal-salt,items pocket
+71,shoal-shell,items pocket
+72,red-shard,items pocket
+73,blue-shard,items pocket
+74,yellow-shard,items pocket
+75,green-shard,items pocket
+76,super-repel,items pocket
+77,max-repel,items pocket
+78,escape-rope,items pocket
+79,repel,items pocket
+80,sun-stone,items pocket
+81,moon-stone,items pocket
+82,fire-stone,items pocket
+83,thunderstone,items pocket
+84,water-stone,items pocket
+85,leaf-stone,items pocket
+86,tinymushroom,items pocket
+87,big-mushroom,items pocket
+88,pearl,items pocket
+89,big-pearl,items pocket
+90,stardust,items pocket
+91,star-piece,items pocket
+92,nugget,items pocket
+93,heart-scale,items pocket
+94,honey,items pocket
+95,growth-mulch,items pocket
+96,damp-mulch,items pocket
+97,stable-mulch,items pocket
+98,gooey-mulch,items pocket
+99,root-fossil,items pocket
+100,claw-fossil,items pocket
+101,helix-fossil,items pocket
+102,dome-fossil,items pocket
+103,old-amber,items pocket
+104,armor-fossil,items pocket
+105,skull-fossil,items pocket
+106,rare-bone,items pocket
+107,shiny-stone,items pocket
+108,dusk-stone,items pocket
+109,dawn-stone,items pocket
+110,oval-stone,items pocket
+111,odd-keystone,items pocket
+112,griseous-orb,items pocket
+113,unknown,unknown pocket
+114,unknown,unknown pocket
+115,unknown,unknown pocket
+116,unknown,unknown pocket
+117,unknown,unknown pocket
+118,unknown,unknown pocket
+119,unknown,unknown pocket
+120,unknown,unknown pocket
+121,unknown,unknown pocket
+122,unknown,unknown pocket
+123,unknown,unknown pocket
+124,unknown,unknown pocket
+125,unknown,unknown pocket
+126,unknown,unknown pocket
+127,unknown,unknown pocket
+128,unknown,unknown pocket
+129,unknown,unknown pocket
+130,unknown,unknown pocket
+131,unknown,unknown pocket
+132,unknown,unknown pocket
+133,unknown,unknown pocket
+134,unknown,unknown pocket
+135,adamant-orb,items pocket
+136,lustrous-orb,items pocket
+137,grass-mail,mail pocket
+138,flame-mail,mail pocket
+139,bubble-mail,mail pocket
+140,bloom-mail,mail pocket
+141,tunnel-mail,mail pocket
+142,steel-mail,mail pocket
+143,heart-mail,mail pocket
+144,snow-mail,mail pocket
+145,space-mail,mail pocket
+146,air-mail,mail pocket
+147,mosaic-mail,mail pocket
+148,brick-mail,mail pocket
+149,cheri-berry,berries pocket
+150,chesto-berry,berries pocket
+151,pecha-berry,berries pocket
+152,rawst-berry,berries pocket
+153,aspear-berry,berries pocket
+154,leppa-berry,berries pocket
+155,oran-berry,berries pocket
+156,persim-berry,berries pocket
+157,lum-berry,berries pocket
+158,sitrus-berry,berries pocket
+159,figy-berry,berries pocket
+160,wiki-berry,berries pocket
+161,mago-berry,berries pocket
+162,aguav-berry,berries pocket
+163,iapapa-berry,berries pocket
+164,razz-berry,berries pocket
+165,bluk-berry,berries pocket
+166,nanab-berry,berries pocket
+167,wepear-berry,berries pocket
+168,pinap-berry,berries pocket
+169,pomeg-berry,berries pocket
+170,kelpsy-berry,berries pocket
+171,qualot-berry,berries pocket
+172,hondew-berry,berries pocket
+173,grepa-berry,berries pocket
+174,tamato-berry,berries pocket
+175,cornn-berry,berries pocket
+176,magost-berry,berries pocket
+177,rabuta-berry,berries pocket
+178,nomel-berry,berries pocket
+179,spelon-berry,berries pocket
+180,pamtre-berry,berries pocket
+181,watmel-berry,berries pocket
+182,durin-berry,berries pocket
+183,belue-berry,berries pocket
+184,occa-berry,berries pocket
+185,passho-berry,berries pocket
+186,wacan-berry,berries pocket
+187,rindo-berry,berries pocket
+188,yache-berry,berries pocket
+189,chople-berry,berries pocket
+190,kebia-berry,berries pocket
+191,shuca-berry,berries pocket
+192,coba-berry,berries pocket
+193,payapa-berry,berries pocket
+194,tanga-berry,berries pocket
+195,charti-berry,berries pocket
+196,kasib-berry,berries pocket
+197,haban-berry,berries pocket
+198,colbur-berry,berries pocket
+199,babiri-berry,berries pocket
+200,chilan-berry,berries pocket
+201,liechi-berry,berries pocket
+202,ganlon-berry,berries pocket
+203,salac-berry,berries pocket
+204,petaya-berry,berries pocket
+205,apicot-berry,berries pocket
+206,lansat-berry,berries pocket
+207,starf-berry,berries pocket
+208,enigma-berry,berries pocket
+209,micle-berry,berries pocket
+210,custap-berry,berries pocket
+211,jaboca-berry,berries pocket
+212,rowap-berry,berries pocket
+213,brightpowder,items pocket
+214,white-herb,items pocket
+215,macho-brace,items pocket
+216,exp.-share,items pocket
+217,quick-claw,items pocket
+218,soothe-bell,items pocket
+219,mental-herb,items pocket
+220,choice-band,items pocket
+221,king's-rock,items pocket
+222,silverpowder,items pocket
+223,amulet-coin,items pocket
+224,cleanse-tag,items pocket
+225,soul-dew,items pocket
+226,deepseatooth,items pocket
+227,deepseascale,items pocket
+228,smoke-ball,items pocket
+229,everstone,items pocket
+230,focus-band,items pocket
+231,lucky-egg,items pocket
+232,scope-lens,items pocket
+233,metal-coat,items pocket
+234,leftovers,items pocket
+235,dragon-scale,items pocket
+236,light-ball,items pocket
+237,soft-sand,items pocket
+238,hard-stone,items pocket
+239,miracle-seed,items pocket
+240,blackglasses,items pocket
+241,black-belt,items pocket
+242,magnet,items pocket
+243,mystic-water,items pocket
+244,sharp-beak,items pocket
+245,poison-barb,items pocket
+246,nevermeltice,items pocket
+247,spell-tag,items pocket
+248,twistedspoon,items pocket
+249,charcoal,items pocket
+250,dragon-fang,items pocket
+251,silk-scarf,items pocket
+252,up-grade,items pocket
+253,shell-bell,items pocket
+254,sea-incense,items pocket
+255,lax-incense,items pocket
+256,lucky-punch,items pocket
+257,metal-powder,items pocket
+258,thick-club,items pocket
+259,stick,items pocket
+260,red-scarf,items pocket
+261,blue-scarf,items pocket
+262,pink-scarf,items pocket
+263,green-scarf,items pocket
+264,yellow-scarf,items pocket
+265,wide-lens,items pocket
+266,muscle-band,items pocket
+267,wise-glasses,items pocket
+268,expert-belt,items pocket
+269,light-clay,items pocket
+270,life-orb,items pocket
+271,power-herb,items pocket
+272,toxic-orb,items pocket
+273,flame-orb,items pocket
+274,quick-powder,items pocket
+275,focus-sash,items pocket
+276,zoom-lens,items pocket
+277,metronome,items pocket
+278,iron-ball,items pocket
+279,lagging-tail,items pocket
+280,destiny-knot,items pocket
+281,black-sludge,items pocket
+282,icy-rock,items pocket
+283,smooth-rock,items pocket
+284,heat-rock,items pocket
+285,damp-rock,items pocket
+286,grip-claw,items pocket
+287,choice-scarf,items pocket
+288,sticky-barb,items pocket
+289,power-bracer,items pocket
+290,power-belt,items pocket
+291,power-lens,items pocket
+292,power-band,items pocket
+293,power-anklet,items pocket
+294,power-weight,items pocket
+295,shed-shell,items pocket
+296,big-root,items pocket
+297,choice-specs,items pocket
+298,flame-plate,items pocket
+299,splash-plate,items pocket
+300,zap-plate,items pocket
+301,meadow-plate,items pocket
+302,icicle-plate,items pocket
+303,fist-plate,items pocket
+304,toxic-plate,items pocket
+305,earth-plate,items pocket
+306,sky-plate,items pocket
+307,mind-plate,items pocket
+308,insect-plate,items pocket
+309,stone-plate,items pocket
+310,spooky-plate,items pocket
+311,draco-plate,items pocket
+312,dread-plate,items pocket
+313,iron-plate,items pocket
+314,odd-incense,items pocket
+315,rock-incense,items pocket
+316,full-incense,items pocket
+317,wave-incense,items pocket
+318,rose-incense,items pocket
+319,luck-incense,items pocket
+320,pure-incense,items pocket
+321,protector,items pocket
+322,electirizer,items pocket
+323,magmarizer,items pocket
+324,dubious-disc,items pocket
+325,reaper-cloth,items pocket
+326,razor-claw,items pocket
+327,razor-fang,items pocket
+328,tm01,tms and hms pocket
+329,tm02,tms and hms pocket
+330,tm03,tms and hms pocket
+331,tm04,tms and hms pocket
+332,tm05,tms and hms pocket
+333,tm06,tms and hms pocket
+334,tm07,tms and hms pocket
+335,tm08,tms and hms pocket
+336,tm09,tms and hms pocket
+337,tm10,tms and hms pocket
+338,tm11,tms and hms pocket
+339,tm12,tms and hms pocket
+340,tm13,tms and hms pocket
+341,tm14,tms and hms pocket
+342,tm15,tms and hms pocket
+343,tm16,tms and hms pocket
+344,tm17,tms and hms pocket
+345,tm18,tms and hms pocket
+346,tm19,tms and hms pocket
+347,tm20,tms and hms pocket
+348,tm21,tms and hms pocket
+349,tm22,tms and hms pocket
+350,tm23,tms and hms pocket
+351,tm24,tms and hms pocket
+352,tm25,tms and hms pocket
+353,tm26,tms and hms pocket
+354,tm27,tms and hms pocket
+355,tm28,tms and hms pocket
+356,tm29,tms and hms pocket
+357,tm30,tms and hms pocket
+358,tm31,tms and hms pocket
+359,tm32,tms and hms pocket
+360,tm33,tms and hms pocket
+361,tm34,tms and hms pocket
+362,tm35,tms and hms pocket
+363,tm36,tms and hms pocket
+364,tm37,tms and hms pocket
+365,tm38,tms and hms pocket
+366,tm39,tms and hms pocket
+367,tm40,tms and hms pocket
+368,tm41,tms and hms pocket
+369,tm42,tms and hms pocket
+370,tm43,tms and hms pocket
+371,tm44,tms and hms pocket
+372,tm45,tms and hms pocket
+373,tm46,tms and hms pocket
+374,tm47,tms and hms pocket
+375,tm48,tms and hms pocket
+376,tm49,tms and hms pocket
+377,tm50,tms and hms pocket
+378,tm51,tms and hms pocket
+379,tm52,tms and hms pocket
+380,tm53,tms and hms pocket
+381,tm54,tms and hms pocket
+382,tm55,tms and hms pocket
+383,tm56,tms and hms pocket
+384,tm57,tms and hms pocket
+385,tm58,tms and hms pocket
+386,tm59,tms and hms pocket
+387,tm60,tms and hms pocket
+388,tm61,tms and hms pocket
+389,tm62,tms and hms pocket
+390,tm63,tms and hms pocket
+391,tm64,tms and hms pocket
+392,tm65,tms and hms pocket
+393,tm66,tms and hms pocket
+394,tm67,tms and hms pocket
+395,tm68,tms and hms pocket
+396,tm69,tms and hms pocket
+397,tm70,tms and hms pocket
+398,tm71,tms and hms pocket
+399,tm72,tms and hms pocket
+400,tm73,tms and hms pocket
+401,tm74,tms and hms pocket
+402,tm75,tms and hms pocket
+403,tm76,tms and hms pocket
+404,tm77,tms and hms pocket
+405,tm78,tms and hms pocket
+406,tm79,tms and hms pocket
+407,tm80,tms and hms pocket
+408,tm81,tms and hms pocket
+409,tm82,tms and hms pocket
+410,tm83,tms and hms pocket
+411,tm84,tms and hms pocket
+412,tm85,tms and hms pocket
+413,tm86,tms and hms pocket
+414,tm87,tms and hms pocket
+415,tm88,tms and hms pocket
+416,tm89,tms and hms pocket
+417,tm90,tms and hms pocket
+418,tm91,tms and hms pocket
+419,tm92,tms and hms pocket
+420,hm01,tms and hms pocket
+421,hm02,tms and hms pocket
+422,hm03,tms and hms pocket
+423,hm04,tms and hms pocket
+424,hm05,tms and hms pocket
+425,hm06,tms and hms pocket
+426,hm07,tms and hms pocket
+427,hm08,tms and hms pocket
+428,explorer-kit,key items pocket
+429,loot-sack,key items pocket
+430,rule-book,key items pocket
+431,poke-radar,key items pocket
+432,point-card,key items pocket
+433,journal,key items pocket
+434,seal-case,key items pocket
+435,fashion-case,key items pocket
+436,seal-bag,key items pocket
+437,pal-pad,key items pocket
+438,works-key,key items pocket
+439,old-charm,key items pocket
+440,galactic-key,key items pocket
+441,red-chain,key items pocket
+442,town-map,key items pocket
+443,vs.-seeker,key items pocket
+444,coin-case,key items pocket
+445,old-rod,key items pocket
+446,good-rod,key items pocket
+447,super-rod,key items pocket
+448,sprayduck,key items pocket
+449,poffin-case,key items pocket
+450,bicycle,key items pocket
+451,suite-key,key items pocket
+452,oak's-letter,key items pocket
+453,lunar-wing,key items pocket
+454,member-card,key items pocket
+455,azure-flute,key items pocket
+456,s.s.-ticket,key items pocket
+457,contest-pass,key items pocket
+458,magma-stone,key items pocket
+459,parcel,key items pocket
+460,coupon-1,key items pocket
+461,coupon-2,key items pocket
+462,coupon-3,key items pocket
+463,storage-key,key items pocket
+464,secretpotion,key items pocket
+465,vs.-recorder,key items pocket
+466,gracidea,key items pocket
+467,secret-key,key items pocket
+468,apricorn-box,key items pocket
+469,unown-report,key items pocket
+470,berry-pots,key items pocket
+471,dowsing-mchn,key items pocket
+472,blue-card,key items pocket
+473,slowpoketail,key items pocket
+474,clear-bell,key items pocket
+475,card-key,key items pocket
+476,basement-key,key items pocket
+477,squirtbottle,key items pocket
+478,red-scale,key items pocket
+479,lost-item,key items pocket
+480,pass,key items pocket
+481,machine-part,key items pocket
+482,silver-wing,key items pocket
+483,rainbow-wing,key items pocket
+484,mystery-egg,key items pocket
+485,red-apricorn,items pocket
+486,ylw-apricorn,items pocket
+487,blu-apricorn,items pocket
+488,grn-apricorn,items pocket
+489,pnk-apricorn,items pocket
+490,wht-apricorn,items pocket
+491,blk-apricorn,items pocket
+492,fast-ball,poke balls pocket
+493,level-ball,poke balls pocket
+494,lure-ball,poke balls pocket
+495,heavy-ball,poke balls pocket
+496,love-ball,poke balls pocket
+497,friend-ball,poke balls pocket
+498,moon-ball,poke balls pocket
+499,sport-ball,poke balls pocket
+500,park-ball,poke balls pocket
+501,photo-album,key items pocket
+502,gb-sounds,key items pocket
+503,tidal-bell,key items pocket
+504,ragecandybar,key items pocket
+505,data-card-01,items pocket
+506,data-card-02,items pocket
+507,data-card-03,items pocket
+508,data-card-04,items pocket
+509,data-card-05,items pocket
+510,data-card-06,items pocket
+511,data-card-07,items pocket
+512,data-card-08,items pocket
+513,data-card-09,items pocket
+514,data-card-10,items pocket
+515,data-card-11,items pocket
+516,data-card-12,items pocket
+517,data-card-13,items pocket
+518,data-card-14,items pocket
+519,data-card-15,items pocket
+520,data-card-16,items pocket
+521,data-card-17,items pocket
+522,data-card-18,items pocket
+523,data-card-19,items pocket
+524,data-card-20,items pocket
+525,data-card-21,items pocket
+526,data-card-22,items pocket
+527,data-card-23,items pocket
+528,data-card-24,items pocket
+529,data-card-25,items pocket
+530,data-card-26,items pocket
+531,data-card-27,items pocket
+532,jade-orb,key items pocket
+533,lock-capsule,key items pocket
+534,red-orb,key items pocket
+535,blue-orb,key items pocket

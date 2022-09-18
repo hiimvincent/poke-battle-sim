@@ -35,10 +35,8 @@ def selection_abilities(poke: pk.Pokemon, battlefield: bf.Battlefield, battle: b
     elif poke.has_ability('insomnia') and poke.nv_status == gs.ASLEEP:
         pm._cure_nv_status(gs.ASLEEP, poke, battle)
     elif poke.has_ability('immunity'):
-        if poke.nv_status == gs.POISONED:
+        if poke.nv_status == gs.POISONED or poke.nv_status == gs.BADLY_POISONED:
             pm._cure_nv_status(gs.POISONED, poke, battle)
-        if poke.nv_status == gs.BADLY_POISONED:
-            pm._cure_nv_status(gs.BADLY_POISONED, poke, battle)
     elif (poke.has_ability('cloud-nine') or poke.has_ability('air-lock')) and battlefield.weather != gs.CLEAR:
             battle._add_text('The effects of weather disappeared.')
             battlefield.change_weather(gs.CLEAR)

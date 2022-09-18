@@ -75,8 +75,6 @@ class Pokemon:
             cur_hp = self.stats_actual[gs.HP]
         self.cur_hp = cur_hp
 
-        self.o_item = item
-
         moves_data = PokeSim.get_move_data(moves)
         if not moves_data:
             raise Exception
@@ -89,6 +87,11 @@ class Pokemon:
             raise Exception
         self.o_ability = ability.lower() if ability else None
         self.ability = self.o_ability
+
+        if item and (not isinstance(item, str) or not PokeSim.check_item(item.lower())):
+            raise Exception
+        self.o_item = item.lower() if item else None
+
         if nickname and not isinstance(nickname, str):
             raise Exception
         self.nickname = nickname if nickname else self.name
@@ -387,6 +390,8 @@ class Pokemon:
             self.reset_transform()
         self.reset_stats()
         self.in_battle = False
+        self.cur_battle = None
+        self.enemy = None
 
     def switch_out(self):
         if self.transformed:
@@ -470,3 +475,14 @@ class Pokemon:
             hp_power += 2 ** i * ((self.ivs[i] >> 1) & 1)
         hp_power = (hp_type * 40) // 63 + 30
         return (gd.HP_TYPES[hp_type], hp_power)
+
+    def restore_pp(self, move_name: str, amount: int):
+        for move in self.moves:
+            if move.name == move_name:
+                move.cur_pp = min(move.cur_pp + amount, move.max_pp)
+        self.cur_battle._add_text(self.nickname + '\'s ' + pm._cap_name(move_name) + '\'s pp was restored!')
+
+    def restore_all_pp(self, amount: int):
+        for move in self.moves:
+            move.cur_pp = min(move.cur_pp + amount, move.max_pp)
+        self.cur_battle._add_text(self.nickname + '\'s move\'s pp were restored!')

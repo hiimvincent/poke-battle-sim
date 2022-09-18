@@ -4,6 +4,7 @@ NATURES_PATH = './csv/natures.csv'
 MOVES_PATH = './csv/move_list.csv'
 TYPE_EF_PATH = './csv/type_effectiveness.csv'
 ABILITIES_PATH = './csv/abilities.csv'
+ITEMS_PATH = './csv/items_gen4.csv'
 
 # Stat Ranges
 LEVEL_MIN, LEVEL_MAX = 1, 100
@@ -124,3 +125,5 @@ ACTION_PRIORITY = {
 # TURN_DATA
 ACTION_TYPE = 0
 ACTION_VALUE = 1
+ITEM_POKE_TARGET = 2
+ITEM_MOVE_TARGET = 3

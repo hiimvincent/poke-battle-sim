@@ -1,14 +1,14 @@
 # Specific Move Data
 MOVE = 'move'
-RECHARGING = ('other', 'recharging')
-BIDING = ('other', 'biding')
-RAGE = ('move', 'rage')
-STRUGGLE = ('move', 'struggle')
-PURSUIT = ('move', 'pursuit')
-SWITCH = ('other', 'switch')
-UPROAR = ('move', 'uproar')
-FOCUS_PUNCH = ('move', 'focus-punch')
-ME_FIRST = ('move', 'me-first')
+RECHARGING = ['other', 'recharging']
+BIDING = ['other', 'biding']
+RAGE = ['move', 'rage']
+STRUGGLE = ['move', 'struggle']
+PURSUIT = ['move', 'pursuit']
+SWITCH = ['other', 'switch']
+UPROAR = ['move', 'uproar']
+FOCUS_PUNCH = ['move', 'focus-punch']
+ME_FIRST = ['move', 'me-first']
 
 # Check Data for Moves and Statuses
 PROTECT_TARGETS = [8, 9, 10, 11]
@@ -87,3 +87,5 @@ ABILITY_CHECK = {'stench', 'drizzle', 'speed-boost', 'battle-armor', 'sturdy', '
                  'immunity', 'flash-fire', 'shield-dust', 'own-tempo'}
 
 CONTACT_CHECK = {'pound', 'karate-chop', 'double-slap', 'comet-punch', 'mega-punch', 'fire-punch', 'ice-punch', 'thunder-punch', 'scratch', 'vise-grip', 'guillotine', 'cut', 'wing-attack', 'fly', 'bind', 'slam', 'vine-whip', 'stomp', 'double-kick', 'mega-kick', 'jump-kick', 'rolling-kick', 'headbutt', 'horn-attack', 'fury-attack', 'horn-drill', 'tackle', 'body-slam', 'wrap', 'take-down', 'thrash', 'double-edge', 'bite', 'peck', 'drill-peck', 'submission', 'low-kick', 'counter', 'seismic-toss', 'strength', 'petal-dance', 'dig', 'quick-attack', 'rage', 'bide', 'lick', 'waterfall', 'clamp', 'skull-bash', 'constrict', 'high-jump-kick', 'leech-life', 'dizzy-punch', 'crabhammer', 'fury-swipes', 'hyper-fang', 'super-fang', 'slash', 'struggle', 'triple-kick', 'thief', 'flame-wheel', 'flail', 'reversal', 'mach-punch', 'feint-attack', 'outrage', 'rollout', 'false-swipe', 'spark', 'fury-cutter', 'steel-wing', 'return', 'frustration', 'dynamic-punch', 'megahorn', 'pursuit', 'rapid-spin', 'iron-tail', 'metal-claw', 'vital-throw', 'cross-chop', 'crunch', 'extreme-speed', 'rock-smash', 'fake-out', 'facade', 'focus-punch', 'smelling-salts', 'superpower', 'revenge', 'brick-break', 'knock-off', 'endeavor', 'dive', 'arm-thrust', 'blaze-kick', 'ice-ball', 'needle-arm', 'poison-fang', 'crush-claw', 'meteor-mash', 'astonish', 'shadow-punch', 'sky-uppercut', 'aerial-ace', 'dragon-claw', 'bounce', 'poison-tail', 'covet', 'volt-tackle', 'leaf-blade', 'wake-up-slap', 'hammer-arm', 'gyro-ball', 'pluck', 'u-turn', 'close-combat', 'payback', 'assurance', 'trump-card', 'wring-out', 'punishment', 'last-resort', 'sucker-punch', 'flare-blitz', 'force-palm', 'poison-jab', 'night-slash', 'aqua-tail', 'x-scissor', 'dragon-rush', 'drain-punch', 'brave-bird', 'giga-impact', 'bullet-punch', 'avalanche', 'shadow-claw', 'thunder-fang', 'ice-fang', 'fire-fang', 'shadow-sneak', 'zen-headbutt', 'rock-climb', 'power-whip', 'cross-poison', 'iron-head', 'grass-knot', 'bug-bite', 'wood-hammer', 'aqua-jet', 'head-smash', 'double-hit', 'crush-grip', 'shadow-force'}
+
+USABLE_ITEM_CHECK = {'potion', 'antidote', 'burn-heal', 'ice-heal', 'awakening', 'parlyz-heal', 'full-restore', 'max-potion', 'hyper-potion', 'super-potion', 'full-heal', 'revive', 'max-revive', 'fresh-water', 'soda-pop', 'lemonade', 'moomoo-milk', 'energypowder', 'energy-root', 'heal-powder', 'revival-herb', 'ether', 'max-ether', 'elixir', 'max-elixir', 'old-gateau', 'guard-spec.', 'dire-hit', 'x-attack', 'x-defense', 'x-speed', 'x-accuracy', 'x-special', 'x-sp.-def', 'blue-flute', 'yellow-flute', 'red-flute', 'cheri-berry', 'chesto-berry', 'pecha-berry', 'rawst-berry', 'aspear-berry', 'leppa-berry', 'oran-berry', 'persim-berry', 'lum-berry', 'sitrus-berry'}

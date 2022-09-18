@@ -8,6 +8,7 @@ import process_move as pm
 import global_settings as gs
 import global_data as gd
 import process_ability as pa
+import process_item as pi
 
 class Battle:
     def __init__(self, t1: tr.Trainer, t2: tr.Trainer):
@@ -48,13 +49,15 @@ class Battle:
         self._add_text(self.t1.name + ' sent out ' + self.t1.current_poke.nickname + '!')
         self._add_text(self.t2.name + ' sent out ' + self.t2.current_poke.nickname + '!')
 
-    def turn(self, t1_move: tuple[str, str], t2_move: tuple[str, str]) -> bool | None:
+    def turn(self, t1_turn: list[str], t2_turn: list[str]) -> bool | None:
         self.turn_count += 1
         if not self.battle_started:
             raise Exception
         if self.is_finished():
             return
 
+        t1_move = t1_turn.copy()
+        t2_move = t2_turn.copy()
         t1_move_data = None
         t2_move_data = None
         t1_mv_check_bypass = False
@@ -73,11 +76,11 @@ class Battle:
             t1_mv_check_bypass = True
         elif not self.t1.current_poke.next_moves.empty():
             t1_move_data = self.t1.current_poke.next_moves.get()
-            t1_move = (gd.MOVE, t1_move_data.name)
+            t1_move = [gd.MOVE, t1_move_data.name]
             t1_mv_check_bypass = True
         elif self.t1.current_poke.encore_count:
             t1_move_data = self.t1.current_poke.encore_move
-            t1_move = (gd.MOVE, t1_move_data.name)
+            t1_move = [gd.MOVE, t1_move_data.name]
             if t1_move_data.disabled:
                 t1_move = gd.STRUGGLE
                 t1_move_data = None
@@ -97,11 +100,11 @@ class Battle:
             t2_mv_check_bypass = True
         elif not self.t2.current_poke.next_moves.empty():
             t2_move_data = self.t2.current_poke.next_moves.get()
-            t2_move = (gd.MOVE, t2_move_data.name)
+            t2_move = [gd.MOVE, t2_move_data.name]
             t2_mv_check_bypass = True
         elif self.t2.current_poke.encore_count:
             t2_move_data = self.t2.current_poke.encore_move
-            t2_move = (gd.MOVE, t2_move_data.name)
+            t2_move = [gd.MOVE, t2_move_data.name]
             if t2_move_data.disabled:
                 t2_move = gd.STRUGGLE
                 t2_move_data = None
@@ -110,15 +113,15 @@ class Battle:
             t2_move = gd.STRUGGLE
             t2_mv_check_bypass = True
 
-        if not isinstance(t1_move, tuple) or not all(isinstance(t1_move[i], str) for i in range(len(t1_move))) or len(t1_move) < 2:
+        if not isinstance(t1_move, list) or not all(isinstance(t1_move[i], str) for i in range(len(t1_move))) or len(t1_move) < 2:
             raise Exception
-        if not isinstance(t2_move, tuple) or not all(isinstance(t2_move[i], str) for i in range(len(t2_move))) or len(t2_move) < 2:
+        if not isinstance(t2_move, list) or not all(isinstance(t2_move[i], str) for i in range(len(t2_move))) or len(t2_move) < 2:
             raise Exception
 
         self.t1.has_moved = False
         self.t2.has_moved = False
-        t1_move = (t1_move[gs.ACTION_TYPE].lower(), t1_move[gs.ACTION_VALUE].lower())
-        t2_move = (t2_move[gs.ACTION_TYPE].lower(), t2_move[gs.ACTION_VALUE].lower())
+        t1_move = [e.lower() for e in t1_move]
+        t2_move = [e.lower() for e in t2_move]
         self.t1_fainted = False
         self.t2_fainted = False
         self.t1.current_poke.turn_damage = False
@@ -220,13 +223,18 @@ class Battle:
     def get_all_text(self) -> list:
         return self.all_text
 
-    def _half_turn(self, attacker: tr.Trainer, defender: tr.Trainer, a_move: tuple[str, str], a_move_data: Move = None):
+    def _half_turn(self, attacker: tr.Trainer, defender: tr.Trainer, a_move: list[str], a_move_data: Move = None):
         if self.winner:
             return
         if a_move[gs.ACTION_TYPE] == 'other':
             self._process_other(attacker, defender, a_move)
         elif a_move[gs.ACTION_TYPE] == 'item':
-            process_item()
+            if len(a_move) >= 4:
+                pi.use_item(a_move[gs.ACTION_VALUE], a_move[gs.ITEM_POKE_TARGET], a_move[gs.ITEM_MOVE_TARGET])
+            elif len(a_move) == 3:
+                pi.use_item(a_move[gs.ACTION_VALUE], a_move[gs.ITEM_POKE_TARGET])
+            else:
+                raise Exception
         elif self._process_pp(attacker.current_poke, a_move_data):
             pm.process_move(attacker.current_poke, defender.current_poke, self.battlefield, self, a_move_data.get_tcopy(), not defender.has_moved)
             if self.last_move_next:
@@ -459,7 +467,7 @@ class Battle:
         self._add_text(winner.name + ' has defeated ' + loser.name + '!')
         self.winner = winner
 
-    def _process_other(self, attacker: tr.Trainer, defender: tr.Trainer, a_move: tuple[str, str]):
+    def _process_other(self, attacker: tr.Trainer, defender: tr.Trainer, a_move: list[str]):
         if a_move[gs.ACTION_VALUE] == 'recharging':
             self._add_text(attacker.current_poke.nickname + ' must recharge!')
             attacker.current_poke.recharging = False
@@ -545,7 +553,7 @@ class Battle:
         self.t1.in_battle = False
         self.t2.in_battle = False
 
-    def _pursuit_check(self, t1_move: tuple[str, str], t2_move: tuple[str, str], t1_move_data: Move, t2_move_data: Move, t1_first: bool) -> bool:
+    def _pursuit_check(self, t1_move: list[str], t2_move: list[str], t1_move_data: Move, t2_move_data: Move, t1_first: bool) -> bool:
         if t1_move == gd.PURSUIT and (t2_move == gd.SWITCH or (t2_move[gs.ACTION_TYPE] == gd.MOVE and t2_move[gs.ACTION_VALUE] in gd.PURSUIT_CHECK and not t1_first)):
             t1_move_data.cur_pp -= 1
             self._pressure_check(t1.current_poke, t1_move_data)
@@ -571,7 +579,7 @@ class Battle:
             return True
         return False
 
-    def _focus_punch_check(self, t1_move: tuple[str, str], t2_move: tuple[str, str]):
+    def _focus_punch_check(self, t1_move: list[str], t2_move: list[str]):
         if t1_move == gd.FOCUS_PUNCH:
             self._add_text(self.t1.current_poke.nickname + ' is tightening its focus!')
         if t2_move == gd.FOCUS_PUNCH:

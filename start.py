@@ -52,8 +52,7 @@ while not battle.winner and me.current_poke and you.current_poke:
         u_move = u_moves[random.randrange(0, len(u_moves))].name
     else:
         u_move = ''
-    #print(me_move, u_move)
-    battle.turn(("move", me_move), ("move", u_move))
+    battle.turn(["move", me_move], ["move", u_move])
     print(battle.get_cur_text())
 
 #print(battle.get_all_text())
