@@ -2,19 +2,21 @@ from __future__ import annotations
 import pokemon as pk
 import battlefield as bf
 import battle as bt
+import process_item
 from poke_sim import PokeSim
 from move import Move
 import random
 import global_settings as gs
 import global_data as gd
 import process_ability as pa
+import process_item as pi
 
 def process_move(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool):
     if _pre_process_status(attacker, defender, battlefield, battle, move_data):
         return
     battle._add_text(attacker.nickname + ' used ' + _cap_name(move_data.name) + '!')
     battle.last_move_next = attacker.last_move_next = move_data
-    if not _calculate_hit_or_miss(attacker, defender, battlefield, battle, move_data):
+    if not _calculate_hit_or_miss(attacker, defender, battlefield, battle, move_data, is_first):
         return
     attacker.last_successful_move_next = move_data
     if _meta_effect_check(attacker, defender, battlefield, battle, move_data, is_first):
@@ -67,6 +69,10 @@ def _calculate_damage(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: b
     cc = crit_chance + attacker.crit_stage if crit_chance else attacker.crit_stage
     if attacker.has_ability('super-luck'):
         cc += 1
+    if attacker.item == 'scope-lens' or attacker.item == 'razor-claw':
+        cc += 1
+    elif attacker.item == 'lucky-punch' and attacker.name == 'chansey':
+        cc += 2
     if not defender.trainer.lucky_chant and not defender.has_ability('battle-armor') \
             and not defender.has_ability('shell-armor') and _calculate_crit(cc):
         crit_mult = 2 if not attacker.has_ability('sniper') else 3
@@ -104,6 +110,7 @@ def _calculate_damage(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: b
     if move_data.type == 'fire' and (attacker.water_sport or defender.water_sport):
         move_data.power //= 2
     pa.damage_calc_abilities(attacker, defender, battle, move_data)
+    pi.damage_calc_items(attacker, defender, battle, move_data)
 
     if t_mult <= 1 and (move_data.category == gs.PHYSICAL and defender.trainer.reflect) or (move_data.category == gs.SPECIAL and defender.trainer.light_screen):
         screen = 0.5
@@ -120,8 +127,8 @@ def _calculate_damage(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: b
     eb = 1
     tl = 1
     srf = 1
-    berry_mult = 1
-    item_mult = 1
+    berry_mult = pi.pre_hit_berries(attacker, defender, battle, move_data, t_mult)
+    item_mult = pi.damage_mult_items(attacker, defender, battle, move_data, t_mult)
     first = 1
 
     damage = ((2 * attacker.level / 5 + 2) * move_data.power * ad_ratio) / 50 * burn * screen * weather_mult * ff + 2
@@ -135,9 +142,10 @@ def _calculate_damage(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: b
     if crit_mult > 1 and defender.is_alive and defender.has_ability('anger-point') and defender.stat_stages[gs.ATK] < 6:
         battle._add_text(defender.nickname + ' maxed it\'s Attack!')
         defender.stat_stages[gs.ATK] = 6
+    pi.post_damage_items(attacker, battle, damage_done)
     return damage_done
 
-def _calculate_hit_or_miss(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move):
+def _calculate_hit_or_miss(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool):
     d_eva_stage = defender.evasion_stage
     a_acc_stage = attacker.accuracy_stage
     if defender.foresight_target or defender.me_target:
@@ -149,8 +157,8 @@ def _calculate_hit_or_miss(attacker: pk.Pokemon, defender: pk.Pokemon, battlefie
         a_acc_stage = 0
     stage = a_acc_stage - d_eva_stage
     stage_mult = max(3, 3 + stage) / max(3, 3 - stage)
-    item_mult = 1
     ability_mult = pa.hit_or_miss_calc_abilities(attacker, defender, battlefield, battle, move_data)
+    item_mult = pi.hit_or_miss_calc_items(attacker, defender, battlefield, battle, move_data, is_first)
 
     ma = move_data.acc
     if _special_move_acc(attacker, defender, battlefield, battle, move_data):
@@ -161,6 +169,10 @@ def _calculate_hit_or_miss(attacker: pk.Pokemon, defender: pk.Pokemon, battlefie
         return True
     if attacker.has_ability('no-guard') or defender.has_ability('no-guard'):
         return True
+    if attacker.next_will_hit:
+        attacker.next_will_hit = False
+        return True
+
     if ma == -1:
         res = random.randrange(1, 101) <= attacker.level - defender.level + 30
     else:
@@ -187,6 +199,7 @@ def _meta_effect_check(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: 
     if _truant_check(attacker, battle, move_data):
         return True
     _normalize_check(attacker, move_data)
+    _extra_flinch_check(attacker, defender, move_data, is_first)
     return False
 
 def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool):
@@ -303,18 +316,18 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
             battle._add_text('It doesn\'t affect ' + defender.nickname)
         return
     elif ef_id == 21:
-        if not move_data.ef_stat:
+        if not move_data.ef_stat and not _power_herb_check(attacker, battle):
             move_data.ef_stat = 1
             attacker.next_moves.put(move_data)
             battle._add_text(attacker.nickname + ' whipped up a whirlwind!')
             return
-        crit_chance = move_data.ef_amount
+        crit_chance = 1
     elif ef_id == 22:
         if defender.in_air:
             inv_bypass = True
             move_data.power *= 2
     elif ef_id == 23:
-        if not move_data.ef_stat:
+        if not move_data.ef_stat and not _power_herb_check(attacker, battle):
             move_data.ef_stat = 1
             attacker.next_moves.put(move_data)
             attacker.in_air = True
@@ -326,7 +339,7 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
     elif ef_id == 24:
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
         if defender.is_alive and not defender.substitute and not defender.v_status[gs.BINDING_COUNT]:
-            defender.v_status[gs.BINDING_COUNT] = _generate_2_to_5()
+            defender.v_status[gs.BINDING_COUNT] = _generate_2_to_5() if attacker.item != 'grip-claw' else 5
             defender.binding_poke = attacker
             if move_data.ef_stat == gs.BIND:
                 defender.binding_type = 'Bind'
@@ -450,19 +463,22 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
     elif ef_id == 38:
         dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
         if dmg:
+            heal_amt = max(1, dmg // 2)
+            if attacker.item == 'big-root':
+                heal_amt = int(heal_amt * 1.3)
             if not defender.has_ability('liquid-ooze'):
-                attacker.heal(max(1, dmg // 2))
+                attacker.heal(heal_amt)
                 battle._add_text(defender.nickname + ' had it\'s energy drained!')
             else:
-                attacker.take_damage(max(1, dmg // 2))
-                battle._add_text(defender.nickname + ' sucked up the liquid ooze!')
+                attacker.take_damage(heal_amt)
+                battle._add_text(attacker.nickname + ' sucked up the liquid ooze!')
         return
     elif ef_id == 39:
         if defender.is_alive and not defender.substitute and not defender.v_status[gs.LEECH_SEED]:
             defender.v_status[gs.LEECH_SEED] = 1
             battle._add_text(defender.nickname + ' was seeded!')
     elif ef_id == 40:
-        if not move_data.ef_stat and battlefield.weather != gs.HARSH_SUNLIGHT:
+        if not move_data.ef_stat and battlefield.weather != gs.HARSH_SUNLIGHT and not _power_herb_check(attacker, battle):
             battle._pop_text()
             battle._add_text(attacker.nickname + ' absorbed light!')
             move_data.ef_stat = 1
@@ -472,7 +488,7 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
         if random.randrange(10) < 3:
             _paralyze(defender, battle)
     elif ef_id == 42:
-        if not move_data.ef_stat:
+        if not move_data.ef_stat and not _power_herb_check(attacker, battle):
             move_data.ef_stat = 1
             attacker.next_moves.put(move_data)
             attacker.in_ground = True
@@ -507,17 +523,18 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
         _give_stat_change(attacker, battle, gs.DEF, 1)
     elif ef_id == 49:
         t = attacker.trainer
+        num_turns = 5 if attacker.item != 'light-clay' else 8
         if move_data.ef_stat == 1:
             if t.light_screen:
                 _failed(battle)
                 return
-            t.light_screen = 5
+            t.light_screen = num_turns
             battle._add_text('Light Screen raised ' + t.name + '\'s team\'s Special Defense!')
         elif move_data.ef_stat == 2:
             if t.reflect:
                 _failed(battle)
                 return
-            t.reflect = 5
+            t.reflect = num_turns
             battle._add_text('Light Screen raised ' + t.name + '\'s team\'s Defense!')
     elif ef_id == 50:
         attacker.reset_stages()
@@ -573,7 +590,7 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
         return
     elif ef_id == 56:
-        if not move_data.ef_stat:
+        if not move_data.ef_stat and not _power_herb_check(attacker, battle):
             battle._pop_text()
             battle._add_text(attacker.nickname + ' tucked in its head!')
             _give_stat_change(attacker, battle, gs.DEF, 1)
@@ -586,14 +603,16 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
         elif defender.nv_status == gs.ASLEEP:
             dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
             if dmg:
-                heal_amount = dmg // 2 if dmg != 1 else 1
-                attacker.heal(heal_amount)
+                heal_amt = max(1, dmg // 2)
+                if attacker.item == 'big-root':
+                    heal_amt = int(heal_amt * 1.3)
+                attacker.heal(heal_amt)
             battle._add_text(defender.nickname + '\'s dream was eaten!')
         else:
             _failed(battle)
         return
     elif ef_id == 58:
-        if not move_data.ef_stat:
+        if not move_data.ef_stat and not _power_herb_check(attacker, battle):
             move_data.ef_stat = 1
             defender.next_moves.put(move_data)
             battle._pop_text()
@@ -832,7 +851,7 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
     elif ef_id == 87:
         if battlefield.weather != gs.SANDSTORM:
             battlefield.change_weather(gs.SANDSTORM)
-            battlefield.weather_count = 5
+            battlefield.weather_count = 5 if attacker.item != 'smooth-rock' else 8
             battle._add_text('A sandstorm brewed')
         else:
             _failed(battle)
@@ -1015,14 +1034,14 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
     elif ef_id == 108:
         if battlefield.weather != gs.RAIN:
             battlefield.change_weather(gs.RAIN)
-            battlefield.weather_count = 5
+            battlefield.weather_count = 5 if attacker.item != 'damp-rock' else 8
             battle._add_text('It started to rain!')
         else:
             _failed(battle)
     elif ef_id == 109:
         if battlefield.weather != gs.HARSH_SUNLIGHT:
             battlefield.change_weather(gs.HARSH_SUNLIGHT)
-            battlefield.weather_count = 5
+            battlefield.weather_count = 5 if attacker.item != 'heat-rock' else 8
             battle._add_text('The sunlight turned harsh!')
         else:
             _failed(battle)
@@ -1109,7 +1128,7 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
     elif ef_id == 119:
         if battlefield.weather != gs.HAIL:
             battlefield.change_weather(gs.HAIL)
-            battlefield.weather_count = 5
+            battlefield.weather_count = 5 if attacker.item != 'icy-rock' else 8
             battle._add_text('It started to hail!')
         else:
             _failed(battle)
@@ -1302,7 +1321,7 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
             _paralyze(defender, battle)
         return
     elif ef_id == 150:
-        if not move_data.ef_stat:
+        if not move_data.ef_stat and not _power_herb_check(attacker, battle):
             move_data.ef_stat = 1
             attacker.next_moves.put(move_data)
             attacker.in_water = True
@@ -1364,7 +1383,7 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
         else:
             _failed(battle)
     elif ef_id == 161:
-        if not move_data.ef_stat:
+        if not move_data.ef_stat and not _power_herb_check(attacker, battle):
             move_data.ef_stat = 1
             attacker.next_moves.put(move_data)
             attacker.in_air = True
@@ -1725,7 +1744,7 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
         for move in t.current_poke.moves:
             move.cur_pp = move.max_pp
     elif ef_id == 219:
-        if not move_data.ef_stat:
+        if not move_data.ef_stat and not _power_herb_check(attacker, battle):
             move_data.ef_stat = 1
             attacker.next_moves.put(move_data)
             attacker.invulnerable = True
@@ -1767,6 +1786,8 @@ def _pre_process_status(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield:
             attacker.in_ground = False
             attacker.in_air = False
             attacker.in_water = False
+    if attacker.prio_boost:
+        attacker.prio_boost = False
     if attacker.nv_status == gs.FROZEN:
         if move_data.name in gd.FREEZE_CHECK or random.randrange(5) < 1:
             _cure_nv_status(gs.FROZEN, attacker, battle)
@@ -1844,6 +1865,7 @@ def _confuse(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False, byp
         return
     recipient.v_status[gs.CONFUSED] = _generate_2_to_5()
     battle._add_text(recipient.nickname + ' became confused!')
+    pi.status_items(recipient, battle)
 
 def _flinch(recipient: pk.Pokemon, battle: bt.Battle, is_first: bool, forced: bool = False):
     if not recipient.is_alive or recipient.substitute or recipient.has_ability('shield-dust'):
@@ -1862,6 +1884,7 @@ def _infatuate(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, fo
     if (attacker.gender == 'male' and defender.gender == 'female') or (attacker.gender == 'female' and defender.gender == 'male'):
         defender.infatuation = attacker
         battle._add_text(defender.nickname + ' fell in love with ' + attacker.nickname + '!')
+        pi.status_items(defender, battle)
 
 def _give_stat_change(recipient: pk.Pokemon, battle: bt.Battle, stat: int, amount: int, forced: bool = False, bypass: bool = False):
     if not recipient.is_alive:
@@ -1971,6 +1994,7 @@ def _burn(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         battle._add_text(recipient.nickname + ' was burned!')
         if recipient.has_ability('synchronize'):
             _burn(recipient.enemy.current_poke)
+        pi.status_items(recipient, battle)
 
 def _freeze(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
     if not recipient.is_alive or recipient.substitute or recipient.has_ability('magma-armor') \
@@ -1994,6 +2018,7 @@ def _freeze(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         battle._add_text(recipient.nickname + ' was frozen solid!')
         if recipient.has_ability('synchronize'):
             _freeze(recipient.enemy.current_poke)
+        pi.status_items(recipient, battle)
 
 def _paralyze(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
     if not recipient.is_alive or recipient.substitute or recipient.has_ability('limber') \
@@ -2013,6 +2038,7 @@ def _paralyze(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         battle._add_text(recipient.nickname + ' is paralyzed! It may be unable to move!')
         if recipient.has_ability('synchronize'):
             _paralyze(recipient.enemy.current_poke)
+        pi.status_items(recipient, battle)
 
 def _poison(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
     if not recipient.is_alive or recipient.substitute or recipient.has_ability('immunity') \
@@ -2032,6 +2058,7 @@ def _poison(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         battle._add_text(recipient.nickname + ' was poisoned!')
         if recipient.has_ability('synchronize'):
             _poison(recipient.enemy.current_poke)
+        pi.status_items(recipient, battle)
 
 def _sleep(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
     if not recipient.is_alive or recipient.substitute or recipient.has_ability('insomnia') or recipient.has_ability('vital-spirit') \
@@ -2051,6 +2078,7 @@ def _sleep(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         battle._add_text(recipient.nickname + ' fell asleep!')
         if recipient.has_ability('synchronize'):
             _sleep(recipient.enemy.current_poke)
+        pi.status_items(recipient, battle)
     
 def _badly_poison(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
     if not recipient.is_alive or recipient.substitute or recipient.has_ability('immunity') \
@@ -2070,6 +2098,7 @@ def _badly_poison(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False
         battle._add_text(recipient.nickname + ' was badly poisoned!')
         if recipient.has_ability('synchronize'):
             _poison(recipient.enemy.current_poke)
+        pi.status_items(recipient, battle)
 
 def _cure_nv_status(status: int, recipient: pk.Pokemon, battle: bt.Battle):
     if not recipient.is_alive or not status:
@@ -2141,6 +2170,11 @@ def _normalize_check(attacker: pk.Pokemon, move_data: Move):
     if attacker.has_ability('normalize'):
         move_data.type = 'normal'
 
+def _extra_flinch_check(attacker: pk.Pokemon, defender: pk.Pokemon, move_data: Move, is_first: bool):
+    if attacker.item == 'king\'s-rock' or attacker.item == 'razor-fang':
+        if move_data in gd.EXTRA_FLINCH_CHECK and not defender.v_status[gs.FLINCHED] and is_first and random.randrange(10) < 1:
+            pm._flinch(defender, battle, is_first)
+
 def _mold_breaker_check(attacker: pk.Pokemon, defender: pk.Pokemon, end_turn: bool = True):
     if not attacker.has_ability('mold-breaker'):
         return
@@ -2150,6 +2184,13 @@ def _mold_breaker_check(attacker: pk.Pokemon, defender: pk.Pokemon, end_turn: bo
     elif end_turn and attacker.ability_count:
         defender.ability_suppressed = False
         attacker.ability_count = 0
+
+def _power_herb_check(attacker: pk.Pokemon, battle: bt.Battle) -> bool:
+    if attacker.item == 'power-herb':
+        battle._add_text(attacker.nickname + ' became fully charged due to its Power Herb!')
+        attacker.give_item(None)
+        return True
+    return False
 
 def _special_move_acc(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move) -> bool:
     if move_data.name == 'thunder':

@@ -155,6 +155,10 @@ class Battle:
                         t1_first = not t1_first
                     if self._stall_check():
                         t1_first = self._calculate_stall()
+                    if self._ltail_check():
+                        t1_first = self._calculate_ltail()
+
+                t1_first = self._prio_boost_check(t1_first)
 
         self._add_text("Turn " + str(self.turn_count) + ":")
 
@@ -268,10 +272,16 @@ class Battle:
                 trainer.wish_poke = None
         if poke.v_status[gs.INGRAIN]:
             self._add_text(poke.nickname + ' absorbed nutrients with its roots!')
-            poke.heal(poke.max_hp // 16, text_skip=True)
+            heal_amt = max(1, poke.max_hp // 16)
+            if poke.item == 'big-root':
+                heal_amt = int(heal_amt * 1.3)
+            poke.heal(heal_amt, text_skip=True)
         if poke.v_status[gs.AQUA_RING]:
             self._add_text('A veil of water restored ' + poke.nickname + '\'s HP!')
-            poke.heal(poke.max_hp // 16, text_skip=True)
+            heal_amt = max(1, poke.max_hp // 16)
+            if poke.item == 'big-root':
+                heal_amt = int(heal_amt * 1.3)
+            poke.heal(heal_amt, text_skip=True)
         if self.battlefield.weather == gs.RAIN and poke.has_ability('rain-dish'):
             poke.heal(poke.max_hp // 16)
         if trainer.fs_count and poke.is_alive:
@@ -359,6 +369,8 @@ class Battle:
         if poke.v_status[gs.LEECH_SEED] and poke.is_alive:
             self._add_text(poke.nickname + '\'s health is sapped by Leech Seed!')
             heal_amt = poke.take_damage(max(1, poke.max_hp // 8))
+            if poke.item == 'big-root':
+                heal_amt = int(heal_amt * 1.3)
             other = self.t2.current_poke if poke is self.t1.current_poke else self.t1.current_poke
             if other.is_alive:
                 if not poke.has_ability('liquid-ooze'):
@@ -400,6 +412,7 @@ class Battle:
             return
 
         pa.end_turn_abilities(poke, self)
+        pi.end_turn_items(poke, self)
 
         if poke.v_status[gs.FLINCHED]:
             poke.v_status[gs.FLINCHED] = 0
@@ -596,6 +609,19 @@ class Battle:
                 return random.randrange(2) < 1
         return self.t2.current_poke.has_ability('stall')
 
+    def _ltail_check(self) -> bool:
+        return self.t1.current_poke.item == 'lagging-tail' or self.t1.current_poke.item == 'full-incense' or \
+               self.t2.current_poke.item == 'lagging-tail' or self.t2.current_poke.item == 'full-incense'
+
+    def _calculate_ltail(self) -> bool:
+        if (self.t1.current_poke.item == 'lagging-tail' or self.t1.current_poke.item == 'full-incense') and \
+                (self.t2.current_poke.item == 'lagging-tail' or self.t2.current_poke.item == 'full-incense'):
+            if self.t1.current_poke.stats_effective[gs.SPD] != self.t2.current_poke.stats_effective[gs.SPD]:
+                return self.t1.current_poke.stats_effective[gs.SPD] < self.t2.current_poke.stats_effective[gs.SPD]
+            else:
+                return random.randrange(2) < 1
+        return (self.t2.current_poke.item == 'lagging-tail' or self.t2.current_poke.item == 'full-incense')
+
     def _sucker_punch_check(self, t1_move_data: Move, t2_move_data: Move):
         if not t1_move_data or not t2_move_data:
             return
@@ -607,6 +633,14 @@ class Battle:
     def _pressure_check(self, attacker: pk.Pokemon, move_data: Move):
         if move_data.cur_pp and attacker.enemy.current_poke.is_alive and attacker.enemy.current_poke.has_ability('pressure'):
             move_data.cur_pp -= 1
+
+    def _prio_boost_check(self, t1_first: bool) -> bool:
+        if self.t1.current_poke.prio_boost and self.t2.current_poke.prio_boost:
+            return random.randrange(2) < 1
+        elif self.t1.current_poke.prio_boost or self.t2.current_poke.prio_boost:
+            return self.t1.current_poke.prio_boost
+        else:
+            return t1_first
 
     def _add_text(self, txt: str):
         if not self.winner:

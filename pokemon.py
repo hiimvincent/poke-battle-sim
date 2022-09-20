@@ -9,6 +9,7 @@ import random
 import global_settings as gs
 import global_data as gd
 import process_ability as pa
+import process_item as pi
 
 class Pokemon:
     def __init__(
@@ -138,6 +139,7 @@ class Pokemon:
         else:
             self.stats_effective = [s for s in self.stats_actual]
         pa.stat_calc_abilities(self)
+        pi.stat_calc_items(self)
         if self.nv_status == gs.PARALYZED and not self.has_ability('quick-feet'):
             self.stats_effective[gs.SPD] //= 4
 
@@ -163,6 +165,7 @@ class Pokemon:
         self.taunt = 0
         self.inv_count = 0
         self.ability_count = 0
+        self.metronome_count = 0
         self.last_damage_taken = 0
         self.last_move = None
         self.last_successful_move = None
@@ -178,6 +181,7 @@ class Pokemon:
         self.infatuation = None
         self.r_types = None
         self.mf_move = None
+        self.locked_move = None
         self.in_air = False
         self.in_ground = False
         self.in_water = False
@@ -204,9 +208,12 @@ class Pokemon:
         self.power_trick = False
         self.ability_suppressed = False
         self.ability_activated = False
+        self.item_activated = False
         self.sp_check = False
         self.magnet_rise = False
         self.has_moved = False
+        self.prio_boost = False
+        self.next_will_hit = False
         self.turn_damage = False
         self.moves = self.o_moves
         self.ability = self.o_ability
@@ -241,11 +248,12 @@ class Pokemon:
             self.last_move_hit_by = enemy_move
             if pa.on_hit_abilities(self.enemy.current_poke, self, self.cur_battle, enemy_move):
                 return
+            pi.on_hit_items(self.enemy.current_poke, self, self.cur_battle, enemy_move)
         if self.bide_count:
             self.bide_dmg += damage
         if self.cur_hp - damage <= 0:
             self.last_damage_taken = self.cur_hp
-            if self._endure_check():
+            if self._endure_check() or self._fband_check() or self._fsash_check():
                 self.cur_hp = 1
                 return self.last_damage_taken - 1
             self._db_check()
@@ -264,6 +272,7 @@ class Pokemon:
         self.turn_damage = True
         self.cur_hp -= damage
         self.last_damage_taken = damage
+        pi.on_damage_items(self, self.cur_battle)
         return self.last_damage_taken
 
     def faint(self):
@@ -319,15 +328,17 @@ class Pokemon:
             av_moves = [move for move in av_moves if move.name != self.last_move.name]
         if self.taunt and av_moves:
             av_moves = [move for move in av_moves if move.category != gs.STATUS]
-        if self.grounded:
+        if self.grounded and av_moves:
             av_moves = [move for move in av_moves if move not in gd.GROUNDED_CHECK]
-        if self.hb_count:
+        if self.hb_count and av_moves:
             av_moves = [move for move in av_moves if move not in gd.HEAL_BLOCK_CHECK]
         if self.trainer.imprisoned_poke and self.trainer.imprisoned_poke is self.enemy.current_poke and av_moves:
             i_moves = [move.name for move in self.trainer.imprisoned_poke.moves]
             av_moves = [move for move in av_moves if move.name not in i_moves]
-        if self.has_ability('truant') and self.last_move:
+        if self.has_ability('truant') and self.last_move and av_moves:
             av_moves = [move for move in av_moves if move.name != self.last_move.name]
+        if self.locked_move:
+            av_moves = [move for move in av_moves if move.name == self.locked_move]
         return av_moves
 
     def transform(self, target: Pokemon):
@@ -417,6 +428,8 @@ class Pokemon:
         return all(not move.cur_pp or move.disabled or move.encore_blocked for move in self.get_available_moves())
 
     def can_switch_out(self) -> bool:
+        if self.item == 'shed-shell':
+            return True
         if self.trapped or self.perma_trapped or self.recharging or not self.next_moves.empty():
             return False
         enemy_poke = self.enemy.current_poke
@@ -445,6 +458,19 @@ class Pokemon:
             return True
         return False
 
+    def _fband_check(self) -> bool:
+        if self.item == 'focus-band' and random.randrange(10) < 1:
+            self.cur_battle._add_text(self.nickname + ' hung on using its Focus Band!')
+            return True
+        return False
+
+    def _fsash_check(self) -> bool:
+        if self.item == 'focus-sash' and self.cur_hp == self.max_hp and not self.item_activated:
+            self.cur_battle._add_text(self.nickname + ' hung on using its Focus Sash!')
+            self.item_activated = True
+            return True
+        return False
+
     def _db_check(self) -> bool:
         if not self.db_count:
             return False
@@ -462,6 +488,7 @@ class Pokemon:
     def give_item(self, item: str):
         self.item = item
         self.h_item = item
+        pi.status_items(self, self.cur_battle)
 
     def hidden_power_stats(self) -> tuple[str, int] | None:
         if not self.ivs:
