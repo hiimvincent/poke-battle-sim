@@ -10,12 +10,17 @@ import global_data as gd
 import process_move as pm
 import trainer as tr
 
-def use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, move: str = None):
+def use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, move: str = None, text_skip: bool = False):
     poke = trainer.current_poke
     if not poke.is_alive or not item in gd.USABLE_ITEM_CHECK:
         return
 
-    battle._add_text(trainer.name + ' used one ' + pm._cap_name(item) + '!')
+    if not text_skip:
+        battle._add_text(trainer.name + ' used one ' + pm._cap_name(item) + '!')
+
+    if poke.embargo_count:
+        pm._failed(battle)
+        return
     if item == 'potion':
         poke.heal(20)
     elif item == 'antidote':
@@ -137,7 +142,7 @@ def use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, move: str = None
         poke.heal(30)
 
 def damage_calc_items(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, move_data: Move):
-    if not attacker.item in gd.DMG_ITEM_CHECK:
+    if not attacker.item in gd.DMG_ITEM_CHECK or attacker.has_ability('klutz') or attacker.embargo_count:
         return
 
     item = attacker.item
@@ -212,7 +217,10 @@ def damage_calc_items(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Bat
         if move_data.category == gs.SPECIAL:
             move_data.power = int(move_data.power * 1.1)
     elif item == 'metronome':
-        if move_data.name == attacker.last_successful_move.name:
+        if not attacker.last_successful_move:
+            attacker.metronome_count = 1
+            move_data.power *= int(move_data.power * 1.1)
+        elif move_data.name == attacker.last_successful_move_next.name:
             attacker.metronome_count = max(10, attacker.metronome_count + 1)
             move_data.power *= int(move_data.power * (1 + (attacker.metronome_count) / 10))
         else:
@@ -221,7 +229,7 @@ def damage_calc_items(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Bat
 def damage_mult_items(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, move_data: Move, t_mult: int) -> float:
     i_mult = 1
 
-    if attacker.item not in gd.DMG_MULT_ITEM_CHECK:
+    if attacker.item not in gd.DMG_MULT_ITEM_CHECK or attacker.has_ability('klutz') or attacker.embargo_count:
         return i_mult
 
     item = attacker.item
@@ -237,17 +245,22 @@ def damage_mult_items(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Bat
 def pre_hit_berries(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, move_data: Move, t_mult: int) -> float:
     p_mult = 1
 
-    if not defender.is_alive or not defender.item in gd.PRE_HIT_BERRIES:
+    if not defender.is_alive or not defender.item in gd.PRE_HIT_BERRIES or defender.has_ability('klutz') or defender.embargo_count:
         return p_mult
 
-    if t_mult > 1 and gd.PRE_HIT_BERRIES[defender.item] == move.type:
+    if t_mult > 1 and gd.PRE_HIT_BERRIES[defender.item] == move_data.type:
         _eat_item(defender, battle)
         p_mult = 0.5
 
     return p_mult
 
 def on_damage_items(poke: pk.Pokemon, battle: bt.Battle):
-    if not poke.is_alive or not poke.item in gd.ON_DAMAGE_ITEM_CHECK or poke.cur_hp >= gs.DAMAGE_THRESHOLD:
+    if not poke.is_alive or not poke.item in gd.ON_DAMAGE_ITEM_CHECK or poke.has_ability('klutz') or poke.embargo_count:
+        return
+    thr = gs.DAMAGE_THRESHOLD
+    if poke.has_ability('gluttony'):
+        thr *= 2
+    if poke.cur_hp >= thr:
         return
 
     item = poke.item
@@ -279,7 +292,7 @@ def on_damage_items(poke: pk.Pokemon, battle: bt.Battle):
             defender.heal(max(1, defender.max_hp // 4))
 
 def pre_move_items(poke: pk.Pokemon):
-    if not poke.item in PRE_MOVE_ITEM_CHECK:
+    if not poke.item in PRE_MOVE_ITEM_CHECK or poke.has_ability('klutz') or poke.embargo_count:
         return
 
     item = poke.item
@@ -289,7 +302,7 @@ def pre_move_items(poke: pk.Pokemon):
             poke.prio_boost = True
 
 def stat_calc_items(poke: pk.Pokemon):
-    if not poke.is_alive or not poke.item in gd.STAT_CALC_ITEM_CHECK:
+    if not poke.is_alive or not poke.item in gd.STAT_CALC_ITEM_CHECK or poke.has_ability('klutz') or poke.embargo_count:
         return
 
     item = poke.item
@@ -305,15 +318,15 @@ def stat_calc_items(poke: pk.Pokemon):
             poke.stats_effective[gs.ATK] *= 2
     elif item == 'choice-band':
         poke.stats_effective[gs.ATK] = int(poke.stats_effective[gs.ATK] * 1.5)
-        if not poke.locked_move:
+        if not poke.locked_move and poke.last_successful_move_next:
             poke.locked_move = poke.last_successful_move_next.name
     elif item == 'choice-specs':
         poke.stats_effective[gs.SP_ATK] = int(poke.stats_effective[gs.SP_ATK] * 1.5)
-        if not poke.locked_move:
+        if not poke.locked_move and poke.last_successful_move_next:
             poke.locked_move = poke.last_successful_move_next.name
     elif item == 'choice-scarf':
         poke.stats_effective[gs.SPD] = int(poke.stats_effective[gs.SPD] * 1.5)
-        if not poke.locked_move:
+        if not poke.locked_move and poke.last_successful_move_next:
             poke.locked_move = poke.last_successful_move_next.name
     elif item == 'deepseatooth':
         if poke.name == 'clamperl':
@@ -330,7 +343,7 @@ def stat_calc_items(poke: pk.Pokemon):
         poke.grounded = True
 
 def status_items(poke: pk.Pokemon, battle: bt.Battle):
-    if not poke.is_alive or not poke.item in gd.STATUS_ITEM_CHECK:
+    if not poke.is_alive or not poke.item in gd.STATUS_ITEM_CHECK or poke.has_ability('klutz') or poke.embargo_count:
         return
 
     item = poke.item
@@ -373,10 +386,11 @@ def status_items(poke: pk.Pokemon, battle: bt.Battle):
             pm._infatuate(poke, poke.enemy.current_poke, battle)
 
 def on_hit_items(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, move_data: Move):
-    if not move_data or not defender.item in gd.ON_HIT_ITEM_CHECK:
+    if not move_data or not defender.item in gd.ON_HIT_ITEM_CHECK or defender.has_ability('klutz') or defender.embargo_count:
         return
 
     t_mult = pm._calculate_type_ef(defender, move_data)
+    item = defender.item
 
     if item == 'jaboca-berry':
         if move_data.category == gs.PHYSICAL and attacker.is_alive:
@@ -394,7 +408,7 @@ def on_hit_items(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, 
 def hit_or_miss_calc_items(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool) -> float:
     i_mult = 1
     
-    if not defender.item in gd.HOMC_ITEM_CHECK or not attacker.item in gd.HOMC_ITEM_CHECK:
+    if (not defender.item in gd.HOMC_ITEM_CHECK or defender.has_ability('klutz') or defender.embargo_count) and (not attacker.item in gd.HOMC_ITEM_CHECK or attacker.has_ability('klutz') or attacker.embargo_count):
         return i_mult
 
     if defender.item == 'brightpowder' or defender.item == 'lax-incense':
@@ -405,8 +419,10 @@ def hit_or_miss_calc_items(attacker: pk.Pokemon, defender: pk.Pokemon, battlefie
     elif attacker.item == 'zoom-lens' and not is_first:
         i_mult *= 1.2
 
+    return i_mult
+
 def end_turn_items(poke: pk.Pokemon, battle: bt.Battle):
-    if not poke.is_alive or not poke.item in gd.END_TURN_ITEM_CHECK:
+    if not poke.is_alive or not poke.item in gd.END_TURN_ITEM_CHECK or poke.has_ability('klutz') or poke.embargo_count:
         return
 
     item = poke.item
@@ -471,21 +487,21 @@ def end_turn_items(poke: pk.Pokemon, battle: bt.Battle):
         poke.take_damage(max(1, poke.max_hp // 8))
 
 def post_damage_items(attacker: pk.Pokemon, battle: bt.Battle, dmg: int):
-    if attacker.item not in gd.POST_DAMAGE_ITEM_CHECK:
+    if attacker.item not in gd.POST_DAMAGE_ITEM_CHECK or attacker.has_ability('klutz') or attacker.embargo_count:
         return
 
     if attacker.item == 'shell-bell':
         if attacker.is_alive and dmg:
-            battle._add_text(poke.nickname + ' restored a little HP using its Shell Bell!')
-            poke.heal(max(1, dmg // 8), text_skip=True)
+            battle._add_text(attacker.nickname + ' restored a little HP using its Shell Bell!')
+            attacker.heal(max(1, dmg // 8), text_skip=True)
     if attacker.item == 'life-orb':
         if attacker.is_alive and dmg:
-            battle._add_text(poke.nickname + ' lost some of its HP!')
-            attacker.take_damage(max(1, poke.max_hp // 10))
+            battle._add_text(attacker.nickname + ' lost some of its HP!')
+            attacker.take_damage(max(1, attacker.max_hp // 10))
 
 def _consume_item(poke: pk.Pokemon, battle: bt.Battle):
-    battle._add_text(poke.nickname + ' used its ' + pm._cap_name(item) + '!')
+    battle._add_text(poke.nickname + ' used its ' + pm._cap_name(poke.item) + '!')
 
 def _eat_item(poke: pk.Pokemon, battle: bt.Battle):
-    battle._add_text(poke.nickname + ' ate its ' + pm._cap_name(item) + '!')
+    battle._add_text(poke.nickname + ' ate its ' + pm._cap_name(poke.item) + '!')
     poke.give_item(None)

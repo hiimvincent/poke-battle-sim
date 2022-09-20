@@ -258,6 +258,9 @@ class Battle:
             return False
         move_data.cur_pp -= 1
         self._pressure_check(attacker, move_data)
+        if not move_data.cur_pp and attacker.item == 'leppa-berry':
+            pi._eat_item(attacker, battle)
+            poke.restore_pp(move_data.name, 10)
         if move_data.cur_pp == 0 and attacker.copied and move_data.name == attacker.copied.name:
             attacker.copied = None
         return True

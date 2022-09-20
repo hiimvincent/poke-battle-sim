@@ -12,10 +12,12 @@ class PokeSim:
     _type_to_id = {}
     _abilities = {}
     _items = {}
+    # Remove After Testing
+    _ability_list = []
+    _item_list = []
 
     @classmethod
     def start(cls):
-        #error handling?
         with open(gs.POKEMON_STATS_PATH) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             next(csv_reader)
@@ -56,12 +58,14 @@ class PokeSim:
             next(csv_reader)
             for row in csv_reader:
                 cls._abilities[row[1]] = (row[0], row[2])
+                cls._ability_list.append(row[1])
 
         with open(gs.ITEMS_PATH) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             next(csv_reader)
             for row in csv_reader:
                 cls._items[row[1]] = (row[0], row[2])
+                cls._item_list.append(row[1])
 
     @classmethod
     def _convert_name_to_id(cls, name: str) -> int:
@@ -131,5 +135,5 @@ class PokeSim:
         return ability in cls._abilities
 
     @classmethod
-    def check_ability(cls, item: str) -> bool:
+    def check_item(cls, item: str) -> bool:
         return item in cls._items

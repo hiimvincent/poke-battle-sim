@@ -214,6 +214,7 @@ class Pokemon:
         self.has_moved = False
         self.prio_boost = False
         self.next_will_hit = False
+        self.unburden = False
         self.turn_damage = False
         self.moves = self.o_moves
         self.ability = self.o_ability
@@ -225,7 +226,6 @@ class Pokemon:
         self.next_moves = Queue()
         self.types = (self.stats_base[gs.TYPE1], self.stats_base[gs.TYPE2])
         self.stats_effective = self.stats_actual
-        self.calculate_stats_effective()
 
     def start_battle(self, battle: bt.Battle):
         self.cur_battle = battle
@@ -264,7 +264,7 @@ class Pokemon:
             self.is_alive = False
             self.reset_stats()
             self.cur_battle._faint_check()
-            self._aftermath_check()
+            self._aftermath_check(enemy_move)
             return self.last_damage_taken
         if self.rage and self.stat_stages[gs.ATK] < 6:
             self.stat_stages[gs.ATK] += 1
@@ -442,6 +442,9 @@ class Pokemon:
             return False
         return True
 
+    def can_use_item(self) -> bool:
+        return not self.embargo_count
+
     def has_ability(self, ability_name: str) -> bool:
         return not self.ability_suppressed and self.ability == ability_name
 
@@ -479,7 +482,7 @@ class Pokemon:
         enemy_poke.faint()
         return True
 
-    def _aftermath_check(self):
+    def _aftermath_check(self, enemy_move: Move):
         if self.has_ability('aftermath') and enemy_move in gd.CONTACT_CHECK and self.enemy.current_poke.is_alive \
                 and not self.enemy.current_poke.has_ability('damp'):
             self.enemy.current_poke.take_damage(max(1, self.enemy.current_poke.max_hp // 4))
@@ -488,6 +491,8 @@ class Pokemon:
     def give_item(self, item: str):
         self.item = item
         self.h_item = item
+        if not item:
+            self.unburden = True
         pi.status_items(self, self.cur_battle)
 
     def hidden_power_stats(self) -> tuple[str, int] | None:

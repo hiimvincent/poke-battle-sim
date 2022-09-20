@@ -43,14 +43,14 @@ def selection_abilities(poke: pk.Pokemon, battlefield: bf.Battlefield, battle: b
     elif poke.has_ability('own-tempo') and poke.v_status[gs.CONFUSED]:
         battle._add_text(attacker.nickname + ' snapped out of its confusion!')
         poke.v_status[gs.CONFUSED] = 0
-    elif poke.has_ability('trace') and poke.enemy.current_poke.is_alive and poke.enemy.current_poke.ability:
+    elif poke.has_ability('trace') and poke.enemy.current_poke.is_alive and poke.enemy.current_poke.ability and not poke.enemy.current_poke.has_ability('trace'):
         battle._add_text(poke.nickname + ' copied ' + poke.enemy.current_poke.nickname + '\'s ' + poke.enemy.current_poke.ability + '!')
         poke.give_ability(poke.enemy.current_poke.ability)
     elif poke.has_ability('forecast'):
         _forecast_check(poke, battle, battlefield)
     elif poke.has_ability('download') and not poke.ability_activated and poke.enemy.current_poke.is_alive:
         poke.enemy.current_poke.calculate_stats_effective()
-        if poke.enemy.current_poke.stats_effective[DEF] < poke.enemy.current_poke.stats_effective[SP_DEF]:
+        if poke.enemy.current_poke.stats_effective[gs.DEF] < poke.enemy.current_poke.stats_effective[gs.SP_DEF]:
             pm._give_stat_change(poke, battle, gs.ATK, 1)
         else:
             pm._give_stat_change(poke, battle, gs.SP_ATK, 1)
@@ -78,7 +78,7 @@ def enemy_selection_abilities(enemy_poke: pk.Pokemon, battlefield: bf.Battlefiel
         poke.give_ability(enemy_poke.ability)
     elif poke.has_ability('download') and not poke.ability_activated:
         enemy_poke.calculate_stats_effective()
-        if enemy_poke.stats_effective[DEF] < enemy_poke.stats_effective[SP_DEF]:
+        if enemy_poke.stats_effective[gs.DEF] < enemy_poke.stats_effective[gs.SP_DEF]:
             pm._give_stat_change(poke, battle, gs.ATK, 1)
         else:
             pm._give_stat_change(poke, battle, gs.SP_ATK, 1)
@@ -166,8 +166,10 @@ def stat_calc_abilities(poke: pk.Pokemon):
     elif poke.has_ability('flower-gift') and poke.cur_battle.battlefield.weather == gs.HARSH_SUNLIGHT:
         poke.stats_effective[gs.ATK] = int(poke.stats_effective[gs.ATK] * 1.5)
         poke.stats_effective[gs.SP_DEF] = int(poke.stats_effective[gs.SPD_DEF] * 1.5)
+    elif poke.has_ability('unburden') and poke.unburden:
+        poke.stats_effective[gs.SPD] *= 2
 
-def damage_calc_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, move_data: Move):
+def damage_calc_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, move_data: Move, t_mult: int):
     if attacker.has_ability('flash-fire') and attacker.ability_activated and move_data.type == 'fire':
         move_data.power = int(move_data.power * 1.5)
     elif attacker.has_ability('overgrow') and move_data.type == 'grass' and attacker.cur_hp <= attacker.max_hp // 3:
@@ -194,9 +196,7 @@ def damage_calc_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt
     elif attacker.has_ability('reckless') and move_data.name in gd.RECOIL_CHECK:
         move_data.power = int(move_data.power * 1.2)
 
-    if defender.has_ability('thick-fat') and (move_data.type == 'fire' or move_data.type == 'ice'):
-        ad_ratio /= 2
-    elif defender.has_ability('heatproof') and move_data.type == 'fire':
+    if defender.has_ability('heatproof') and move_data.type == 'fire':
         move_data.power //= 2
     elif (defender.has_ability('filter') or defender.has_ability('solid-rock')) and t_mult > 1:
         move_data.power *= 0.75
@@ -212,6 +212,8 @@ def hit_or_miss_calc_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, battl
     elif defender.has_ability('hustle') and move_data.category == gs.PHYSICAL:
         ability_mult *= 0.8
     elif defender.has_ability('tangled-feet') and defender.v_status[gs.CONFUSED]:
+        ability_mult *= 0.5
+    elif defender.has_ability('thick-fat') and (move_data.type == 'fire' or move_data.type == 'ice'):
         ability_mult *= 0.5
     return ability_mult
 
@@ -240,6 +242,8 @@ def _rand_max_power(poke: pk.Pokemon) -> Move:
     for move in poke.moves:
         if not move.power and not p_max:
             p_moves.append(move)
+        elif not move.power and p_max:
+            continue
         elif (move.power and not p_max) or move.power > p_max:
             p_max = move.power
             p_moves = [move]

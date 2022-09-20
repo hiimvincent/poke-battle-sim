@@ -109,7 +109,7 @@ def _calculate_damage(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: b
         move_data.power //= 2
     if move_data.type == 'fire' and (attacker.water_sport or defender.water_sport):
         move_data.power //= 2
-    pa.damage_calc_abilities(attacker, defender, battle, move_data)
+    pa.damage_calc_abilities(attacker, defender, battle, move_data, t_mult)
     pi.damage_calc_items(attacker, defender, battle, move_data)
 
     if t_mult <= 1 and (move_data.category == gs.PHYSICAL and defender.trainer.reflect) or (move_data.category == gs.SPECIAL and defender.trainer.light_screen):
@@ -566,7 +566,7 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
         move_names = [move.name for move in attacker.moves]
         rand_move = PokeSim.get_rand_move()
         # counter check for loop
-        while rand_move in move_names or rand_move in gd.METRONOME_CHECK:
+        while rand_move[gs.MOVE_NAME] in move_names or rand_move[gs.MOVE_NAME] in gd.METRONOME_CHECK:
             rand_move = PokeSim.get_rand_move()
         rand_move = Move(rand_move)
         battle._add_text(attacker.nickname + ' used ' + _cap_name(rand_move.name) + '!')
@@ -1483,8 +1483,10 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
         if attacker.cur_hp < attacker.max_hp // 2:
             move_data.power *= 2
     elif ef_id == 175:
-        if attacker.item and attacker.item in gd.BERRY_DATA and not battlefield.weather in [gs.HARSH_SUNLIGHT, gs.RAIN]:
+        if attacker.item and attacker.item in gd.BERRY_DATA and not battlefield.weather in [gs.HARSH_SUNLIGHT, gs.RAIN] \
+                and not attacker.has_ability('klutz') and not attacker.embargo_count:
             move_data.type, move_data.power = gd.BERRY_DATA[attacker.item]
+            attacker.give_item(None)
         else:
             _failed(battle)
             return
@@ -1498,9 +1500,10 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
     elif ef_id == 177:
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
         if defender.is_alive and defender.item and defender.item in gd.BERRY_DATA and not defender.has_ability('sticky-hold') \
-                and not attacker.has_ability('klutz'):
+                and not defender.substitute:
             battle._add_text(attacker.nickname + ' stole and ate ' + defender.nickname + '\'s ' + defender.item + '!')
-            # _consume_item(defender.item)
+            if not attacker.has_ability('klutz') and not attacker.embargo_count:
+                pi.use_item(attacker.trainer, battle, defender.item, text_skip=True)
             defender.give_item(None)
         return
     elif ef_id == 178:
@@ -1549,8 +1552,14 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
         else:
             _failed(battle)
     elif ef_id == 186:
-        # move_data.power = FLING_CHECK[attacker.item]
-        move_data.power = 20
+        if attacker.item:
+            battle._add_text(attacker.nickname + ' flung its ' + attacker.item + '!')
+            move_data.power = 20
+            _calculate_damage(attacker, defender, battlefield, battle, move_data)
+            if attacker.is_alive:
+                attacker.give_item(None)
+        else:
+            _failed(battle)
     elif ef_id == 187:
         if attacker.nv_status:
             _give_nv_status(attacker.nv_status, defender, battle)
@@ -2149,7 +2158,7 @@ def _protect_check(defender: pk.Pokemon, battle: bt.Battle, move_data: Move) -> 
     return False
 
 def _soundproof_check(defender: pk.Pokemon, battle: bt.Battle, move_data: Move) -> bool:
-    if defender.is_alive and defender.has_ability('soundproof') and move_data in SOUNDPROOF_CHECK:
+    if defender.is_alive and defender.has_ability('soundproof') and move_data in gd.SOUNDPROOF_CHECK:
         battle._add_text("It doesn't affect " + defender.nickname)
         return True
     return False
