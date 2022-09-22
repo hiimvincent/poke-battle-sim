@@ -1,11 +1,12 @@
 # Specific Move Data
 MOVE = 'move'
+ITEM = 'item'
+SWITCH = ['other', 'switch']
 RECHARGING = ['other', 'recharging']
 BIDING = ['other', 'biding']
 RAGE = ['move', 'rage']
 STRUGGLE = ['move', 'struggle']
 PURSUIT = ['move', 'pursuit']
-SWITCH = ['other', 'switch']
 UPROAR = ['move', 'uproar']
 FOCUS_PUNCH = ['move', 'focus-punch']
 ME_FIRST = ['move', 'me-first']
@@ -74,3 +75,5 @@ END_TURN_ITEM_CHECK = {'oran-berry', 'sitrus-berry', 'figy-berry', 'wiki-berry',
 POST_DAMAGE_ITEM_CHECK = {'shell-bell', 'life-orb'}
 
 EXTRA_FLINCH_CHECK = {'aerial-ace', 'aeroblast', 'air-cutter', 'air-slash', 'aqua-jet', 'aqua-tail', 'arm-thrust', 'assurance', 'attack-order', 'aura-sphere', 'avalanche', 'barrage', 'beat-up', 'bide', 'bind', 'blast-burn', 'bone-rush', 'bonemerang', 'bounce', 'brave-bird', 'brick-break', 'brine', 'bug-bite', 'bullet-punch', 'bullet-seed', 'charge-beam', 'clamp', 'close-combat', 'comet-punch', 'crabhammer', 'cross-chop', 'cross-poison', 'crush-grip', 'cut', 'dark-pulse', 'dig', 'discharge', 'dive', 'double-hit', 'double-kick', 'double-slap', 'double-edge', 'draco-meteor', 'dragon-breath', 'dragon-claw', 'dragon-pulse', 'dragon-rush', 'drain-punch', 'drill-peck', 'earth-power', 'earthquake', 'egg-bomb', 'endeavor', 'eruption', 'explosion', 'extreme-speed', 'false-swipe', 'feint-attack', 'fire-fang', 'fire-spin', 'flail', 'flash-cannon', 'fly', 'force-palm', 'frenzy-plant', 'frustration', 'fury-attack', 'fury-cutter', 'fury-swipes', 'giga-impact', 'grass-knot', 'gunk-shot', 'gyro-ball', 'hammer-arm', 'head-smash', 'hidden-power', 'high-jump-kick', 'horn-attack', 'hydro-cannon', 'hydro-pump', 'hyper-beam', 'ice-ball', 'ice-fang', 'ice-shard', 'icicle-spear', 'iron-head', 'judgment', 'jump-kick', 'karate-chop', 'last-resort', 'lava-plume', 'leaf-blade', 'leaf-storm', 'low-kick', 'mach-punch', 'magical-leaf', 'magma-storm', 'magnet-bomb', 'magnitude', 'mega-kick', 'mega-punch', 'megahorn', 'meteor-mash', 'mirror-coat', 'mirror-shot', 'mud-bomb', 'mud-shot', 'muddy-water', 'night-shade', 'night-slash', 'ominous-wind', 'outrage', 'overheat', 'pay-day', 'payback', 'peck', 'petal-dance', 'pin-missile', 'pluck', 'poison-jab', 'poison-tail', 'power-gem', 'power-whip', 'psycho-boost', 'psycho-cut', 'psywave', 'punishment', 'quick-attack', 'rage', 'rapid-spin', 'razor-leaf', 'razor-wind', 'return', 'revenge', 'reversal', 'roar-of-time', 'rock-blast', 'rock-climb', 'rock-throw', 'rock-wrecker', 'rolling-kick', 'rollout', 'sand-tomb', 'scratch', 'seed-bomb', 'seed-flare', 'seismic-toss', 'self-destruct', 'shadow-claw', 'shadow-force', 'shadow-punch', 'shadow-sneak', 'shock-wave', 'signal-beam', 'silver-wind', 'skull-bash', 'sky-attack', 'sky-uppercut', 'slam', 'slash', 'snore', 'solar-beam', 'sonic-boom', 'spacial-rend', 'spike-cannon', 'spit-up', 'steel-wing', 'stone-edge', 'strength', 'struggle', 'submission', 'sucker-punch', 'surf', 'swift', 'tackle', 'take-down', 'thrash', 'thunder-fang', 'triple-kick', 'trump-card', 'twister', 'u-turn', 'uproar', 'vacuum-wave', 'vice-grip', 'vine-whip', 'vital-throw', 'volt-tackle', 'wake-up-slap', 'water-gun', 'water-pulse', 'waterfall', 'weather-ball', 'whirlpool', 'wing-attack', 'wood-hammer', 'wrap', 'x-scissor'}
+
+HEALING_ITEM_CHECK = {'potion': 20, 'hyper-potion': 200, 'super-potion': 50, 'fresh-water': 50, 'soda-pop': 60, 'lemonade': 80, 'moomoo-milk': 100, 'energypowder': 50, 'energy-root': 200, 'berry-juice': 20, 'oran-berry': 10, 'sitrus-berry': 30}

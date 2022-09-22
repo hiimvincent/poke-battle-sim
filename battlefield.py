@@ -49,3 +49,24 @@ class Battlefield:
         if self.weather != weather:
             self.weather = weather
             pa.weather_change_abilities(self.cur_battle, self)
+            
+    def process_weather_effects(self, poke: pk.Pokemon):
+        if not poke.is_alive or self.weather_count >= 999:
+            return
+        if self.weather == gs.SANDSTORM and not poke.has_ability('sand-veil') and \
+                not poke.in_ground and not poke.in_water and not any(type in poke.types for type in ['ground', 'steel', 'rock']):
+            self.cur_battle._add_text(poke.nickname + ' is buffeted by the Sandstorm!')
+            poke.take_damage(max(1, poke.max_hp // 16))
+        if self.weather == gs.HAIL and not poke.has_ability('ice-body') and \
+                not poke.in_ground and not poke.in_water and not any(type in poke.types for type in ['ice']):
+            self.cur_battle._add_text(poke.nickname + ' is buffeted by the Hail!')
+            poke.take_damage(max(1, poke.max_hp // 16))
+        if self.weather == gs.HAIL and poke.has_ability('ice-body'):
+            self.cur_battle._add_text(poke.nickname + ' was healed by its Ice Body!')
+            poke.heal(max(1, poke.max_hp // 16), text_skip=True)
+        if self.weather == gs.RAIN and poke.has_ability('dry-skin'):
+            self.cur_battle._add_text(poke.nickname + ' was healed by its Dry Skin!')
+            poke.heal(max(1, poke.max_hp // 8), text_skip=True)
+        if self.weather == gs.HARSH_SUNLIGHT and poke.has_ability('dry-skin'):
+            self.cur_battle._add_text(poke.nickname + ' was hurt by its Dry Skin!')
+            poke.take_damage(max(1, poke.max_hp // 8))

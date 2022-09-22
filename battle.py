@@ -50,6 +50,20 @@ class Battle:
         self._add_text(self.t2.name + ' sent out ' + self.t2.current_poke.nickname + '!')
 
     def turn(self, t1_turn: list[str], t2_turn: list[str]) -> bool | None:
+        """
+        Both trainers are required to provide a valid action for a turn to be processed.
+
+        The three types of valid actions are:
+            1. Moves - formatted as ['move', $move_name]
+            2. Items - formatted as ['item', $item, $item_target_pos, $move_target_name?]
+            3. Switch-out - formatted as ['other', 'switch']
+
+        Certain moves and switching out will call the respective trainer's selection function.
+
+        If either trainer provides an invalid action, the turn will abort and an exception will be raised.
+
+        To check which actions are valid, refer to is_valid_actions() in Trainer.
+        """
         self.turn_count += 1
         if not self.battle_started:
             raise Exception
@@ -63,55 +77,10 @@ class Battle:
         t1_mv_check_bypass = False
         t2_mv_check_bypass = False
         t1_first = None
+        faster_did_selection = False
 
-        if self.t1.current_poke.recharging:
-            t1_move = gd.RECHARGING
-        elif self.t1.current_poke.bide_count:
-            t1_move = gd.BIDING
-        elif self.t1.current_poke.rage:
-            t1_move = gd.RAGE
-            t1_mv_check_bypass = True
-        elif self.t1.current_poke.uproar:
-            t1_move = gd.UPROAR
-            t1_mv_check_bypass = True
-        elif not self.t1.current_poke.next_moves.empty():
-            t1_move_data = self.t1.current_poke.next_moves.get()
-            t1_move = [gd.MOVE, t1_move_data.name]
-            t1_mv_check_bypass = True
-        elif self.t1.current_poke.encore_count:
-            t1_move_data = self.t1.current_poke.encore_move
-            t1_move = [gd.MOVE, t1_move_data.name]
-            if t1_move_data.disabled:
-                t1_move = gd.STRUGGLE
-                t1_move_data = None
-                t1_mv_check_bypass = True
-        elif t1_move[gs.ACTION_TYPE] == gd.MOVE and self.t1.current_poke.no_pp():
-            t1_move = gd.STRUGGLE
-            t1_mv_check_bypass = True
-        if self.t2.current_poke.recharging:
-            t2_move = gd.RECHARGING
-        elif self.t2.current_poke.bide_count:
-            t2_move = gd.BIDING
-        elif self.t2.current_poke.rage:
-            t2_move = gd.RAGE
-            t2_mv_check_bypass = True
-        elif self.t2.current_poke.uproar:
-            t2_move = gd.UPROAR
-            t2_mv_check_bypass = True
-        elif not self.t2.current_poke.next_moves.empty():
-            t2_move_data = self.t2.current_poke.next_moves.get()
-            t2_move = [gd.MOVE, t2_move_data.name]
-            t2_mv_check_bypass = True
-        elif self.t2.current_poke.encore_count:
-            t2_move_data = self.t2.current_poke.encore_move
-            t2_move = [gd.MOVE, t2_move_data.name]
-            if t2_move_data.disabled:
-                t2_move = gd.STRUGGLE
-                t2_move_data = None
-                t2_mv_check_bypass = True
-        elif t2_move[gs.ACTION_TYPE] == gd.MOVE and self.t2.current_poke.no_pp():
-            t2_move = gd.STRUGGLE
-            t2_mv_check_bypass = True
+        t1_move, t1_move_data, t1_mv_check_bypass = self._pre_process_move(self.t1, [t1_move, t1_move_data, t1_mv_check_bypass])
+        t2_move, t2_move_data, t2_mv_check_bypass = self._pre_process_move(self.t2, [t2_move, t2_move_data, t2_mv_check_bypass])
 
         if not isinstance(t1_move, list) or not all(isinstance(t1_move[i], str) for i in range(len(t1_move))) or len(t1_move) < 2:
             raise Exception
@@ -393,23 +362,7 @@ class Battle:
         if not poke.is_alive:
             return
 
-        if self.battlefield.weather == gs.SANDSTORM and poke.is_alive and not poke.has_ability('sand-veil') and \
-                not poke.in_ground and not poke.in_water and not any(type in poke.types for type in ['ground', 'steel', 'rock']):
-            self._add_text(poke.nickname + ' is buffeted by the Sandstorm!')
-            poke.take_damage(max(1, poke.max_hp // 16))
-        if self.battlefield.weather == gs.HAIL and poke.is_alive and not poke.has_ability('ice-body'):
-            if not poke.in_ground and not poke.in_water and not any(type in poke.types for type in ['ice']):
-                self._add_text(poke.nickname + ' is buffeted by the Hail!')
-                poke.take_damage(max(1, poke.max_hp // 16))
-        if self.battlefield.weather == gs.HAIL and poke.is_alive and poke.has_ability('ice-body'):
-            self._add_text(poke.nickname + ' was healed by its Ice Body!')
-            poke.heal(max(1, poke.max_hp // 16), text_skip=True)
-        if self.battlefield.weather == gs.RAIN and poke.is_alive and poke.has_ability('dry-skin'):
-            self._add_text(poke.nickname + ' was healed by its Dry Skin!')
-            poke.heal(max(1, poke.max_hp // 8), text_skip=True)
-        if self.battlefield.weather == gs.HARSH_SUNLIGHT and poke.is_alive and poke.has_ability('dry-skin'):
-            self._add_text(poke.nickname + ' was hurt by its Dry Skin!')
-            poke.take_damage(max(1, poke.max_hp // 8))
+        self.battlefield.process_weather_effects(poke)
 
         if not poke.is_alive:
             return
@@ -478,12 +431,46 @@ class Battle:
                 poke.nv_status = gs.ASLEEP
                 self._add_text(poke.nickname + ' fell asleep!')
 
+    def _pre_process_move(self, trainer: tr.Trainer, t_move: list) -> list:
+        if t_move[gs.PPM_MOVE] == gd.RECHARGING or t_move[gs.PPM_MOVE] == gd.BIDING:
+            raise Exception
+        if trainer.current_poke.recharging:
+            t_move[gs.PPM_MOVE] = gd.RECHARGING
+        elif trainer.current_poke.bide_count:
+            t_move[gs.PPM_MOVE] = gd.BIDING
+        elif trainer.current_poke.rage:
+            t_move[gs.PPM_MOVE] = gd.RAGE
+            t_move[gs.PPM_BYPASS] = True
+        elif trainer.current_poke.uproar:
+            t_move[gs.PPM_MOVE] = gd.UPROAR
+            t_move[gs.PPM_BYPASS] = True
+        elif not trainer.current_poke.next_moves.empty():
+            t_move[gs.PPM_MOVE_DATA] = trainer.current_poke.next_moves.get()
+            t_move[gs.PPM_MOVE] = [gd.MOVE, t_move[gs.PPM_MOVE_DATA].name]
+            t_move[gs.PPM_BYPASS] = True
+        elif trainer.current_poke.encore_count:
+            t_move[gs.PPM_MOVE_DATA] = trainer.current_poke.encore_move
+            t_move[gs.PPM_MOVE] = [gd.MOVE, t_move[gs.PPM_MOVE_DATA].name]
+            if t_move[gs.PPM_MOVE_DATA].disabled:
+                t_move[gs.PPM_MOVE] = gd.STRUGGLE
+                t_move[gs.PPM_MOVE_DATA] = None
+                t_move[gs.PPM_BYPASS] = True
+        elif t_move[gs.PPM_MOVE][gs.ACTION_TYPE] == gd.MOVE and trainer.current_poke.no_pp():
+            t_move[gs.PPM_MOVE] = gd.STRUGGLE
+            t_move[gs.PPM_BYPASS] = True
+        return t_move
+
     def _victory(self, winner: tr.Trainer, loser: tr.Trainer):
         self._process_end_battle()
         self._add_text(winner.name + ' has defeated ' + loser.name + '!')
         self.winner = winner
 
     def _process_other(self, attacker: tr.Trainer, defender: tr.Trainer, a_move: list[str]):
+        if a_move == gd.SWITCH:
+            if attacker.can_switch_out():
+                _process_selection(attacker)
+            else:
+                raise Exception
         if a_move[gs.ACTION_VALUE] == 'recharging':
             self._add_text(attacker.current_poke.nickname + ' must recharge!')
             attacker.current_poke.recharging = False
@@ -501,6 +488,8 @@ class Battle:
                     break
         if not selector.current_poke.is_alive or selector.current_poke is old_poke:
             return True
+        if old_poke.is_alive:
+            old_poke.switch_out()
         self._add_text(selector.name + ' sent out ' + selector.current_poke.nickname + '!')
 
         if self.battlefield.gravity_count:

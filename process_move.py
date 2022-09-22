@@ -60,7 +60,7 @@ def _calculate_damage(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: b
     if not move_data.power:
         return
     t_mult = _calculate_type_ef(defender, move_data)
-    if t_mult == 0 or (t_mult < 2 and defender.has_ability('wonder-guard')):
+    if not t_mult or (t_mult < 2 and defender.has_ability('wonder-guard')):
         battle._add_text("It doesn't affect " + defender.nickname)
         return
     if pa.type_protection_abilities(defender, move_data, battle):
@@ -117,22 +117,28 @@ def _calculate_damage(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: b
     else:
         screen = 1
     weather_mult = 1
-    ff = 1
+    if battlefield.weather == gs.HARSH_SUNLIGHT:
+        if move_data.type == 'fire':
+            weather_mult = 1.5
+        elif move_data.type == 'water':
+            weather_mult = 0.5
+    elif battlefield.weather == gs.RAIN:
+        if move_data.type == 'fire':
+            weather_mult = 0.5
+        elif move_data.type == 'water':
+            weather_mult = 1.5
+
     if move_data.type == attacker.types[0] or move_data.type == attacker.types[1]:
         stab = 1.5 if not attacker.has_ability('adaptability') else 2
     else:
         stab = 1
     random_mult = random.randrange(85, 101) / 100
 
-    eb = 1
-    tl = 1
-    srf = 1
     berry_mult = pi.pre_hit_berries(attacker, defender, battle, move_data, t_mult)
     item_mult = pi.damage_mult_items(attacker, defender, battle, move_data, t_mult)
-    first = 1
 
-    damage = ((2 * attacker.level / 5 + 2) * move_data.power * ad_ratio) / 50 * burn * screen * weather_mult * ff + 2
-    damage *= crit_mult * item_mult * first * random_mult * stab * t_mult * srf * eb * tl * berry_mult
+    damage = ((2 * attacker.level / 5 + 2) * move_data.power * ad_ratio) / 50 * burn * screen * weather_mult + 2
+    damage *= crit_mult * item_mult * random_mult * stab * t_mult * berry_mult
     damage = int(damage)
     if skip_dmg:
         return damage
@@ -467,7 +473,7 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
             if attacker.item == 'big-root':
                 heal_amt = int(heal_amt * 1.3)
             if not defender.has_ability('liquid-ooze'):
-                attacker.heal(heal_amt)
+                attacker.heal(heal_amt, text_skip=True)
                 battle._add_text(defender.nickname + ' had it\'s energy drained!')
             else:
                 attacker.take_damage(heal_amt)
@@ -484,6 +490,8 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
             move_data.ef_stat = 1
             attacker.next_moves.put(move_data)
             return
+        if battlefield.weather != gs.HARSH_SUNLIGHT and battlefield.weather != gs.CLEAR:
+            move_data.power //= 2
     elif ef_id == 41:
         if random.randrange(10) < 3:
             _paralyze(defender, battle)
@@ -981,8 +989,21 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
         battle._add_text('Magnitude ' + str(mag) + '!')
     elif ef_id == 102:
         t = attacker.trainer
+        old_poke = attacker
         if t.num_fainted >= len(t.poke_list) - 1 or battle._process_selection(t):
             _failed(battle)
+        t.current_poke.v_status = attacker.v_status.copy()
+        t.current_poke.stat_stages = attacker.stat_stages.copy()
+        t.current_poke.perish_count = attacker.perish_count
+        t.current_poke.trapped = attacker.trapped
+        t.current_poke.perma_trapped = attacker.perma_trapped
+        t.current_poke.embargo_count = attacker.embargo_count
+        t.current_poke.magnetic_rise = attacker.magnet_rise
+        t.current_poke.substitute = attacker.substitute
+        t.current_poke.hb_count = attacker.hb_count
+        t.current_poke.power_trick = attacker.power_trick
+        if not attacker.has_ability('multitype'):
+            t.current_poke.ability_supressed = attacker.ability_suppressed
     elif ef_id == 103:
         if defender.is_alive and not defender.encore_count and defender.last_move and defender.last_move.cur_pp \
                 and defender.last_move not in ENCORE_CHECK and any([move.name == defender.last_move.name for move in defender.moves]):
@@ -1603,13 +1624,13 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
             _failed(battle)
     elif ef_id == 194:
         if attacker.mf_move:
-            attacker.mf_move.power *= 2
+            attacker.mf_move.power = int(1.5 * attacker.mf_move)
             battle._add_text(attacker.nickname + ' used ' + _cap_name(attacker.mf_move.name) + '!')
             _process_effect(attacker, defender, battlefield, battle, attacker.mf_move, is_first)
             attacker.mf_move = None
-            return
         else:
             _failed(battle)
+        return
     elif ef_id == 195:
         if battle.last_move:
             _process_effect(attacker, defender, battlefield, battle, Move(battle.last_move.md), is_first)
@@ -1745,8 +1766,10 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
             _recoil(attacker, battle, max(1, dmg // 2), move_data)
     elif ef_id == 218:
         t = attacker.trainer
-        if t.num_fainted >= len(t.poke_list) - 1 or battle._process_selection(t):
+        if t.num_fainted >= len(t.poke_list) - 1:
             _failed(battle)
+        attacker.faint()
+        battle._process_selection(t)
         battle._add_text(t.current_poke.nickname + 'became cloaked in mystical moonlight!')
         t.current_poke.heal(t.current_poke.max_hp)
         t.current_poke.nv_status = 0
@@ -1806,14 +1829,14 @@ def _pre_process_status(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield:
     if attacker.nv_status == gs.ASLEEP:
         if not attacker.nv_counter:
             attacker.nv_status = 0
-        attacker.nv_counter -= 1
+        else:
+            attacker.nv_counter -= 1
         if attacker.nv_counter and attacker.has_ability('early-bird'):
             attacker.nv_counter -= 1
-        if attacker.nv_counter:
+        if attacker.nv_counter > 0:
             battle._add_text(attacker.nickname + ' is fast asleep!')
-            if move_data.name == 'snore' or move_data.name == 'sleep-talk':
-                return False
-            return True
+            if move_data.name != 'snore' and move_data.name != 'sleep-talk':
+                return True
         battle._add_text(attacker.nickname + ' woke up!')
     if attacker.v_status[gs.FLINCHED]:
         attacker.v_status[gs.FLINCHED] = 0

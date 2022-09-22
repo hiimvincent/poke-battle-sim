@@ -10,28 +10,36 @@ import global_data as gd
 import process_move as pm
 import trainer as tr
 
-def use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, move: str = None, text_skip: bool = False):
-    poke = trainer.current_poke
-    if not poke.is_alive or not item in gd.USABLE_ITEM_CHECK:
+def use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, item_target_pos: str, move_target_pos: str = None, text_skip: bool = False):
+    """
+    Item actions in turn must be formatted as: ['item', $item, $item_target_pos, $move_target_name?]
+
+    $item refers to the item name
+    $item_target_pos refers to the target's position in the trainer's party (0-indexed)
+    $move_target_pos is an optional parameter that refers to the target move's position
+    in item target's move list (0-indexed)
+    """
+    if not can_use_item(trainer, battle, item, item_target_pos, move_target_pos):
         return
 
     if not text_skip:
-        battle._add_text(trainer.name + ' used one ' + pm._cap_name(item) + '!')
+        battle._add_text(trainer.name + ' used one ' + pm._cap_name(item) + ' on ' + poke.nickname + '!')
 
     if poke.embargo_count:
         pm._failed(battle)
         return
-    if item == 'potion':
-        poke.heal(20)
-    elif item == 'antidote':
+
+    if item in gd.HEALING_ITEM_CHECK:
+        poke.heal(gd.HEALING_ITEM_CHECK[item])
+    elif item == 'antidote' or item == 'pecha-berry':
         pm._cure_nv_status(gs.POISONED, poke, battle)
-    elif item == 'burn-heal':
+    elif item == 'burn-heal' or item == 'rawst-berry':
         pm._cure_nv_status(gs.BURNED, poke, battle)
-    elif item == 'ice-heal':
+    elif item == 'ice-heal' or item == 'aspear-berry':
         pm._cure_nv_status(gs.FROZEN, poke, battle)
-    elif item == 'awakening':
+    elif item == 'awakening' or item == 'chesto-berry':
         pm._cure_nv_status(gs.ASLEEP, poke, battle)
-    elif item == 'paralyz-heal':
+    elif item == 'paralyz-heal' or item == 'cheri-berry':
         pm._cure_nv_status(gs.PARALYZED, poke, battle)
     elif item == 'full-restore':
         poke.heal(poke.max_hp)
@@ -39,11 +47,8 @@ def use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, move: str = None
         pm._cure_confusion(poke, battle)
     elif item == 'max-potion':
         poke.heal(poke.max_hp)
-    elif item == 'hyper-potion':
-        poke.heal(200)
-    elif item == 'super-potion':
-        poke.heal(50)
-    elif item == 'full-heal':
+    elif item == 'full-heal' or item == 'heal-powder' or item == 'lava-cookie' \
+            or item == 'old-gateau' or item == 'lum-berry':
         pm._cure_nv_status(poke.nv_status, poke, battle)
         pm._cure_confusion(poke, battle)
     elif item == 'revive':
@@ -54,43 +59,18 @@ def use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, move: str = None
         if not poke.is_alive:
             poke.is_alive = True
             poke.heal(poke.max_hp)
-    elif item == 'fresh-water':
-        poke.heal(50)
-    elif item == 'soda-pop':
-        poke.heal(60)
-    elif item == 'lemonade':
-        poke.heal(80)
-    elif item == 'moomoo-milk':
-        poke.heal(100)
-    elif item == 'energypowder':
-        poke.heal(50)
-    elif item == 'energy-root':
-        poke.heal(200)
-    elif item == 'heal-powder':
-        pm._cure_nv_status(poke.nv_status, poke, battle)
-        pm._cure_confusion(poke, battle)
     elif item == 'revival-herb':
         if not poke.is_alive:
             poke.is_alive = True
             poke.heal(poke.max_hp)
-    elif item == 'ether':
-        if move and isinstance(move, str):
-            poke.restore_pp(move, 10)
+    elif item == 'ether' or item == 'leppa-berry':
+        poke.restore_pp(move, 10)
     elif item == 'max-ether':
-        if move and isinstance(move, str):
-            poke.restore_pp(move, 999)
+        poke.restore_pp(move, 999)
     elif item == 'elixir':
         poke.restore_all_pp(10)
     elif item == 'max-elixir':
         poke.restore_all_pp(999)
-    elif item == 'lava-cookie':
-        pm._cure_nv_status(poke.nv_status, poke, battle)
-        pm._cure_confusion(poke, battle)
-    elif item == 'berry-juice':
-        poke.heal(20)
-    elif item == 'old-gateau':
-        pm._cure_nv_status(poke.nv_status, poke, battle)
-        pm._cure_confusion(poke, battle)
     elif item == 'guard-spec.':
         if not trainer.mist:
             battle._add_text(trainer.name + '\'s team became shrouded in mist!')
@@ -114,32 +94,58 @@ def use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, move: str = None
         pm._give_stat_change(poke, battle, gs.SP_DEF, 1, forced=True)
     elif item == 'blue-flute':
         pm._cure_nv_status(gs.ASLEEP, poke, battle)
-    elif item == 'yellow-flute':
+    elif item == 'yellow-flute' or item == 'persim-berry':
         pm._cure_confusion(poke, battle)
     elif item == 'red-flute':
         pm._cure_infatuation(poke, battle)
-    elif item == 'cheri-berry':
-        pm._cure_nv_status(gs.PARALYZED, poke, battle)
-    elif item == 'chesto-berry':
-        pm._cure_nv_status(gs.ASLEEP, poke, battle)
-    elif item == 'pecha-berry':
-        pm._cure_nv_status(gs.POISONED, poke, battle)
-    elif item == 'rawst-berry':
-        pm._cure_nv_status(gs.BURNED, poke, battle)
-    elif item == 'aspear-berry':
-        pm._cure_nv_status(gs.FROZEN, poke, battle)
-    elif item == 'leppa-berry':
-        if move and isinstance(move, str):
-            poke.restore_pp(move, 10)
-    elif item == 'oran-berry':
-        poke.heal(10)
-    elif item == 'persim-berry':
-        pm._cure_confusion(poke, battle)
-    elif item == 'lum-berry':
-        pm._cure_nv_status(poke.nv_status, poke, battle)
-        pm._cure_confusion(poke, battle)
-    elif item == 'sitrus-berry':
-        poke.heal(30)
+
+def can_use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, item_target_pos: str, move_target_pos: str = None):
+    if not isinstance(str, item) or not item in gd.USABLE_ITEM_CHECK:
+        return False
+    if not isinstance(str, item_target_pos) or any([not num.is_digit() for num in item_target_pos]) \
+            or item_target_pos >= len(trainer.poke_list):
+        return False
+    poke = trainer.poke_list[int(item_target_pos)]
+    if poke.embargo_count:
+        return False
+    if move_target_pos and (any([not num.is_digit() for num in move_target_pos]) \
+            or move_target_pos >= len(poke.moves)):
+        return False
+    if move_target_pos:
+        move = poke.moves[move_target_pos]
+
+    if item in gd.HEALING_ITEM_CHECK:
+        return poke.cur_hp < poke.max_hp
+    elif item == 'antidote' or item == 'pecha-berry':
+        return poke.nv_status == gs.POISONED
+    elif item == 'burn-heal' or item == 'rawst-berry':
+        return poke.nv_status == gs.BURNED
+    elif item == 'ice-heal' or item == 'aspear-berry':
+        return poke.nv_status == gs.FROZEN
+    elif item == 'awakening' or item == 'chesto-berry':
+        return poke.nv_status == gs.ASLEEP
+    elif item == 'paralyz-heal' or item == 'cheri-berry':
+        return poke.nv_status == gs.PARALYZED
+    elif item == 'revive' or item == 'max-revive' or item == 'revival-herb':
+        return not poke.is_alive
+    elif item == 'full-restore':
+        return poke.cur_hp < poke.max_hp or poke.nv_status or poke.v_status[gs.CONFUSED]
+    elif item == 'max-potion':
+        return poke.cur_hp < poke.max_hp
+    elif item == 'full-heal' or item == 'heal-powder' or item == 'lava-cookie' \
+            or item == 'old-gateau' or item == 'lum-berry':
+        return poke.nv_status or poke.v_status[gs.CONFUSED]
+    elif item == 'yellow-flute' or item == 'persim-berry':
+        return poke.v_status[gs.CONFUSED]
+    elif item == 'red-flute':
+        return not not poke.infatuation
+    elif item == 'guard-spec.':
+        return not trainer.mist
+    elif item == 'ether' or item == 'max-ether' or item == 'leppa-berry':
+        return move and move.cur_pp < move.max_pp
+    elif item == 'elixir' or item == 'max-elixir':
+        return any([move.cur_pp < move.max_pp for move in poke.moves])
+    return True
 
 def damage_calc_items(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, move_data: Move):
     if not attacker.item in gd.DMG_ITEM_CHECK or attacker.has_ability('klutz') or attacker.embargo_count:
@@ -217,7 +223,7 @@ def damage_calc_items(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Bat
         if move_data.category == gs.SPECIAL:
             move_data.power = int(move_data.power * 1.1)
     elif item == 'metronome':
-        if not attacker.last_successful_move:
+        if not attacker.last_successful_move_next:
             attacker.metronome_count = 1
             move_data.power *= int(move_data.power * 1.1)
         elif move_data.name == attacker.last_successful_move_next.name:

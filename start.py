@@ -25,7 +25,6 @@ while d in ['scratch', 'fire-punch', c]:
 m2 = [c, 'scratch', 'fire-punch', d]
 print(m1[0], m1[3])
 print(m2[0], m2[3])
-print(ps.PokeSim._ability_list[random.randrange(len(ps.PokeSim._ability_list))])
 pikachu1 = pk.Pokemon(name_or_id="pikachu", level=100, ivs=[31,31,0,10,21,30], evs=[255,0,100,5,5,10],
                      moves=m1, nature="timid", nickname='pikachu1', gender='male', ability=ps.PokeSim._ability_list[random.randrange(len(ps.PokeSim._ability_list))], item=ps.PokeSim._item_list[random.randrange(len(ps.PokeSim._item_list))])
 
@@ -36,6 +35,13 @@ charizard4 = pk.Pokemon("charizard", level=100, stats_actual=[200,200,200,200,20
 
 charizard1 = pk.Pokemon("charizard", level=100, stats_actual=[200,200,200,200,200,200], moves=m2, nickname='charizard1', gender='female', ability=ps.PokeSim._ability_list[random.randrange(len(ps.PokeSim._ability_list))], item=ps.PokeSim._item_list[random.randrange(len(ps.PokeSim._item_list))])
 charizard2 = pk.Pokemon("charizard", level=100, stats_actual=[200,200,200,200,200,200], moves=m2, nickname='charizard2', gender='female', ability=ps.PokeSim._ability_list[random.randrange(len(ps.PokeSim._ability_list))], item=ps.PokeSim._item_list[random.randrange(len(ps.PokeSim._item_list))])
+
+print('p1 ability: ' + pikachu1.ability + ' p1 item: ' + pikachu1.o_item)
+print('p2 ability: ' + pikachu2.ability + ' p2 item: ' + pikachu2.o_item)
+print('c1 ability: ' + charizard1.ability + ' c1 item: ' + charizard1.o_item)
+print('c2 ability: ' + charizard2.ability + ' c2 item: ' + charizard2.o_item)
+print('c3 ability: ' + charizard3.ability + ' c3 item: ' + charizard3.o_item)
+print('c4 ability: ' + charizard4.ability + ' c4 item: ' + charizard4.o_item)
 
 me = tr.Trainer("player", [pikachu1, pikachu2, charizard3, charizard4])
 you = tr.Trainer("enemy", [charizard1, charizard2])
