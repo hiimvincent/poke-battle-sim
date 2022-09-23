@@ -1,5 +1,6 @@
 import csv
 import random
+
 import global_settings as gs
 
 class PokeSim:
@@ -121,7 +122,7 @@ class PokeSim:
         return
 
     @classmethod
-    def get_type_effectiveness(cls, move_type: str, def_type: str) -> float | None:
+    def get_type_ef(cls, move_type: str, def_type: str) -> float | None:
         if move_type not in cls._type_to_id or def_type not in cls._type_to_id:
             raise Exception
         return cls._type_effectives[cls._type_to_id[move_type]][cls._type_to_id[def_type]]

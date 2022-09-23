@@ -1,14 +1,17 @@
 from __future__ import annotations
-import pokemon as pk
-import battlefield as bf
-import battle as bt
+from random import randrange
+
 from poke_sim import PokeSim
 from move import Move
-import random
+
+import pokemon as pk
+import trainer as tr
+import battle as bt
+import battlefield as bf
+import process_move as pm
+
 import global_settings as gs
 import global_data as gd
-import process_move as pm
-import trainer as tr
 
 def use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, item_target_pos: str, move_target_pos: str = None, text_skip: bool = False):
     """
@@ -23,7 +26,7 @@ def use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, item_target_pos:
         return
 
     if not text_skip:
-        battle._add_text(trainer.name + ' used one ' + pm._cap_name(item) + ' on ' + poke.nickname + '!')
+        battle.add_text(trainer.name + ' used one ' + pm.cap_name(item) + ' on ' + poke.nickname + '!')
 
     if poke.embargo_count:
         pm._failed(battle)
@@ -32,25 +35,25 @@ def use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, item_target_pos:
     if item in gd.HEALING_ITEM_CHECK:
         poke.heal(gd.HEALING_ITEM_CHECK[item])
     elif item == 'antidote' or item == 'pecha-berry':
-        pm._cure_nv_status(gs.POISONED, poke, battle)
+        pm.cure_nv_status(gs.POISONED, poke, battle)
     elif item == 'burn-heal' or item == 'rawst-berry':
-        pm._cure_nv_status(gs.BURNED, poke, battle)
+        pm.cure_nv_status(gs.BURNED, poke, battle)
     elif item == 'ice-heal' or item == 'aspear-berry':
-        pm._cure_nv_status(gs.FROZEN, poke, battle)
+        pm.cure_nv_status(gs.FROZEN, poke, battle)
     elif item == 'awakening' or item == 'chesto-berry':
-        pm._cure_nv_status(gs.ASLEEP, poke, battle)
+        pm.cure_nv_status(gs.ASLEEP, poke, battle)
     elif item == 'paralyz-heal' or item == 'cheri-berry':
-        pm._cure_nv_status(gs.PARALYZED, poke, battle)
+        pm.cure_nv_status(gs.PARALYZED, poke, battle)
     elif item == 'full-restore':
         poke.heal(poke.max_hp)
-        pm._cure_nv_status(poke.nv_status, poke, battle)
-        pm._cure_confusion(poke, battle)
+        pm.cure_nv_status(poke.nv_status, poke, battle)
+        pm.cure_confusion(poke, battle)
     elif item == 'max-potion':
         poke.heal(poke.max_hp)
     elif item == 'full-heal' or item == 'heal-powder' or item == 'lava-cookie' \
             or item == 'old-gateau' or item == 'lum-berry':
-        pm._cure_nv_status(poke.nv_status, poke, battle)
-        pm._cure_confusion(poke, battle)
+        pm.cure_nv_status(poke.nv_status, poke, battle)
+        pm.cure_confusion(poke, battle)
     elif item == 'revive':
         if not poke.is_alive:
             poke.is_alive = True
@@ -73,31 +76,31 @@ def use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, item_target_pos:
         poke.restore_all_pp(999)
     elif item == 'guard-spec.':
         if not trainer.mist:
-            battle._add_text(trainer.name + '\'s team became shrouded in mist!')
+            battle.add_text(trainer.name + '\'s team became shrouded in mist!')
             trainer.mist = 5
     elif item == 'dire-hit':
         poke.crit_stage += 2
         if poke.crit_stage > 4:
             poke.crit_stage = 4
-        battle._add_text(poke.nickname + ' is getting pumped!')
+        battle.add_text(poke.nickname + ' is getting pumped!')
     elif item == 'x-attack':
-        pm._give_stat_change(poke, battle, gs.ATK, 1, forced=True)
+        pm.give_stat_change(poke, battle, gs.ATK, 1, forced=True)
     elif item == 'x-defense':
-        pm._give_stat_change(poke, battle, gs.DEF, 1, forced=True)
+        pm.give_stat_change(poke, battle, gs.DEF, 1, forced=True)
     elif item == 'x-speed':
-        pm._give_stat_change(poke, battle, gs.SPD, 1, forced=True)
+        pm.give_stat_change(poke, battle, gs.SPD, 1, forced=True)
     elif item == 'x-accuracy':
-        pm._give_stat_change(poke, battle, gs.ACC, 1, forced=True)
+        pm.give_stat_change(poke, battle, gs.ACC, 1, forced=True)
     elif item == 'x-special':
-        pm._give_stat_change(poke, battle, gs.SP_ATK, 1, forced=True)
+        pm.give_stat_change(poke, battle, gs.SP_ATK, 1, forced=True)
     elif item == 'x-sp.-def':
-        pm._give_stat_change(poke, battle, gs.SP_DEF, 1, forced=True)
+        pm.give_stat_change(poke, battle, gs.SP_DEF, 1, forced=True)
     elif item == 'blue-flute':
-        pm._cure_nv_status(gs.ASLEEP, poke, battle)
+        pm.cure_nv_status(gs.ASLEEP, poke, battle)
     elif item == 'yellow-flute' or item == 'persim-berry':
-        pm._cure_confusion(poke, battle)
+        pm.cure_confusion(poke, battle)
     elif item == 'red-flute':
-        pm._cure_infatuation(poke, battle)
+        pm.cure_infatuation(poke, battle)
 
 def can_use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, item_target_pos: str, move_target_pos: str = None):
     if not isinstance(item, str) or not item in gd.USABLE_ITEM_CHECK:
@@ -273,20 +276,20 @@ def on_damage_items(poke: pk.Pokemon, battle: bt.Battle):
     _eat_item(poke, battle)
 
     if item == 'liechi-berry':
-        pm._give_stat_change(poke, battle, gs.ATK, 1)
+        pm.give_stat_change(poke, battle, gs.ATK, 1)
     elif item == 'ganlon-berry':
-        pm._give_stat_change(poke, battle, gs.DEF, 1)
+        pm.give_stat_change(poke, battle, gs.DEF, 1)
     elif item == 'salac-berry':
-        pm._give_stat_change(poke, battle, gs.SPD, 1)
+        pm.give_stat_change(poke, battle, gs.SPD, 1)
     elif item == 'petaya-berry':
-        pm._give_stat_change(poke, battle, gs.SP_ATK, 1)
+        pm.give_stat_change(poke, battle, gs.SP_ATK, 1)
     elif item == 'apricot-berry':
-        pm._give_stat_change(poke, battle, gs.SP_DEF, 1)
+        pm.give_stat_change(poke, battle, gs.SP_DEF, 1)
     elif item == 'lansat-berry':
         poke.crit_stage = min(4, poke.crit_stage + 1)
-        battle._add_text(poke.nickname + ' is getting pumped!')
+        battle.add_text(poke.nickname + ' is getting pumped!')
     elif item == 'starf-berry':
-        pm._give_stat_change(poke, battle, random.randrange(1, 6), 2)
+        pm.give_stat_change(poke, battle, randrange(1, 6), 2)
     elif item == 'micle-berry':
         poke.next_will_hit = True
     elif item == 'custap-berry':
@@ -304,7 +307,7 @@ def pre_move_items(poke: pk.Pokemon):
     item = poke.item
 
     if item == 'quick-claw':
-        if random.randrange(5) < 1:
+        if randrange(5) < 1:
             poke.prio_boost = True
 
 def stat_calc_items(poke: pk.Pokemon):
@@ -357,39 +360,39 @@ def status_items(poke: pk.Pokemon, battle: bt.Battle):
     if item == 'cheri-berry':
         if poke.nv_status == gs.PARALYZED:
             _eat_item(poke, battle)
-            pm._cure_nv_status(gs.PARALYZED, poke, battle)
+            pm.cure_nv_status(gs.PARALYZED, poke, battle)
     elif item == 'chesto-berry':
         if poke.nv_status == gs.ASLEEP:
             _eat_item(poke, battle)
-            pm._cure_nv_status(gs.ASLEEP, poke, battle)
+            pm.cure_nv_status(gs.ASLEEP, poke, battle)
     elif item == 'pecha-berry':
         if poke.nv_status == gs.POISONED:
             _eat_item(poke, battle)
-            pm._cure_nv_status(gs.POISONED, poke, battle)
+            pm.cure_nv_status(gs.POISONED, poke, battle)
     elif item == 'rawst-berry':
         if poke.nv_status == gs.BURNED:
             _eat_item(poke, battle)
-            pm._cure_nv_status(gs.BURNED, poke, battle)
+            pm.cure_nv_status(gs.BURNED, poke, battle)
     elif item == 'aspear-berry':
         if poke.nv_status == gs.FROZEN:
             _eat_item(poke, battle)
-            pm._cure_nv_status(gs.FROZEN, poke, battle)
+            pm.cure_nv_status(gs.FROZEN, poke, battle)
     elif item == 'persim-berry':
         if poke.v_status[gs.CONFUSED]:
             _eat_item(poke, battle)
-            pm._cure_confusion(poke, battle)
+            pm.cure_confusion(poke, battle)
     elif item == 'lum-berry':
         if poke.nv_status or poke.v_status[gs.CONFUSED]:
             _eat_item(poke, battle)
-            pm._cure_nv_status(poke.nv_status, poke, battle)
-            pm._cure_confusion(poke, battle)
+            pm.cure_nv_status(poke.nv_status, poke, battle)
+            pm.cure_confusion(poke, battle)
     elif item == 'mental-herb':
         if poke.infatuation:
             _consume_item(poke, battle)
-            pm._cure_infatuation(poke, battle)
+            pm.cure_infatuation(poke, battle)
     elif item == 'destiny-knot':
         if poke.infatuation and poke.enemy.current_poke.is_alive and not poke.enemy.current_poke.infatuation:
-            pm._infatuate(poke, poke.enemy.current_poke, battle)
+            pm.infatuate(poke, poke.enemy.current_poke, battle)
 
 def on_hit_items(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, move_data: Move):
     if not move_data or not defender.item in gd.ON_HIT_ITEM_CHECK or defender.has_ability('klutz') or defender.embargo_count:
@@ -408,10 +411,10 @@ def on_hit_items(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, 
             attacker.take_damage(max(1, attacker.max_hp // 8))
     elif item == 'sticky-barb':
         if move_data.name in gd.CONTACT_CHECK and attacker.is_alive and not attacker.item:
-            battle._add_text(attacker.nickname + ' received ' + defender.nickname + '\'s Sticky Barb!')
+            battle.add_text(attacker.nickname + ' received ' + defender.nickname + '\'s Sticky Barb!')
             attacker.give_item('sticky-barb')
 
-def hit_or_miss_calc_items(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool) -> float:
+def homc_items(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle, move_data: Move, is_first: bool) -> float:
     i_mult = 1
     
     if (not defender.item in gd.HOMC_ITEM_CHECK or defender.has_ability('klutz') or defender.embargo_count) and (not attacker.item in gd.HOMC_ITEM_CHECK or attacker.has_ability('klutz') or attacker.embargo_count):
@@ -446,50 +449,50 @@ def end_turn_items(poke: pk.Pokemon, battle: bt.Battle):
             _eat_item(poke, battle)
             poke.heal(max(1, poke.max_hp // 8))
             if not poke.nature or poke.nature in ('modest', 'timid', 'calm', 'bold'):
-                pm._confuse(poke, battle)
+                pm.confuse(poke, battle)
     elif item == 'wiki-berry':
         if poke.cur_hp < poke.max_hp * gs.BERRY_THRESHOLD:
             _eat_item(poke, battle)
             poke.heal(max(1, poke.max_hp // 8))
             if not poke.nature or poke.nature in ('adamant', 'jolly', 'careful', 'impish'):
-                pm._confuse(poke, battle)
+                pm.confuse(poke, battle)
     elif item == 'mago-berry':
         if poke.cur_hp < poke.max_hp * gs.BERRY_THRESHOLD:
             _eat_item(poke, battle)
             poke.heal(max(1, poke.max_hp // 8))
             if not poke.nature or poke.nature in ('brave', 'quiet', 'sassy', 'relaxed'):
-                pm._confuse(poke, battle)
+                pm.confuse(poke, battle)
     elif item == 'aguav-berry':
         if poke.cur_hp < poke.max_hp * gs.BERRY_THRESHOLD:
             _eat_item(poke, battle)
             poke.heal(max(1, poke.max_hp // 8))
             if not poke.nature or poke.nature in ('naughty', 'rash', 'naive', 'lax'):
-                pm._confuse(poke, battle)
+                pm.confuse(poke, battle)
     elif item == 'iapapa-berry':
         if poke.cur_hp < poke.max_hp * gs.BERRY_THRESHOLD:
             _eat_item(poke, battle)
             poke.heal(max(1, poke.max_hp // 8))
             if not poke.nature or poke.nature in ('lonely', 'mild', 'gentle', 'hasty'):
-                pm._confuse(poke, battle)
+                pm.confuse(poke, battle)
     elif item == 'leftovers':
         if not poke.cur_hp == poke.max_hp:
-            battle._add_text(poke.nickname + ' restored a little HP using its Leftovers!')
+            battle.add_text(poke.nickname + ' restored a little HP using its Leftovers!')
             poke.heal(max(1, poke.max_hp // 16), text_skip=True)
     elif item == 'black-sludge':
         if 'poison' in poke.types:
-            battle._add_text(poke.nickname + ' restored a little HP using its Black Sludge!')
+            battle.add_text(poke.nickname + ' restored a little HP using its Black Sludge!')
             poke.heal(max(1, poke.max_hp // 16), text_skip=True)
         elif not poke.has_ability('magic-guard'):
-            battle._add_text(poke.nickname + ' was hurt by its Black Sludge!')
+            battle.add_text(poke.nickname + ' was hurt by its Black Sludge!')
             poke.take_damage(max(1, poke.max_hp // 8))
     elif item == 'toxic-orb':
         if not poke.nv_status:
-            pm._give_nv_status(gs.BADLY_POISONED, poke, battle)
+            pm.give_nv_status(gs.BADLY_POISONED, poke, battle)
     elif item == 'flame-orb':
         if not poke.nv_status:
-            pm._give_nv_status(gs.BURNED, poke, battle)
+            pm.give_nv_status(gs.BURNED, poke, battle)
     elif item == 'sticky-barb':
-        battle._add_text(poke.nickname + ' was hurt by its Sticky Barb!')
+        battle.add_text(poke.nickname + ' was hurt by its Sticky Barb!')
         poke.take_damage(max(1, poke.max_hp // 8))
 
 def post_damage_items(attacker: pk.Pokemon, battle: bt.Battle, dmg: int):
@@ -498,16 +501,16 @@ def post_damage_items(attacker: pk.Pokemon, battle: bt.Battle, dmg: int):
 
     if attacker.item == 'shell-bell':
         if attacker.is_alive and dmg:
-            battle._add_text(attacker.nickname + ' restored a little HP using its Shell Bell!')
+            battle.add_text(attacker.nickname + ' restored a little HP using its Shell Bell!')
             attacker.heal(max(1, dmg // 8), text_skip=True)
     if attacker.item == 'life-orb':
         if attacker.is_alive and dmg:
-            battle._add_text(attacker.nickname + ' lost some of its HP!')
+            battle.add_text(attacker.nickname + ' lost some of its HP!')
             attacker.take_damage(max(1, attacker.max_hp // 10))
 
 def _consume_item(poke: pk.Pokemon, battle: bt.Battle):
-    battle._add_text(poke.nickname + ' used its ' + pm._cap_name(poke.item) + '!')
+    battle.add_text(poke.nickname + ' used its ' + pm.cap_name(poke.item) + '!')
 
 def _eat_item(poke: pk.Pokemon, battle: bt.Battle):
-    battle._add_text(poke.nickname + ' ate its ' + pm._cap_name(poke.item) + '!')
+    battle.add_text(poke.nickname + ' ate its ' + pm.cap_name(poke.item) + '!')
     poke.give_item(None)

@@ -1,15 +1,18 @@
 from __future__ import annotations
-import random
-import pokemon as pk
-import trainer as tr
+from random import randrange
+
 from move import Move
 from poke_sim import PokeSim
+
+import pokemon as pk
+import trainer as tr
 import battlefield as bf
 import process_move as pm
-import global_settings as gs
-import global_data as gd
 import process_ability as pa
 import process_item as pi
+
+import global_settings as gs
+import global_data as gd
 
 class Battle:
     def __init__(self, t1: tr.Trainer, t2: tr.Trainer):
@@ -47,8 +50,8 @@ class Battle:
         self.last_move = None
         self.last_move_next = None
         self.turn_count = 0
-        self._add_text(self.t1.name + ' sent out ' + self.t1.current_poke.nickname + '!')
-        self._add_text(self.t2.name + ' sent out ' + self.t2.current_poke.nickname + '!')
+        self.add_text(self.t1.name + ' sent out ' + self.t1.current_poke.nickname + '!')
+        self.add_text(self.t2.name + ' sent out ' + self.t2.current_poke.nickname + '!')
 
     def turn(self, t1_turn: list[str], t2_turn: list[str]) -> bool | None:
         """
@@ -122,7 +125,7 @@ class Battle:
             else:
                 spd_dif = self.t1.current_poke.stats_effective[gs.SPD] - self.t2.current_poke.stats_effective[gs.SPD]
                 if spd_dif == 0:
-                    t1_first = random.randrange(2) < 1
+                    t1_first = randrange(2) < 1
                 else:
                     t1_first = spd_dif > 0
                     if self.battlefield.trick_room_count:
@@ -134,7 +137,7 @@ class Battle:
 
                 t1_first = self._prio_boost_check(t1_first)
 
-        self._add_text("Turn " + str(self.turn_count) + ":")
+        self.add_text("Turn " + str(self.turn_count) + ":")
 
         if self._pursuit_check(t1_move, t2_move, t1_move_data, t2_move_data, t1_first):
             t1_first = t1_move == gd.PURSUIT
@@ -175,7 +178,7 @@ class Battle:
             faster = self.t2
             slower = self.t1
         else:
-            faster = self.t1 if random.randrange(2) < 1 else self.t2
+            faster = self.t1 if randrange(2) < 1 else self.t2
             slower = self.t2 if faster is self.t1 else self.t1
 
         if faster.current_poke.is_alive:
@@ -228,7 +231,7 @@ class Battle:
         is_disabled = move_data.disabled
         attacker.reduce_disabled_count()
         if is_disabled:
-            self._add_text(move_data.name + ' is disabled!')
+            self.add_text(move_data.name + ' is disabled!')
             return False
         if not (move_data.name in gd.TWO_TURN_CHECK and not move_data.ef_stat):
             move_data.cur_pp -= 1
@@ -245,17 +248,17 @@ class Battle:
         if trainer.wish:
             trainer.wish -= 1
             if not trainer.wish:
-                self._add_text(trainer.wish_poke + '\'s wish came true!')
+                self.add_text(trainer.wish_poke + '\'s wish came true!')
                 trainer.current_poke.heal(trainer.current_poke.max_hp // 2)
                 trainer.wish_poke = None
         if poke.v_status[gs.INGRAIN]:
-            self._add_text(poke.nickname + ' absorbed nutrients with its roots!')
+            self.add_text(poke.nickname + ' absorbed nutrients with its roots!')
             heal_amt = max(1, poke.max_hp // 16)
             if poke.item == 'big-root':
                 heal_amt = int(heal_amt * 1.3)
             poke.heal(heal_amt, text_skip=True)
         if poke.v_status[gs.AQUA_RING]:
-            self._add_text('A veil of water restored ' + poke.nickname + '\'s HP!')
+            self.add_text('A veil of water restored ' + poke.nickname + '\'s HP!')
             heal_amt = max(1, poke.max_hp // 16)
             if poke.item == 'big-root':
                 heal_amt = int(heal_amt * 1.3)
@@ -266,35 +269,35 @@ class Battle:
             trainer.fs_count -= 1
             if not trainer.fs_count:
                 poke.take_damage(trainer.fs_dmg)
-                self._add_text(poke.nickname + ' took the Future Sight attack!')
+                self.add_text(poke.nickname + ' took the Future Sight attack!')
         if trainer.dd_count and poke.is_alive:
             trainer.dd_count -= 1
             if not trainer.dd_count:
                 poke.take_damage(trainer.dd_dmg)
-                self._add_text(poke.nickname + ' took the Doom Desire attack!')
+                self.add_text(poke.nickname + ' took the Doom Desire attack!')
         if trainer.reflect:
             trainer.reflect -= 1
         if trainer.light_screen:
             trainer.light_screen -= 1
-            self._add_text(trainer.name + '\'s Light Screen wore off.')
+            self.add_text(trainer.name + '\'s Light Screen wore off.')
         if trainer.safeguard:
             trainer.safeguard -= 1
             if not trainer.safeguard:
-                self._add_text(trainer.name + ' is no longer protected by Safeguard.')
+                self.add_text(trainer.name + ' is no longer protected by Safeguard.')
         if trainer.mist:
             trainer.mist -= 1
             if not trainer.mist:
-                self._add_text(trainer.name + ' is no longer protected by mist!')
+                self.add_text(trainer.name + ' is no longer protected by mist!')
         if trainer.tailwind_count:
             trainer.tailwind_count -= 1
             if not trainer.tailwind_count:
-                self._add_text(trainer.name + '\'s ' + 'tailwind petered out!')
+                self.add_text(trainer.name + '\'s ' + 'tailwind petered out!')
                 for poke in trainer.poke_list:
                     poke.stats_actual[gs.SPD] //= 2
         if trainer.lucky_chant:
             trainer.lucky_chant -= 1
             if not trainer.lucky_chant:
-                self._add_text(trainer.name + '\'s Lucky Chant wore off!')
+                self.add_text(trainer.name + '\'s Lucky Chant wore off!')
         if trainer.imprisoned_poke and not trainer.imprisoned_poke is other.current_poke:
             trainer.imprisoned_poke = None
         if poke.perish_count and poke.is_alive:
@@ -306,33 +309,33 @@ class Battle:
         if not poke.is_alive:
             return
 
-        if poke.nv_status and ((poke.has_ability('shed-skin') and random.randrange(10) < 3) \
+        if poke.nv_status and ((poke.has_ability('shed-skin') and randrange(10) < 3) \
                 or (poke.has_ability('hydration') and self.battlefield.weather == gs.RAIN)):
-            pm._cure_nv_status(poke.nv_status, poke, self)
+            pm.cure_nv_status(poke.nv_status, poke, self)
         if poke.nv_status == gs.BURNED and poke.is_alive:
-            self._add_text(poke.nickname + ' was hurt by its burn!')
+            self.add_text(poke.nickname + ' was hurt by its burn!')
             if not poke.has_ability('heatproof'):
                 poke.take_damage(max(1, poke.max_hp // 8))
             else:
                 poke.take_damage(max(1, poke.max_hp // 16))
         if poke.nv_status == gs.POISONED and poke.is_alive:
             if not poke.has_ability('poison-heal'):
-                self._add_text(poke.nickname + ' was hurt by poison!')
+                self.add_text(poke.nickname + ' was hurt by poison!')
                 poke.take_damage(max(1, poke.max_hp // 8))
             else:
-                self._add_text(poke.nickname + ' was healed by its Poison Heal!')
+                self.add_text(poke.nickname + ' was healed by its Poison Heal!')
                 poke.heal(max(1, poke.max_hp // 8))
         if poke.nv_status == gs.BADLY_POISONED and poke.is_alive:
             if not poke.has_ability('poison-heal'):
-                self._add_text(poke.nickname + ' was hurt by poison!')
+                self.add_text(poke.nickname + ' was hurt by poison!')
                 poke.take_damage(max(1, poke.max_hp * poke.nv_counter // 16))
             else:
-                self._add_text(poke.nickname + ' was healed by its Poison Heal!')
+                self.add_text(poke.nickname + ' was healed by its Poison Heal!')
                 poke.heal(max(1, poke.max_hp // 8))
             poke.nv_counter += 1
         if poke.v_status[gs.BINDING_COUNT] and poke.is_alive:
             if poke.binding_poke is other.current_poke and poke.binding_type:
-                self._add_text(poke.nickname + ' is hurt by ' + poke.binding_type + '!')
+                self.add_text(poke.nickname + ' is hurt by ' + poke.binding_type + '!')
                 poke.take_damage(max(1, poke.max_hp // 16))
                 if not poke.is_alive:
                     return
@@ -345,7 +348,7 @@ class Battle:
                 poke.binding_type = None
                 poke.binding_poke = None
         if poke.v_status[gs.LEECH_SEED] and poke.is_alive:
-            self._add_text(poke.nickname + '\'s health is sapped by Leech Seed!')
+            self.add_text(poke.nickname + '\'s health is sapped by Leech Seed!')
             heal_amt = poke.take_damage(max(1, poke.max_hp // 8))
             if poke.item == 'big-root':
                 heal_amt = int(heal_amt * 1.3)
@@ -355,15 +358,15 @@ class Battle:
                     other.heal(heal_amt)
                 else:
                     other.take_damage(heal_amt)
-                    self._add_text(other.nickname + ' sucked up the liquid ooze!')
+                    self.add_text(other.nickname + ' sucked up the liquid ooze!')
         if poke.v_status[gs.NIGHTMARE] and poke.is_alive:
-            self._add_text(poke.nickname + ' is locked in a nightmare!')
+            self.add_text(poke.nickname + ' is locked in a nightmare!')
             poke.take_damage(max(1, poke.max_hp // 4))
         if poke.v_status[gs.CURSE] and poke.is_alive:
-            self._add_text(poke.nickname + ' is afflicted by the curse!')
+            self.add_text(poke.nickname + ' is afflicted by the curse!')
             poke.take_damage(max(1, poke.max_hp // 4))
         if poke.has_ability('solar-power'):
-            self._add_text(poke.nickname + 'was hurt by its Solar Power!')
+            self.add_text(poke.nickname + 'was hurt by its Solar Power!')
             poke.take_damage(max(1, poke.max_hp // 8))
         if not poke.is_alive:
             return
@@ -401,19 +404,19 @@ class Battle:
                 poke.encore_move = None
                 for move in poke.moves:
                     move.encore_blocked = False
-                    self._add_text(poke.nickname + '\'s encore ended.')
+                    self.add_text(poke.nickname + '\'s encore ended.')
         if poke.embargo_count:
             poke.embargo_count -= 1
             if not poke.encore_count:
-                self._add_text(poke.nickname + ' can use items again!')
+                self.add_text(poke.nickname + ' can use items again!')
         if poke.hb_count:
             poke.hb_count -= 1
             if not poke.hb_count:
-                self._add_text(poke.nickname + '\'s Heal Block wore off!')
+                self.add_text(poke.nickname + '\'s Heal Block wore off!')
         if poke.uproar:
             poke.uproar -= 1
             if not poke.uproar:
-                self._add_text(poke.nickname + ' calmed down.')
+                self.add_text(poke.nickname + ' calmed down.')
         if poke.protect:
             poke.protect = False
             poke.invulnerable = False
@@ -435,7 +438,7 @@ class Battle:
             poke.v_status[gs.DROWSY] -= 1
             if not poke.v_status[gs.DROWSY] and not poke.nv_status:
                 poke.nv_status = gs.ASLEEP
-                self._add_text(poke.nickname + ' fell asleep!')
+                self.add_text(poke.nickname + ' fell asleep!')
 
     def _pre_process_move(self, trainer: tr.Trainer, t_move: list) -> list:
         if t_move[gs.PPM_MOVE] == gd.RECHARGING or t_move[gs.PPM_MOVE] == gd.BIDING:
@@ -469,7 +472,7 @@ class Battle:
 
     def _victory(self, winner: tr.Trainer, loser: tr.Trainer):
         self._process_end_battle()
-        self._add_text(winner.name + ' has defeated ' + loser.name + '!')
+        self.add_text(winner.name + ' has defeated ' + loser.name + '!')
         self.winner = winner
 
     def _process_other(self, attacker: tr.Trainer, defender: tr.Trainer, a_move: list[str]):
@@ -479,10 +482,10 @@ class Battle:
             else:
                 raise Exception
         if a_move[gs.ACTION_VALUE] == 'recharging':
-            self._add_text(attacker.current_poke.nickname + ' must recharge!')
+            self.add_text(attacker.current_poke.nickname + ' must recharge!')
             attacker.current_poke.recharging = False
         if a_move[gs.ACTION_VALUE] == 'biding':
-            self._add_text(attacker.current_poke.nickname + ' is storing energy!')
+            self.add_text(attacker.current_poke.nickname + ' is storing energy!')
 
     def _process_selection(self, selector: tr.Trainer) -> bool:
         if self.winner:
@@ -499,7 +502,7 @@ class Battle:
             return True
         if old_poke.is_alive:
             old_poke.switch_out()
-        self._add_text(selector.name + ' sent out ' + selector.current_poke.nickname + '!')
+        self.add_text(selector.name + ' sent out ' + selector.current_poke.nickname + '!')
 
         if self.battlefield.gravity_count:
             selector.current_poke.grounded = True
@@ -513,10 +516,10 @@ class Battle:
             else:
                 mult = 4
             selector.current_poke.take_damage(selector.current_poke.max_hp // mult)
-            self._add_text(selector.current_poke.nickname + ' was hurt by the spikes!')
+            self.add_text(selector.current_poke.nickname + ' was hurt by the spikes!')
         if selector.toxic_spikes and 'poison' in selector.current_poke.types:
             selector.toxic_spikes = 0
-            self._add_text('The poison spikes disappeared from the ground around ' + selector.name + '.')
+            self.add_text('The poison spikes disappeared from the ground around ' + selector.name + '.')
         if selector.toxic_spikes and not selector.current_poke.nv_status and (selector.current_poke.grounded \
                     or (not 'flying' in selector.current_poke.types and not 'steel' in selector.current_poke.types \
                     and not selector.current_poke.magnet_rise and not selector.current_poke.has_ability('immunity') \
@@ -524,18 +527,18 @@ class Battle:
                     and not (selector.current_poke.has_ability('leaf-guard') and battlefield.weather == gs.HARSH_SUNLIGHT))):
             if selector.toxic_spikes == 1:
                 selector.current_poke.nv_status = gs.POISONED
-                self._add_text(selector.current_poke.nickname + ' was poisoned!')
+                self.add_text(selector.current_poke.nickname + ' was poisoned!')
             else:
                 selector.current_poke.nv_status = gs.BADLY_POISONED
                 selector.current_pokenv_counter = 1
-                self._add_text(selector.current_poke.nickname + ' was badly poisoned!')
+                self.add_text(selector.current_poke.nickname + ' was badly poisoned!')
         if selector.stealth_rock and not selector.current_poke.has_ability('magic-guard'):
-            t_mult = PokeSim.get_type_effectiveness('rock', selector.current_poke.types[0])
+            t_mult = PokeSim.get_type_ef('rock', selector.current_poke.types[0])
             if selector.current_poke.types[1]:
-                t_mult *= PokeSim.get_type_effectiveness('rock', selector.current_poke.types[1])
+                t_mult *= PokeSim.get_type_ef('rock', selector.current_poke.types[1])
             if t_mult:
                 selector.current_poke.take_damage(int(selector.current_poke.max_hp * 0.125 * t_mult))
-                self._add_text('Pointed stones dug into ' + selector.current_poke.nickname + '!')
+                self.add_text('Pointed stones dug into ' + selector.current_poke.nickname + '!')
 
         pa.enemy_selection_abilities(selector.current_poke, self.battlefield, self)
         pa.selection_abilities(selector.current_poke, self.battlefield, self)
@@ -545,14 +548,14 @@ class Battle:
         if self.winner:
             return
         if not self.t1_fainted and not self.t1.current_poke.is_alive:
-            self._add_text(self.t1.current_poke.nickname + " fainted!")
+            self.add_text(self.t1.current_poke.nickname + " fainted!")
             self.t1_fainted = True
             self.t1.num_fainted += 1
             if self.t1.num_fainted == len(self.t1.poke_list):
                 self._victory(self.t2, self.t1)
                 return
         if not self.t2_fainted and not self.t2.current_poke.is_alive:
-            self._add_text(self.t2.current_poke.nickname + " fainted!")
+            self.add_text(self.t2.current_poke.nickname + " fainted!")
             self.t2_fainted = True
             self.t2.num_fainted += 1
             if self.t2.num_fainted == len(self.t2.poke_list):
@@ -570,13 +573,13 @@ class Battle:
     def _pursuit_check(self, t1_move: list[str], t2_move: list[str], t1_move_data: Move, t2_move_data: Move, t1_first: bool) -> bool:
         if t1_move == gd.PURSUIT and (t2_move == gd.SWITCH or (t2_move[gs.ACTION_TYPE] == gd.MOVE and t2_move[gs.ACTION_VALUE] in gd.PURSUIT_CHECK and not t1_first)):
             t1_move_data.cur_pp -= 1
-            self._pressure_check(t1.current_poke, t1_move_data)
+            self._pressure_check(self.t1.current_poke, t1_move_data)
             t1_move_data = t1_move_data.get_tcopy()
             t1_move_data.power *= 2
             return True
         elif t2_move == gd.PURSUIT and (t1_move == gd.SWITCH or (t1_move[gs.ACTION_TYPE] == gd.MOVE and t1_move[gs.ACTION_VALUE] in gd.PURSUIT_CHECK and t1_first)):
             t2_move_data.cur_pp -= 1
-            self._pressure_check(t2.current_poke, t2_move_data)
+            self._pressure_check(self.t2.current_poke, t2_move_data)
             t2_move_data = t2_move_data.get_tcopy()
             t2_move_data.power *= 2
             return True
@@ -595,9 +598,9 @@ class Battle:
 
     def _focus_punch_check(self, t1_move: list[str], t2_move: list[str]):
         if t1_move == gd.FOCUS_PUNCH:
-            self._add_text(self.t1.current_poke.nickname + ' is tightening its focus!')
+            self.add_text(self.t1.current_poke.nickname + ' is tightening its focus!')
         if t2_move == gd.FOCUS_PUNCH:
-            self._add_text(self.t2.current_poke.nickname + ' is tightening its focus!')
+            self.add_text(self.t2.current_poke.nickname + ' is tightening its focus!')
 
     def _stall_check(self) -> bool:
         return self.t1.current_poke.has_ability('stall') or self.t2.current_poke.has_ability('stall')
@@ -607,7 +610,7 @@ class Battle:
             if self.t1.current_poke.stats_effective[gs.SPD] != self.t2.current_poke.stats_effective[gs.SPD]:
                 return self.t1.current_poke.stats_effective[gs.SPD] < self.t2.current_poke.stats_effective[gs.SPD]
             else:
-                return random.randrange(2) < 1
+                return randrange(2) < 1
         return self.t2.current_poke.has_ability('stall')
 
     def _ltail_check(self) -> bool:
@@ -620,7 +623,7 @@ class Battle:
             if self.t1.current_poke.stats_effective[gs.SPD] != self.t2.current_poke.stats_effective[gs.SPD]:
                 return self.t1.current_poke.stats_effective[gs.SPD] < self.t2.current_poke.stats_effective[gs.SPD]
             else:
-                return random.randrange(2) < 1
+                return randrange(2) < 1
         return (self.t2.current_poke.item == 'lagging-tail' or self.t2.current_poke.item == 'full-incense')
 
     def _sucker_punch_check(self, t1_move_data: Move, t2_move_data: Move):
@@ -637,13 +640,13 @@ class Battle:
 
     def _prio_boost_check(self, t1_first: bool) -> bool:
         if self.t1.current_poke.prio_boost and self.t2.current_poke.prio_boost:
-            return random.randrange(2) < 1
+            return randrange(2) < 1
         elif self.t1.current_poke.prio_boost or self.t2.current_poke.prio_boost:
             return self.t1.current_poke.prio_boost
         else:
             return t1_first
 
-    def _add_text(self, txt: str):
+    def add_text(self, txt: str):
         if not self.winner:
             self.all_text.append(txt)
             self.cur_text.append(txt)

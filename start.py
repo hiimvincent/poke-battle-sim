@@ -87,7 +87,6 @@ for i in range(1000):
         print([move.cur_pp for move in you.current_poke.moves])
         print(me.current_poke.get_available_moves())
         print(you.current_poke.get_available_moves())
-        print(battle.pp_log)
         exit(1)
 
 #print(battle.get_all_text())

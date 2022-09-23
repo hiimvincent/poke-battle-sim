@@ -1,15 +1,18 @@
 from __future__ import annotations
+from random import randrange
 from queue import Queue
+
 from poke_sim import PokeSim
-import process_move as pm
-import battlefield
-import battle as bt
 from move import Move
-import random
-import global_settings as gs
-import global_data as gd
+
+import battle as bt
+import battlefield as bf
+import process_move as pm
 import process_ability as pa
 import process_item as pi
+
+import global_settings as gs
+import global_data as gd
 
 class Pokemon:
     def __init__(
@@ -107,7 +110,7 @@ class Pokemon:
         else:
             self.nv_status = 0
         if self.nv_status ==  gs.NV_STATUSES['asleep']:
-            self.nv_counter = random.randrange(2,6)
+            self.nv_counter = randrange(2,6)
         if self.nv_status ==  gs.NV_STATUSES['badly poisoned']:
             self.nv_counter = 1
         else:
@@ -237,10 +240,10 @@ class Pokemon:
         if not damage or damage < 0 or not self.cur_battle:
             return 0
         if self.substitute:
-            self.cur_battle._add_text('The substitute took damage for ' + self.nickname + '!')
+            self.cur_battle.add_text('The substitute took damage for ' + self.nickname + '!')
             if self.substitute - damage <= 0:
                 self.substitute = 0
-                self.cur_battle._add_text(self.nickname + '\'s substitute faded!')
+                self.cur_battle.add_text(self.nickname + '\'s substitute faded!')
             else:
                 self.substitute -= damage
             return 0
@@ -260,7 +263,7 @@ class Pokemon:
                 return self.last_damage_taken - 1
             self._db_check()
             if self.last_move and self.last_move.name == 'grudge' and enemy_move and self.enemy.current_poke.is_alive:
-                self.cur_battle._add_text(self.enemy.current_poke.name + '\'s ' + enemy_move + ' lost all its PP due to the grudge!')
+                self.cur_battle.add_text(self.enemy.current_poke.name + '\'s ' + enemy_move + ' lost all its PP due to the grudge!')
                 enemy_move.cur_pp = 0
             if not self.cur_battle:
                 return
@@ -272,7 +275,7 @@ class Pokemon:
             return self.last_damage_taken
         if self.rage and self.stat_stages[gs.ATK] < 6:
             self.stat_stages[gs.ATK] += 1
-            self.cur_battle._add_text(self.nickname + '\'s rage is building!')
+            self.cur_battle.add_text(self.nickname + '\'s rage is building!')
         self.turn_damage = True
         self.cur_hp -= damage
         self.last_damage_taken = damage
@@ -298,7 +301,7 @@ class Pokemon:
             self.cur_hp += heal_amount
             r_amt = heal_amount
         if not text_skip:
-            self.cur_battle._add_text(self.nickname + ' regained health!')
+            self.cur_battle.add_text(self.nickname + ' regained health!')
         return r_amt
 
     def get_move_data(self, move_name: str) -> Move:
@@ -460,20 +463,20 @@ class Pokemon:
 
     def _endure_check(self) -> bool:
         if self.endure:
-            self.cur_battle._add_text(self.nickname + ' endured the hit!')
+            self.cur_battle.add_text(self.nickname + ' endured the hit!')
             self.cur_hp = 1
             return True
         return False
 
     def _fband_check(self) -> bool:
-        if self.item == 'focus-band' and random.randrange(10) < 1:
-            self.cur_battle._add_text(self.nickname + ' hung on using its Focus Band!')
+        if self.item == 'focus-band' and randrange(10) < 1:
+            self.cur_battle.add_text(self.nickname + ' hung on using its Focus Band!')
             return True
         return False
 
     def _fsash_check(self) -> bool:
         if self.item == 'focus-sash' and self.cur_hp == self.max_hp and not self.item_activated:
-            self.cur_battle._add_text(self.nickname + ' hung on using its Focus Sash!')
+            self.cur_battle.add_text(self.nickname + ' hung on using its Focus Sash!')
             self.item_activated = True
             return True
         return False
@@ -482,7 +485,7 @@ class Pokemon:
         if not self.db_count:
             return False
         enemy_poke = self.enemy.current_poke
-        self.cur_battle._add_text(self.nickname + ' took down ' + enemy_poke.nickname + ' down with it!')
+        self.cur_battle.add_text(self.nickname + ' took down ' + enemy_poke.nickname + ' down with it!')
         enemy_poke.faint()
         return True
 
@@ -490,7 +493,7 @@ class Pokemon:
         if self.has_ability('aftermath') and enemy_move in gd.CONTACT_CHECK and self.enemy.current_poke.is_alive \
                 and not self.enemy.current_poke.has_ability('damp'):
             self.enemy.current_poke.take_damage(max(1, self.enemy.current_poke.max_hp // 4))
-            self.cur_battle._add_text(self.enemy.current_poke.nickname + ' was hurt by ' + self.nickname + '\'s Aftermath!')
+            self.cur_battle.add_text(self.enemy.current_poke.nickname + ' was hurt by ' + self.nickname + '\'s Aftermath!')
 
     def give_item(self, item: str):
         self.item = item
@@ -516,9 +519,9 @@ class Pokemon:
         for move in self.moves:
             if move.name == move_name:
                 move.cur_pp = min(move.cur_pp + amount, move.max_pp)
-        self.cur_battle._add_text(self.nickname + '\'s ' + pm._cap_name(move_name) + '\'s pp was restored!')
+        self.cur_battle.add_text(self.nickname + '\'s ' + pm.cap_name(move_name) + '\'s pp was restored!')
 
     def restore_all_pp(self, amount: int):
         for move in self.moves:
             move.cur_pp = min(move.cur_pp + amount, move.max_pp)
-        self.cur_battle._add_text(self.nickname + '\'s move\'s pp were restored!')
+        self.cur_battle.add_text(self.nickname + '\'s move\'s pp were restored!')

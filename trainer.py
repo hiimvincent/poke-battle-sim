@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 import pokemon as pk
 import battle as bt
+import process_item as pi
+
 import global_settings as gs
 import global_data as gd
-import process_item as pi
 
 class Trainer:
     def __init__(self, name: str, poke_list: list[pk.Pokemon], selection: callable = None):
