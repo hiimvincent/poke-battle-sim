@@ -47,6 +47,8 @@ class Battle:
         self.last_move = None
         self.last_move_next = None
         self.turn_count = 0
+        #testing
+        self.pp_log = []
         self._add_text(self.t1.name + ' sent out ' + self.t1.current_poke.nickname + '!')
         self._add_text(self.t2.name + ' sent out ' + self.t2.current_poke.nickname + '!')
 
@@ -221,10 +223,12 @@ class Battle:
         attacker.has_moved = True
 
     def _process_pp(self, attacker: pk.Pokemon, move_data: Move) -> bool:
+        self.pp_log.append((attacker.nickname, [move.cur_pp for move in attacker.moves]))
         if move_data.name == 'struggle' or attacker.rage or attacker.uproar:
             return True
         if move_data.cur_pp <= 0:
             print('No pp move:::' + move_data.name)
+            print(attacker.nickname)
             raise Exception
         is_disabled = move_data.disabled
         attacker.reduce_disabled_count()
@@ -236,7 +240,7 @@ class Battle:
             self._pressure_check(attacker, move_data)
         if not move_data.cur_pp and attacker.item == 'leppa-berry':
             pi._eat_item(attacker, self)
-            poke.restore_pp(move_data.name, 10)
+            attacker.restore_pp(move_data.name, 10)
         if move_data.cur_pp == 0 and attacker.copied and move_data.name == attacker.copied.name:
             attacker.copied = None
         return True
@@ -379,7 +383,7 @@ class Battle:
 
         if poke.v_status[gs.FLINCHED]:
             poke.v_status[gs.FLINCHED] = 0
-        if poke.foresight_target and not poke.foresight_target is other.current_poke:
+        if poke.foresight_target and not poke.foresight_target is other:
             poke.foresight_target = None
         if poke.bide_count:
             poke.bide_count -= 1

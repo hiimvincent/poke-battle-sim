@@ -17,7 +17,7 @@ charizard4 = None
 me = None
 you = None
 ps.PokeSim.start()
-for i in range(100):
+for i in range(200):
     try:
         a = ps.PokeSim._move_list[random.randrange(1, 467) - 1][1]
         b = ps.PokeSim._move_list[random.randrange(1, 467) - 1][1]
@@ -87,6 +87,7 @@ for i in range(100):
         print([move.cur_pp for move in you.current_poke.moves])
         print(me.current_poke.get_available_moves())
         print(you.current_poke.get_available_moves())
+        print(battle.pp_log)
         exit(1)
 
 #print(battle.get_all_text())

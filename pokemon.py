@@ -357,7 +357,7 @@ class Pokemon:
         self.base_exp = target.base_exp
         self.gen = target.gen
         self.ability = target.ability
-        self.moves = target.moves
+        self.moves = [move.get_tcopy() for move in target.moves]
         for move in self.moves:
             move.max_pp = min(5, move.max_pp)
             move.cur_pp = move.max_pp
