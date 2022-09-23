@@ -100,9 +100,9 @@ def use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, item_target_pos:
         pm._cure_infatuation(poke, battle)
 
 def can_use_item(trainer: tr.Trainer, battle: bt.Battle, item: str, item_target_pos: str, move_target_pos: str = None):
-    if not isinstance(str, item) or not item in gd.USABLE_ITEM_CHECK:
+    if not isinstance(item, str) or not item in gd.USABLE_ITEM_CHECK:
         return False
-    if not isinstance(str, item_target_pos) or any([not num.is_digit() for num in item_target_pos]) \
+    if not isinstance(item_target_pos, str) or any([not num.is_digit() for num in item_target_pos]) \
             or item_target_pos >= len(trainer.poke_list):
         return False
     poke = trainer.poke_list[int(item_target_pos)]

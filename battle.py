@@ -2,7 +2,8 @@ from __future__ import annotations
 import random
 import pokemon as pk
 import trainer as tr
-import move
+from move import Move
+from poke_sim import PokeSim
 import battlefield as bf
 import process_move as pm
 import global_settings as gs
@@ -105,8 +106,12 @@ class Battle:
 
         if not t1_move_data and t1_move[gs.ACTION_TYPE] == gd.MOVE:
             t1_move_data = self.t1.current_poke.get_move_data(t1_move[gs.ACTION_VALUE])
+            if not t1_move_data:
+                t1_move_data = Move(PokeSim.get_single_move(t1_move[gs.ACTION_VALUE]))
         if not t2_move_data and t2_move[gs.ACTION_TYPE] == gd.MOVE:
             t2_move_data = self.t2.current_poke.get_move_data(t2_move[gs.ACTION_VALUE])
+            if not t2_move_data:
+                t2_move_data = Move(PokeSim.get_single_move(t2_move[gs.ACTION_VALUE]))
 
         t1_prio = gs.ACTION_PRIORITY[t1_move[gs.ACTION_TYPE]]
         t2_prio = gs.ACTION_PRIORITY[t2_move[gs.ACTION_TYPE]]
@@ -216,19 +221,21 @@ class Battle:
         attacker.has_moved = True
 
     def _process_pp(self, attacker: pk.Pokemon, move_data: Move) -> bool:
-        if move_data.name == 'struggle':
+        if move_data.name == 'struggle' or attacker.rage or attacker.uproar:
             return True
         if move_data.cur_pp <= 0:
+            print('No pp move:::' + move_data.name)
             raise Exception
         is_disabled = move_data.disabled
         attacker.reduce_disabled_count()
         if is_disabled:
             self._add_text(move_data.name + ' is disabled!')
             return False
-        move_data.cur_pp -= 1
-        self._pressure_check(attacker, move_data)
+        if not (move_data.name in gd.TWO_TURN_CHECK and not move_data.ef_stat):
+            move_data.cur_pp -= 1
+            self._pressure_check(attacker, move_data)
         if not move_data.cur_pp and attacker.item == 'leppa-berry':
-            pi._eat_item(attacker, battle)
+            pi._eat_item(attacker, self)
             poke.restore_pp(move_data.name, 10)
         if move_data.cur_pp == 0 and attacker.copied and move_data.name == attacker.copied.name:
             attacker.copied = None
@@ -302,7 +309,7 @@ class Battle:
 
         if poke.nv_status and ((poke.has_ability('shed-skin') and random.randrange(10) < 3) \
                 or (poke.has_ability('hydration') and self.battlefield.weather == gs.RAIN)):
-            pm._cure_nv_status(poke.nv_status, poke, battle)
+            pm._cure_nv_status(poke.nv_status, poke, self)
         if poke.nv_status == gs.BURNED and poke.is_alive:
             self._add_text(poke.nickname + ' was hurt by its burn!')
             if not poke.has_ability('heatproof'):
@@ -436,14 +443,6 @@ class Battle:
             raise Exception
         if trainer.current_poke.recharging:
             t_move[gs.PPM_MOVE] = gd.RECHARGING
-        elif trainer.current_poke.bide_count:
-            t_move[gs.PPM_MOVE] = gd.BIDING
-        elif trainer.current_poke.rage:
-            t_move[gs.PPM_MOVE] = gd.RAGE
-            t_move[gs.PPM_BYPASS] = True
-        elif trainer.current_poke.uproar:
-            t_move[gs.PPM_MOVE] = gd.UPROAR
-            t_move[gs.PPM_BYPASS] = True
         elif not trainer.current_poke.next_moves.empty():
             t_move[gs.PPM_MOVE_DATA] = trainer.current_poke.next_moves.get()
             t_move[gs.PPM_MOVE] = [gd.MOVE, t_move[gs.PPM_MOVE_DATA].name]
@@ -457,6 +456,15 @@ class Battle:
                 t_move[gs.PPM_BYPASS] = True
         elif t_move[gs.PPM_MOVE][gs.ACTION_TYPE] == gd.MOVE and trainer.current_poke.no_pp():
             t_move[gs.PPM_MOVE] = gd.STRUGGLE
+            t_move[gs.PPM_MOVE_DATA] = None
+            t_move[gs.PPM_BYPASS] = True
+        elif trainer.current_poke.bide_count:
+            t_move[gs.PPM_MOVE] = gd.BIDING
+        elif trainer.current_poke.rage:
+            t_move[gs.PPM_MOVE] = gd.RAGE
+            t_move[gs.PPM_BYPASS] = True
+        elif trainer.current_poke.uproar:
+            t_move[gs.PPM_MOVE] = gd.UPROAR
             t_move[gs.PPM_BYPASS] = True
         return t_move
 

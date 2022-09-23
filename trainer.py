@@ -18,12 +18,13 @@ class Trainer:
         self.selection = selection
         self.name = name
         self.poke_list = poke_list
+        for poke in self.poke_list:
+            poke.trainer = self
         self.in_battle = False
 
     def start_pokemon(self, battle: bt.Battle):
         for poke in self.poke_list:
             poke.start_battle(battle)
-            poke.trainer = self
         self.current_poke = self.poke_list[0]
         self.light_screen = 0
         self.safeguard = 0

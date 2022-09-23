@@ -127,7 +127,7 @@ def on_hit_abilities(attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Batt
         battle._add_text(attacker.nickname + ' was hurt!')
     elif defender.has_ability('effect-spore') and made_contact and random.randrange(10) < 3:
         pm._give_nv_status(random.randrange(3, 6), attacker, battle)
-    elif defender.has_ability('color-change') and move_data.type not in defender.types:
+    elif defender.has_ability('color-change') and move_data.type not in defender.types and PokeSim.is_valid_type(move_data.type):
         defender.types = (move_data.type, None)
         battle._add_text(defender.nickname + ' transformed into the ' + move_data.type.upper() + ' type!')
     elif defender.has_ability('wonder-guard') and pm._calculate_type_ef(defender, move_data) < 2:
@@ -165,7 +165,7 @@ def stat_calc_abilities(poke: pk.Pokemon):
         poke.stats_effective[gs.SPD] //= 2
     elif poke.has_ability('flower-gift') and poke.cur_battle.battlefield.weather == gs.HARSH_SUNLIGHT:
         poke.stats_effective[gs.ATK] = int(poke.stats_effective[gs.ATK] * 1.5)
-        poke.stats_effective[gs.SP_DEF] = int(poke.stats_effective[gs.SPD_DEF] * 1.5)
+        poke.stats_effective[gs.SP_DEF] = int(poke.stats_effective[gs.SP_DEF] * 1.5)
     elif poke.has_ability('unburden') and poke.unburden:
         poke.stats_effective[gs.SPD] *= 2
 

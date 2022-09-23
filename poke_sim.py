@@ -113,18 +113,32 @@ class PokeSim:
         return move_data
 
     @classmethod
+    def get_single_move(cls, move: str):
+        return cls._move_list[cls._move_name_to_id[move] - 1]
+
+    @classmethod
     def check_status(cls, status: str):
         return
 
     @classmethod
     def get_type_effectiveness(cls, move_type: str, def_type: str) -> float | None:
         if move_type not in cls._type_to_id or def_type not in cls._type_to_id:
-            return
+            print(move_type)
+            print(def_type)
+            raise Exception
         return cls._type_effectives[cls._type_to_id[move_type]][cls._type_to_id[def_type]]
 
     @classmethod
     def get_all_types(cls) -> list:
         return cls._type_to_id.keys()
+
+    @classmethod
+    def is_valid_type(cls, type: str) -> bool:
+        return type in cls._type_to_id
+
+    @classmethod
+    def filter_valid_types(cls, types: list[str]) -> bool:
+        return [type for type in types if type in cls._type_to_id]
 
     @classmethod
     def get_rand_move(cls) -> list:

@@ -232,9 +232,10 @@ class Pokemon:
         self.in_battle = True
         self.reset_stats()
         self.enemy = self.cur_battle.t2 if self.cur_battle.t1 is self.trainer else self.cur_battle.t1
+        #print(self.enemy.name)
 
     def take_damage(self, damage: int, enemy_move: Move = None) -> int:
-        if damage <= 0 or self.cur_battle.winner:
+        if not damage or damage < 0 or self.cur_battle.winner:
             return 0
         if self.substitute:
             self.cur_battle._add_text('The substitute took damage for' + self.nickname + '!')
@@ -397,12 +398,13 @@ class Pokemon:
         pa.selection_abilities(self, self.cur_battle.battlefield, self.cur_battle)
 
     def battle_end_reset(self):
+        #print('battle end reset')
         if self.transformed:
             self.reset_transform()
         self.reset_stats()
         self.in_battle = False
-        self.cur_battle = None
-        self.enemy = None
+        #self.cur_battle = None
+        #self.enemy = None
 
     def switch_out(self):
         if self.transformed:
