@@ -14,11 +14,25 @@ import process_item as pi
 import global_settings as gs
 import global_data as gd
 
+
 class Pokemon:
     def __init__(
-            self, name_or_id: str | int, level: int, moves: [str], gender: str, ability = None, nature: str = None,
-            cur_hp: int = None, stats_actual: [int] = None, ivs: [int] = None, evs: [int] = None, item: str = None,
-            status: str = None, nickname: str = None, friendship: int = 0):
+        self,
+        name_or_id: str | int,
+        level: int,
+        moves: [str],
+        gender: str,
+        ability=None,
+        nature: str = None,
+        cur_hp: int = None,
+        stats_actual: [int] = None,
+        ivs: [int] = None,
+        evs: [int] = None,
+        item: str = None,
+        status: str = None,
+        nickname: str = None,
+        friendship: int = 0,
+    ):
 
         self.stats_base = PokeSim.get_pokemon(name_or_id)
         if not self.stats_base:
@@ -27,7 +41,10 @@ class Pokemon:
         self.id = int(self.stats_base[gs.NDEX])
         self.name = self.stats_base[gs.NAME]
         self.types = (self.stats_base[gs.TYPE1], self.stats_base[gs.TYPE2])
-        self.base = [int(self.stats_base[i]) for i in range(gs.STAT_START, gs.STAT_START + gs.STAT_NUM)]
+        self.base = [
+            int(self.stats_base[i])
+            for i in range(gs.STAT_START, gs.STAT_START + gs.STAT_NUM)
+        ]
         self.height = int(self.stats_base[gs.HEIGHT])
         self.weight = int(self.stats_base[gs.WEIGHT])
         self.base_exp = int(self.stats_base[gs.BASE_EXP])
@@ -37,7 +54,11 @@ class Pokemon:
             raise Exception
         self.level = level
 
-        if not gender or not isinstance(gender, str) or gender.lower() not in gs.POSSIBLE_GENDERS:
+        if (
+            not gender
+            or not isinstance(gender, str)
+            or gender.lower() not in gs.POSSIBLE_GENDERS
+        ):
             raise Exception
         self.gender = gender
 
@@ -50,7 +71,12 @@ class Pokemon:
         if stats_actual:
             if not isinstance(stats_actual, list) or len(stats_actual) != gs.STAT_NUM:
                 raise Exception
-            if not all([isinstance(s, int) and gs.STAT_ACTUAL_MIN < s < gs.STAT_ACTUAL_MAX for s in stats_actual]):
+            if not all(
+                [
+                    isinstance(s, int) and gs.STAT_ACTUAL_MIN < s < gs.STAT_ACTUAL_MAX
+                    for s in stats_actual
+                ]
+            ):
                 raise Exception
             self.stats_actual = stats_actual
             self.ivs = None
@@ -58,12 +84,24 @@ class Pokemon:
             self.nature = None
             self.nature_effect = None
         else:
-            if not isinstance(ivs, list) or not isinstance(evs, list) or len(ivs) != gs.STAT_NUM or len(evs) != gs.STAT_NUM:
+            if (
+                not isinstance(ivs, list)
+                or not isinstance(evs, list)
+                or len(ivs) != gs.STAT_NUM
+                or len(evs) != gs.STAT_NUM
+            ):
                 raise Exception
-            if not all([isinstance(iv, int) and gs.IV_MIN <= iv <= gs.IV_MAX for iv in ivs]):
+            if not all(
+                [isinstance(iv, int) and gs.IV_MIN <= iv <= gs.IV_MAX for iv in ivs]
+            ):
                 raise Exception
             self.ivs = ivs
-            if not all([isinstance(ev, int) and gs.EV_MIN <= ev <= gs.EV_MAX for ev in evs]) or sum(evs) > gs.EV_TOTAL_MAX:
+            if (
+                not all(
+                    [isinstance(ev, int) and gs.EV_MIN <= ev <= gs.EV_MAX for ev in evs]
+                )
+                or sum(evs) > gs.EV_TOTAL_MAX
+            ):
                 raise Exception
             self.evs = evs
             self.nature_effect = PokeSim.nature_conversion(nature.lower())
@@ -87,7 +125,9 @@ class Pokemon:
             self.moves[i].pos = i
         self.o_moves = self.moves
 
-        if ability and (not isinstance(ability, str) or not PokeSim.check_ability(ability.lower())):
+        if ability and (
+            not isinstance(ability, str) or not PokeSim.check_ability(ability.lower())
+        ):
             raise Exception
         self.o_ability = ability.lower() if ability else None
         self.ability = self.o_ability
@@ -109,9 +149,9 @@ class Pokemon:
             self.nv_status = gs.NV_STATUSES[status]
         else:
             self.nv_status = 0
-        if self.nv_status ==  gs.NV_STATUSES['asleep']:
-            self.nv_counter = randrange(2,6)
-        if self.nv_status ==  gs.NV_STATUSES['badly poisoned']:
+        if self.nv_status == gs.NV_STATUSES["asleep"]:
+            self.nv_counter = randrange(2, 6)
+        if self.nv_status == gs.NV_STATUSES["badly poisoned"]:
             self.nv_counter = 1
         else:
             self.nv_counter = 0
@@ -130,20 +170,37 @@ class Pokemon:
         nature_stat_changes = [1.0 for _ in range(6)]
         nature_stat_changes[self.nature_effect[0]] = gs.NATURE_INC
         nature_stat_changes[self.nature_effect[1]] = gs.NATURE_DEC
-        stats_actual.append(((2 * self.base[0] + self.ivs[0] + self.evs[0] // 4) * self.level) // 100 + 10)
+        stats_actual.append(
+            ((2 * self.base[0] + self.ivs[0] + self.evs[0] // 4) * self.level) // 100
+            + 10
+        )
         for s in range(1, gs.STAT_NUM):
-            stats_actual.append((((2 * self.base[s] + self.ivs[s] + self.evs[s] // 4) * self.level) // 100 + 5) * nature_stat_changes[s])
+            stats_actual.append(
+                (
+                    ((2 * self.base[s] + self.ivs[s] + self.evs[s] // 4) * self.level)
+                    // 100
+                    + 5
+                )
+                * nature_stat_changes[s]
+            )
         self.stats_actual = [int(stat) for stat in stats_actual]
 
     def calculate_stats_effective(self, ignore_stats: bool = False):
         if not ignore_stats:
             for s in range(1, 6):
-                self.stats_effective[s] = max(1, int(self.stats_actual[s] * max(2, 2 + self.stat_stages[s]) / max(2, 2 - self.stat_stages[s])))
+                self.stats_effective[s] = max(
+                    1,
+                    int(
+                        self.stats_actual[s]
+                        * max(2, 2 + self.stat_stages[s])
+                        / max(2, 2 - self.stat_stages[s])
+                    ),
+                )
         else:
             self.stats_effective = [s for s in self.stats_actual]
         pa.stat_calc_abilities(self)
         pi.stat_calc_items(self)
-        if self.nv_status == gs.PARALYZED and not self.has_ability('quick-feet'):
+        if self.nv_status == gs.PARALYZED and not self.has_ability("quick-feet"):
             self.stats_effective[gs.SPD] //= 4
 
     def reset_stats(self):
@@ -234,22 +291,33 @@ class Pokemon:
         self.cur_battle = battle
         self.in_battle = True
         self.reset_stats()
-        self.enemy = self.cur_battle.t2 if self.cur_battle.t1 is self.trainer else self.cur_battle.t1
+        self.enemy = (
+            self.cur_battle.t2
+            if self.cur_battle.t1 is self.trainer
+            else self.cur_battle.t1
+        )
 
     def take_damage(self, damage: int, enemy_move: Move = None) -> int:
         if not damage or damage < 0 or not self.cur_battle:
             return 0
         if self.substitute:
-            self.cur_battle.add_text('The substitute took damage for ' + self.nickname + '!')
+            self.cur_battle.add_text(
+                "The substitute took damage for " + self.nickname + "!"
+            )
             if self.substitute - damage <= 0:
                 self.substitute = 0
-                self.cur_battle.add_text(self.nickname + '\'s substitute faded!')
+                self.cur_battle.add_text(self.nickname + "'s substitute faded!")
             else:
                 self.substitute -= damage
             return 0
         if enemy_move:
             self.last_move_hit_by = enemy_move
-            if pa.on_hit_abilities(self.enemy.current_poke, self, self.cur_battle, enemy_move) or not self.cur_battle:
+            if (
+                pa.on_hit_abilities(
+                    self.enemy.current_poke, self, self.cur_battle, enemy_move
+                )
+                or not self.cur_battle
+            ):
                 return 0
             pi.on_hit_items(self.enemy.current_poke, self, self.cur_battle, enemy_move)
             if not self.cur_battle:
@@ -262,8 +330,18 @@ class Pokemon:
                 self.cur_hp = 1
                 return self.last_damage_taken - 1
             self._db_check()
-            if self.last_move and self.last_move.name == 'grudge' and enemy_move and self.enemy.current_poke.is_alive:
-                self.cur_battle.add_text(self.enemy.current_poke.name + '\'s ' + enemy_move + ' lost all its PP due to the grudge!')
+            if (
+                self.last_move
+                and self.last_move.name == "grudge"
+                and enemy_move
+                and self.enemy.current_poke.is_alive
+            ):
+                self.cur_battle.add_text(
+                    self.enemy.current_poke.name
+                    + "'s "
+                    + enemy_move
+                    + " lost all its PP due to the grudge!"
+                )
                 enemy_move.cur_pp = 0
             if not self.cur_battle:
                 return
@@ -275,7 +353,7 @@ class Pokemon:
             return self.last_damage_taken
         if self.rage and self.stat_stages[gs.ATK] < 6:
             self.stat_stages[gs.ATK] += 1
-            self.cur_battle.add_text(self.nickname + '\'s rage is building!')
+            self.cur_battle.add_text(self.nickname + "'s rage is building!")
         self.turn_damage = True
         self.cur_hp -= damage
         self.last_damage_taken = damage
@@ -301,7 +379,7 @@ class Pokemon:
             self.cur_hp += heal_amount
             r_amt = heal_amount
         if not text_skip:
-            self.cur_battle.add_text(self.nickname + ' regained health!')
+            self.cur_battle.add_text(self.nickname + " regained health!")
         return r_amt
 
     def get_move_data(self, move_name: str) -> Move:
@@ -315,7 +393,7 @@ class Pokemon:
         if self.copied and self.copied.cur_pp:
             if move_name == self.copied.name:
                 return True
-            if move_name == 'mimic':
+            if move_name == "mimic":
                 return False
         av_moves = self.get_available_moves()
         for move in av_moves:
@@ -329,7 +407,7 @@ class Pokemon:
         av_moves = [move for move in self.moves if not move.disabled and move.cur_pp]
         if self.copied and self.copied.cur_pp:
             for i in range(len(av_moves)):
-                if av_moves[i].name == 'mimic':
+                if av_moves[i].name == "mimic":
                     av_moves[i] = self.copied
         if self.tormented and av_moves and self.last_move:
             av_moves = [move for move in av_moves if move.name != self.last_move.name]
@@ -339,10 +417,14 @@ class Pokemon:
             av_moves = [move for move in av_moves if move not in gd.GROUNDED_CHECK]
         if self.hb_count and av_moves:
             av_moves = [move for move in av_moves if move not in gd.HEAL_BLOCK_CHECK]
-        if self.trainer.imprisoned_poke and self.trainer.imprisoned_poke is self.enemy.current_poke and av_moves:
+        if (
+            self.trainer.imprisoned_poke
+            and self.trainer.imprisoned_poke is self.enemy.current_poke
+            and av_moves
+        ):
             i_moves = [move.name for move in self.trainer.imprisoned_poke.moves]
             av_moves = [move for move in av_moves if move.name not in i_moves]
-        if self.has_ability('truant') and self.last_move and av_moves:
+        if self.has_ability("truant") and self.last_move and av_moves:
             av_moves = [move for move in av_moves if move.name != self.last_move.name]
         if self.locked_move:
             av_moves = [move for move in av_moves if move.name == self.locked_move]
@@ -351,11 +433,22 @@ class Pokemon:
     def transform(self, target: Pokemon):
         if self.transformed or target.transformed:
             return
-        self.original = [self.name, self.types, self.height, self.weight, self.base_exp,
-                        self.gen,  self.ability, [stat for stat in self.stats_base],
-                         [iv for iv in self.ivs] if self.ivs else None, [ev for ev in self.evs] if self.evs else None,
-                         self.nature, self.nature_effect, [move.get_tcopy() for move in self.moves],
-                         [stat for stat in self.stats_actual]]
+        self.original = [
+            self.name,
+            self.types,
+            self.height,
+            self.weight,
+            self.base_exp,
+            self.gen,
+            self.ability,
+            [stat for stat in self.stats_base],
+            [iv for iv in self.ivs] if self.ivs else None,
+            [ev for ev in self.evs] if self.evs else None,
+            self.nature,
+            self.nature_effect,
+            [move.get_tcopy() for move in self.moves],
+            [stat for stat in self.stats_actual],
+        ]
         self.name = target.name
         self.types = target.types
         self.height = target.height
@@ -415,7 +508,7 @@ class Pokemon:
         if self.transformed:
             self.reset_transform()
         self.reset_stats()
-        if self.has_ability('natural-cure') and self.nv_status:
+        if self.has_ability("natural-cure") and self.nv_status:
             pm._cure_nv_status(self.nv_status, self, self.cur_battle)
 
     def update_last_moves(self):
@@ -432,20 +525,38 @@ class Pokemon:
                 move.disabled -= 1
 
     def no_pp(self) -> bool:
-        return all(not move.cur_pp or move.disabled or move.encore_blocked for move in self.get_available_moves())
+        return all(
+            not move.cur_pp or move.disabled or move.encore_blocked
+            for move in self.get_available_moves()
+        )
 
     def can_switch_out(self) -> bool:
-        if self.item == 'shed-shell':
+        if self.item == "shed-shell":
             return True
-        if self.trapped or self.perma_trapped or self.recharging or not self.next_moves.empty():
+        if (
+            self.trapped
+            or self.perma_trapped
+            or self.recharging
+            or not self.next_moves.empty()
+        ):
             return False
         enemy_poke = self.enemy.current_poke
-        if enemy_poke.is_alive and enemy_poke.has_ability('shadow-tag'):
+        if enemy_poke.is_alive and enemy_poke.has_ability("shadow-tag"):
             return False
-        if 'steel' in self.types and enemy_poke.is_alive and enemy_poke.has_ability('magnet_pull'):
+        if (
+            "steel" in self.types
+            and enemy_poke.is_alive
+            and enemy_poke.has_ability("magnet_pull")
+        ):
             return False
-        if (grounded or (not 'flying' in self.types and not self.has_ability('levitate'))) and enemy_poke.is_alive \
-                and enemy_poke.has_ability('arena-trap'):
+        if (
+            (
+                grounded
+                or (not "flying" in self.types and not self.has_ability("levitate"))
+            )
+            and enemy_poke.is_alive
+            and enemy_poke.has_ability("arena-trap")
+        ):
             return False
         return True
 
@@ -463,20 +574,24 @@ class Pokemon:
 
     def _endure_check(self) -> bool:
         if self.endure:
-            self.cur_battle.add_text(self.nickname + ' endured the hit!')
+            self.cur_battle.add_text(self.nickname + " endured the hit!")
             self.cur_hp = 1
             return True
         return False
 
     def _fband_check(self) -> bool:
-        if self.item == 'focus-band' and randrange(10) < 1:
-            self.cur_battle.add_text(self.nickname + ' hung on using its Focus Band!')
+        if self.item == "focus-band" and randrange(10) < 1:
+            self.cur_battle.add_text(self.nickname + " hung on using its Focus Band!")
             return True
         return False
 
     def _fsash_check(self) -> bool:
-        if self.item == 'focus-sash' and self.cur_hp == self.max_hp and not self.item_activated:
-            self.cur_battle.add_text(self.nickname + ' hung on using its Focus Sash!')
+        if (
+            self.item == "focus-sash"
+            and self.cur_hp == self.max_hp
+            and not self.item_activated
+        ):
+            self.cur_battle.add_text(self.nickname + " hung on using its Focus Sash!")
             self.item_activated = True
             return True
         return False
@@ -485,15 +600,28 @@ class Pokemon:
         if not self.db_count:
             return False
         enemy_poke = self.enemy.current_poke
-        self.cur_battle.add_text(self.nickname + ' took down ' + enemy_poke.nickname + ' down with it!')
+        self.cur_battle.add_text(
+            self.nickname + " took down " + enemy_poke.nickname + " down with it!"
+        )
         enemy_poke.faint()
         return True
 
     def _aftermath_check(self, enemy_move: Move):
-        if self.has_ability('aftermath') and enemy_move in gd.CONTACT_CHECK and self.enemy.current_poke.is_alive \
-                and not self.enemy.current_poke.has_ability('damp'):
-            self.enemy.current_poke.take_damage(max(1, self.enemy.current_poke.max_hp // 4))
-            self.cur_battle.add_text(self.enemy.current_poke.nickname + ' was hurt by ' + self.nickname + '\'s Aftermath!')
+        if (
+            self.has_ability("aftermath")
+            and enemy_move in gd.CONTACT_CHECK
+            and self.enemy.current_poke.is_alive
+            and not self.enemy.current_poke.has_ability("damp")
+        ):
+            self.enemy.current_poke.take_damage(
+                max(1, self.enemy.current_poke.max_hp // 4)
+            )
+            self.cur_battle.add_text(
+                self.enemy.current_poke.nickname
+                + " was hurt by "
+                + self.nickname
+                + "'s Aftermath!"
+            )
 
     def give_item(self, item: str):
         self.item = item
@@ -507,11 +635,11 @@ class Pokemon:
             return
         hp_type = 0
         for i in range(6):
-            hp_type += 2 ** i * (self.ivs[i] & 1)
+            hp_type += 2**i * (self.ivs[i] & 1)
         hp_type = (hp_type * 15) // 63
         hp_power = 0
         for i in range(6):
-            hp_power += 2 ** i * ((self.ivs[i] >> 1) & 1)
+            hp_power += 2**i * ((self.ivs[i] >> 1) & 1)
         hp_power = (hp_type * 40) // 63 + 30
         return (gd.HP_TYPES[hp_type], hp_power)
 
@@ -519,9 +647,11 @@ class Pokemon:
         for move in self.moves:
             if move.name == move_name:
                 move.cur_pp = min(move.cur_pp + amount, move.max_pp)
-        self.cur_battle.add_text(self.nickname + '\'s ' + pm.cap_name(move_name) + '\'s pp was restored!')
+        self.cur_battle.add_text(
+            self.nickname + "'s " + pm.cap_name(move_name) + "'s pp was restored!"
+        )
 
     def restore_all_pp(self, amount: int):
         for move in self.moves:
             move.cur_pp = min(move.cur_pp + amount, move.max_pp)
-        self.cur_battle.add_text(self.nickname + '\'s move\'s pp were restored!')
+        self.cur_battle.add_text(self.nickname + "'s move's pp were restored!")

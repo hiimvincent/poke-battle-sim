@@ -16,6 +16,7 @@ charizard3 = None
 charizard4 = None
 me = None
 you = None
+
 ps.PokeSim.start()
 for i in range(1000):
     try:

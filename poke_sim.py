@@ -3,6 +3,7 @@ import random
 
 import global_settings as gs
 
+
 class PokeSim:
     _pokemon_stats = []
     _name_to_id = {}
@@ -20,7 +21,7 @@ class PokeSim:
     @classmethod
     def start(cls):
         with open(gs.POKEMON_STATS_PATH) as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',')
+            csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             for row in csv_reader:
                 for num in gs.POKEMON_STATS_NUMS:
@@ -29,13 +30,13 @@ class PokeSim:
                 cls._name_to_id[row[1]] = row[0]
 
         with open(gs.NATURES_PATH) as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',')
+            csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             for row in csv_reader:
                 cls._natures[row[0]] = (int(row[1]), int(row[2]))
 
         with open(gs.MOVES_PATH) as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',')
+            csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             for row in csv_reader:
                 for num in gs.MOVES_NUM:
@@ -45,7 +46,7 @@ class PokeSim:
                 cls._move_name_to_id[row[1]] = row[0]
 
         with open(gs.TYPE_EF_PATH) as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',')
+            csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             line_count = 0
             for row in csv_reader:
@@ -55,14 +56,14 @@ class PokeSim:
                 line_count += 1
 
         with open(gs.ABILITIES_PATH) as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',')
+            csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             for row in csv_reader:
                 cls._abilities[row[1]] = (row[0], row[2])
                 cls._ability_list.append(row[1])
 
         with open(gs.ITEMS_PATH) as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',')
+            csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             for row in csv_reader:
                 cls._items[row[1]] = (row[0], row[2])
@@ -125,7 +126,9 @@ class PokeSim:
     def get_type_ef(cls, move_type: str, def_type: str) -> float | None:
         if move_type not in cls._type_to_id or def_type not in cls._type_to_id:
             raise Exception
-        return cls._type_effectives[cls._type_to_id[move_type]][cls._type_to_id[def_type]]
+        return cls._type_effectives[cls._type_to_id[move_type]][
+            cls._type_to_id[def_type]
+        ]
 
     @classmethod
     def get_all_types(cls) -> list:

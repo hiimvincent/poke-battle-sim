@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import global_settings as gs
 
+
 class Move:
     def __init__(self, move_data: list):
         self.md = move_data
