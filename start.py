@@ -17,7 +17,7 @@ charizard4 = None
 me = None
 you = None
 ps.PokeSim.start()
-for i in range(200):
+for i in range(1000):
     try:
         a = ps.PokeSim._move_list[random.randrange(1, 467) - 1][1]
         b = ps.PokeSim._move_list[random.randrange(1, 467) - 1][1]

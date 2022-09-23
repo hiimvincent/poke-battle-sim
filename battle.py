@@ -47,8 +47,6 @@ class Battle:
         self.last_move = None
         self.last_move_next = None
         self.turn_count = 0
-        #testing
-        self.pp_log = []
         self._add_text(self.t1.name + ' sent out ' + self.t1.current_poke.nickname + '!')
         self._add_text(self.t2.name + ' sent out ' + self.t2.current_poke.nickname + '!')
 
@@ -223,12 +221,9 @@ class Battle:
         attacker.has_moved = True
 
     def _process_pp(self, attacker: pk.Pokemon, move_data: Move) -> bool:
-        self.pp_log.append((attacker.nickname, [move.cur_pp for move in attacker.moves]))
         if move_data.name == 'struggle' or attacker.rage or attacker.uproar:
             return True
         if move_data.cur_pp <= 0:
-            print('No pp move:::' + move_data.name)
-            print(attacker.nickname)
             raise Exception
         is_disabled = move_data.disabled
         attacker.reduce_disabled_count()
@@ -490,6 +485,8 @@ class Battle:
             self._add_text(attacker.current_poke.nickname + ' is storing energy!')
 
     def _process_selection(self, selector: tr.Trainer) -> bool:
+        if self.winner:
+            return
         old_poke = selector.current_poke
         if selector.selection:
             selector.selection(self)

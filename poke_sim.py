@@ -123,8 +123,6 @@ class PokeSim:
     @classmethod
     def get_type_effectiveness(cls, move_type: str, def_type: str) -> float | None:
         if move_type not in cls._type_to_id or def_type not in cls._type_to_id:
-            print(move_type)
-            print(def_type)
             raise Exception
         return cls._type_effectives[cls._type_to_id[move_type]][cls._type_to_id[def_type]]
 
@@ -142,7 +140,7 @@ class PokeSim:
 
     @classmethod
     def get_rand_move(cls) -> list:
-        return cls._move_list[random.randrange(gs.COMPLETED_MOVES + 1)]
+        return cls._move_list[random.randrange(gs.COMPLETED_MOVES)]
 
     @classmethod
     def check_ability(cls, ability: str) -> bool:

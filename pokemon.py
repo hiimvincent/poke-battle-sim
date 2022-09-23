@@ -232,24 +232,25 @@ class Pokemon:
         self.in_battle = True
         self.reset_stats()
         self.enemy = self.cur_battle.t2 if self.cur_battle.t1 is self.trainer else self.cur_battle.t1
-        #print(self.enemy.name)
 
     def take_damage(self, damage: int, enemy_move: Move = None) -> int:
-        if not damage or damage < 0 or self.cur_battle.winner:
+        if not damage or damage < 0 or not self.cur_battle:
             return 0
         if self.substitute:
-            self.cur_battle._add_text('The substitute took damage for' + self.nickname + '!')
+            self.cur_battle._add_text('The substitute took damage for ' + self.nickname + '!')
             if self.substitute - damage <= 0:
                 self.substitute = 0
                 self.cur_battle._add_text(self.nickname + '\'s substitute faded!')
             else:
                 self.substitute -= damage
-            return
+            return 0
         if enemy_move:
             self.last_move_hit_by = enemy_move
-            if pa.on_hit_abilities(self.enemy.current_poke, self, self.cur_battle, enemy_move):
-                return
+            if pa.on_hit_abilities(self.enemy.current_poke, self, self.cur_battle, enemy_move) or not self.cur_battle:
+                return 0
             pi.on_hit_items(self.enemy.current_poke, self, self.cur_battle, enemy_move)
+            if not self.cur_battle:
+                return
         if self.bide_count:
             self.bide_dmg += damage
         if self.cur_hp - damage <= 0:
@@ -261,6 +262,8 @@ class Pokemon:
             if self.last_move and self.last_move.name == 'grudge' and enemy_move and self.enemy.current_poke.is_alive:
                 self.cur_battle._add_text(self.enemy.current_poke.name + '\'s ' + enemy_move + ' lost all its PP due to the grudge!')
                 enemy_move.cur_pp = 0
+            if not self.cur_battle:
+                return
             self.cur_hp = 0
             self.is_alive = False
             self.reset_stats()
@@ -285,7 +288,7 @@ class Pokemon:
         self.cur_battle._faint_check()
 
     def heal(self, heal_amount: int, text_skip: bool = False) -> int:
-        if heal_amount <= 0:
+        if not self.cur_battle or heal_amount <= 0:
             return 0
         if self.cur_hp + heal_amount >= self.max_hp:
             amt = self.max_hp - self.cur_hp
@@ -398,13 +401,12 @@ class Pokemon:
         pa.selection_abilities(self, self.cur_battle.battlefield, self.cur_battle)
 
     def battle_end_reset(self):
-        #print('battle end reset')
         if self.transformed:
             self.reset_transform()
         self.reset_stats()
         self.in_battle = False
-        #self.cur_battle = None
-        #self.enemy = None
+        self.cur_battle = None
+        self.enemy = None
 
     def switch_out(self):
         if self.transformed:

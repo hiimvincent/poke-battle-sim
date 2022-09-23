@@ -50,7 +50,7 @@ def _calculate_type_ef(defender: pk.Pokemon, move_data: list) -> float:
 
 def _calculate_damage(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.Battlefield, battle: bt.Battle,
                       move_data: Move, crit_chance: int = None, inv_bypass: bool = False, skip_fc: bool = False, skip_dmg: bool = False) -> int:
-    if move_data.category == gs.STATUS:
+    if battle.winner or move_data.category == gs.STATUS:
         return
     if not defender.is_alive:
         _missed(attacker, battle)
@@ -375,7 +375,7 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
         dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
         if dmg:
             dmg //= 2
-        elif dmg == 0 and _calculate_type_ef(defender, move_data) == 0:
+        elif dmg == 0 and attacker.enemy and _calculate_type_ef(defender, move_data) == 0:
             dmg = defender.max_hp // 2
         if not dmg:
             return
@@ -796,7 +796,7 @@ def _process_effect(attacker: pk.Pokemon, defender: pk.Pokemon, battlefield: bf.
         else:
             move_data.power = 200
     elif ef_id == 79:
-        if not attacker.last_move_hit_by:
+        if not attacker.last_move_hit_by or not PokeSim.is_valid_type(attacker.last_move_hit_by.type):
             _failed(battle)
             return
         last_move_type = attacker.last_move_hit_by.type
