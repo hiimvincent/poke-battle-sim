@@ -10,7 +10,9 @@ import poke_battle_sim.conf.global_data as gd
 
 
 class Trainer:
-    def __init__(self, name: str, poke_list: list[pk.Pokemon], selection: callable = None):
+    def __init__(
+        self, name: str, poke_list: list[pk.Pokemon], selection: callable = None
+    ):
         """
         Creating a Trainer object requires a name, party, and optional selection function.
 
@@ -26,14 +28,20 @@ class Trainer:
         If no selection function is provided or the provided selection function does not select a Pokemon correctly,
         the first available Pokemon in the party will be automatically selected.
         """
-        if not isinstance(poke_list, list) or not all([isinstance(p, pk.Pokemon) for p in poke_list]):
+        if not isinstance(poke_list, list) or not all(
+            [isinstance(p, pk.Pokemon) for p in poke_list]
+        ):
             raise Exception("Attempted to create Trainer with invalid party")
         if len(poke_list) < gs.POKE_NUM_MIN or len(poke_list) > gs.POKE_NUM_MAX:
-            raise Exception("Attempted to create Trainer with invalid number of Pokemon")
+            raise Exception(
+                "Attempted to create Trainer with invalid number of Pokemon"
+            )
         if not name or not isinstance(name, str):
             raise Exception("Attempted to create Trainer without providing name")
         if selection and not isinstance(selection, callable):
-            raise Exception("Attempted to create Trainer with invalid selection function")
+            raise Exception(
+                "Attempted to create Trainer with invalid selection function"
+            )
         self.selection = selection
         self.name = name
         self.poke_list = poke_list
@@ -80,17 +88,41 @@ class Trainer:
         return self.current_poke.can_switch_out()
 
     def can_use_item(self, item_action: list[str]) -> bool:
-        if not isinstance(item_action, list) or not isinstance(item_action[gs.ACTION_TYPE], str) or item_action[gs.ACTION_TYPE] != 'item':
+        if (
+            not isinstance(item_action, list)
+            or not isinstance(item_action[gs.ACTION_TYPE], str)
+            or item_action[gs.ACTION_TYPE] != "item"
+        ):
             return False
         if len(item_action) == 3:
-            return pi.can_use_item(self, self.cur_battle, item_action[gs.ACTION_VALUE], item_action[gs.ITEM_TARGET_POS])
+            return pi.can_use_item(
+                self,
+                self.cur_battle,
+                item_action[gs.ACTION_VALUE],
+                item_action[gs.ITEM_TARGET_POS],
+            )
         elif len(item_action) == 4:
-            return pi.can_use_item(self, self.cur_battle, item_action[gs.ACTION_VALUE], item_action[gs.ITEM_TARGET_POS], item_action[gs.MOVE_TARGET_POS])
+            return pi.can_use_item(
+                self,
+                self.cur_battle,
+                item_action[gs.ACTION_VALUE],
+                item_action[gs.ITEM_TARGET_POS],
+                item_action[gs.MOVE_TARGET_POS],
+            )
         return False
 
     def can_use_move(self, move_action: list[str]) -> bool:
-        if not isinstance(move_action, list) or not isinstance(move_action[gs.ACTION_TYPE], str) or move_action[gs.ACTION_TYPE] != 'move':
+        if (
+            not isinstance(move_action, list)
+            or not isinstance(move_action[gs.ACTION_TYPE], str)
+            or move_action[gs.ACTION_TYPE] != "move"
+        ):
             return False
         if len(move_action) == 2:
-            return any([move_action[gs.ACTION_VALUE] == move.name for move in self.current_poke.get_available_moves()])
+            return any(
+                [
+                    move_action[gs.ACTION_VALUE] == move.name
+                    for move in self.current_poke.get_available_moves()
+                ]
+            )
         return False
