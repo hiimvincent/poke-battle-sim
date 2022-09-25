@@ -8,10 +8,10 @@ PokeBattleSim models, as closely as possible, the mechanics present in the class
 
 Currently the package supports all content from Gen I to IV including:
 
-493 Pokemon
-467 Moves
-122 Abilities
-535 Items
+- 493 Pokemon
+- 467 Moves
+- 122 Abilities
+- 535 Items
 
 ## Getting Started
 
