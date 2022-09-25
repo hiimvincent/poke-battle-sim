@@ -17,20 +17,26 @@ import global_data as gd
 
 class Battle:
     def __init__(self, t1: tr.Trainer, t2: tr.Trainer):
+        """
+        Creating a battle object requires exactly two Trainers with a valid party size
+        and no overlapping Pokemon or Pokemon already in battle.
+
+        The order of Trainers does not affect any battle mechanics.
+        """
         if not isinstance(t1, tr.Trainer) or not isinstance(t2, tr.Trainer):
-            raise Exception
+            raise Exception("Attempted to create Battle with invalid Trainer")
         if t1.in_battle or t2.in_battle:
-            raise Exception
+            raise Exception("Attempted to create Battle with Trainer already in battle")
         for t1_poke in t1.poke_list:
             for t2_poke in t2.poke_list:
                 if t1_poke is t2_poke:
-                    raise Exception
+                    raise Exception("Attempted to create Battle with Pokemon that is in both Trainers' parties")
         for t1_poke in t1.poke_list:
             if t1_poke.in_battle:
-                raise Exception
+                raise Exception("Attempted to create Battle with Pokemon already in battle")
         for t2_poke in t2.poke_list:
             if t2_poke.in_battle:
-                raise Exception
+                raise Exception("Attempted to create Battle with Pokemon already in battle")
 
         self.t1 = t1
         self.t2 = t2
@@ -71,7 +77,7 @@ class Battle:
         """
         self.turn_count += 1
         if not self.battle_started:
-            raise Exception
+            raise Exception("Cannot use turn on Battle that hasn't started")
         if self.is_finished():
             return
 
@@ -95,14 +101,16 @@ class Battle:
             not isinstance(t1_move, list)
             or not all(isinstance(t1_move[i], str) for i in range(len(t1_move)))
             or len(t1_move) < 2
+            or t1_move[gs.ACTION_TYPE].lower() not in gs.ACTION_PRIORITY
         ):
-            raise Exception
+            raise Exception("Trainer 1 invalid turn action")
         if (
             not isinstance(t2_move, list)
             or not all(isinstance(t2_move[i], str) for i in range(len(t2_move)))
             or len(t2_move) < 2
+            or t2_move[gs.ACTION_TYPE].lower() not in gs.ACTION_PRIORITY
         ):
-            raise Exception
+            raise Exception("Trainer 2 invalid turn action")
 
         self.t1.has_moved = False
         self.t2.has_moved = False
@@ -114,22 +122,17 @@ class Battle:
         self.t2.current_poke.turn_damage = False
 
         if (
-            t1_move[gs.ACTION_TYPE] not in gs.ACTION_PRIORITY
-            or t2_move[gs.ACTION_TYPE] not in gs.ACTION_PRIORITY
-        ):
-            raise Exception
-        if (
             t1_move[gs.ACTION_TYPE] == gd.MOVE
             and not t1_mv_check_bypass
             and not self.t1.current_poke.is_move(t1_move[gs.ACTION_VALUE])
         ):
-            raise Exception
+            raise Exception("Trainer 1 attempted to use move not in Pokemon's moveset")
         if (
             t2_move[gs.ACTION_TYPE] == gd.MOVE
             and not t2_mv_check_bypass
             and not self.t2.current_poke.is_move(t2_move[gs.ACTION_VALUE])
         ):
-            raise Exception
+            raise Exception("Trainer 2 attempted to use move not in Pokemon's moveset")
 
         if not t1_move_data and t1_move[gs.ACTION_TYPE] == gd.MOVE:
             t1_move_data = self.t1.current_poke.get_move_data(t1_move[gs.ACTION_VALUE])
@@ -255,7 +258,7 @@ class Battle:
             elif len(a_move) == 3:
                 pi.use_item(a_move[gs.ACTION_VALUE], a_move[gs.ITEM_POKE_TARGET])
             else:
-                raise Exception
+                raise Exception("Trainer attempted to use item with invalid data format")
         elif self._process_pp(attacker.current_poke, a_move_data):
             pm.process_move(
                 attacker.current_poke,
@@ -274,7 +277,7 @@ class Battle:
         if move_data.name == "struggle" or attacker.rage or attacker.uproar:
             return True
         if move_data.cur_pp <= 0:
-            raise Exception
+            raise Exception("Trainer attempted to use move that has no pp left")
         is_disabled = move_data.disabled
         attacker.reduce_disabled_count()
         if is_disabled:
@@ -502,7 +505,7 @@ class Battle:
 
     def _pre_process_move(self, trainer: tr.Trainer, t_move: list) -> list:
         if t_move[gs.PPM_MOVE] == gd.RECHARGING or t_move[gs.PPM_MOVE] == gd.BIDING:
-            raise Exception
+            raise Exception("Trainer attempted to use invalid move")
         if trainer.current_poke.recharging:
             t_move[gs.PPM_MOVE] = gd.RECHARGING
         elif not trainer.current_poke.next_moves.empty():
@@ -545,7 +548,7 @@ class Battle:
             if attacker.can_switch_out():
                 _process_selection(attacker)
             else:
-                raise Exception
+                raise Exception("Trainer attempted to switch out Pokemon that's trapped")
         if a_move[gs.ACTION_VALUE] == "recharging":
             self.add_text(attacker.current_poke.nickname + " must recharge!")
             attacker.current_poke.recharging = False

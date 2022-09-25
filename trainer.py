@@ -9,14 +9,29 @@ import global_data as gd
 
 class Trainer:
     def __init__(self, name: str, poke_list: list[pk.Pokemon], selection: callable = None):
+        """
+        Creating a Trainer object requires a name, party, and optional selection function.
+
+        Required
+
+        - name: Trainer's name or nickname
+        - poke_List: list of Trainer's Pokemon objects
+
+        Optional
+
+        - selection: function that will be called whenever a selection needs to be made (except for using items)
+
+        If no selection function is provided or the provided selection function does not select a Pokemon correctly,
+        the first available Pokemon in the party will be automatically selected.
+        """
         if not isinstance(poke_list, list) or not all([isinstance(p, pk.Pokemon) for p in poke_list]):
-            raise Exception
+            raise Exception("Attempted to create Trainer with invalid party")
         if len(poke_list) < gs.POKE_NUM_MIN or len(poke_list) > gs.POKE_NUM_MAX:
-            raise Exception
+            raise Exception("Attempted to create Trainer with invalid number of Pokemon")
         if not name or not isinstance(name, str):
-            raise Exception
+            raise Exception("Attempted to create Trainer without providing name")
         if selection and not isinstance(selection, callable):
-            raise Exception
+            raise Exception("Attempted to create Trainer with invalid selection function")
         self.selection = selection
         self.name = name
         self.poke_list = poke_list

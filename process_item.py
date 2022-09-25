@@ -21,6 +21,7 @@ def use_item(
     item_target_pos: str,
     move_target_pos: str = None,
     text_skip: bool = False,
+    can_skip: bool = False
 ):
     """
     Item actions in turn must be formatted as: ['item', $item, $item_target_pos, $move_target_name?]
@@ -31,7 +32,9 @@ def use_item(
     in item target's move list (0-indexed)
     """
     if not can_use_item(trainer, battle, item, item_target_pos, move_target_pos):
-        return
+        if can_skip:
+            return
+        raise Exception("Trainer attempted to use invalid item on Pokemon")
 
     if not text_skip:
         battle.add_text(

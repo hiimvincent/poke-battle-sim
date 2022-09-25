@@ -38,7 +38,7 @@ def process_move(
     battle._faint_check()
 
 
-def _calculate_type_ef(defender: pk.Pokemon, move_data: list) -> float:
+def _calculate_type_ef(defender: pk.Pokemon, move_data: Move) -> float:
     if move_data.type == "typeless":
         return 1
     if (
@@ -83,6 +83,7 @@ def _calculate_damage(
     inv_bypass: bool = False,
     skip_fc: bool = False,
     skip_dmg: bool = False,
+    skip_txt: bool = False
 ) -> int:
     if battle.winner or move_data.category == gs.STATUS:
         return
@@ -96,7 +97,7 @@ def _calculate_damage(
     if not move_data.power:
         return
     t_mult = _calculate_type_ef(defender, move_data)
-    if not t_mult or (t_mult < 2 and defender.has_ability("wonder-guard")):
+    if not skip_txt and not t_mult or (t_mult < 2 and defender.has_ability("wonder-guard")):
         battle.add_text("It doesn't affect " + defender.nickname)
         return
     if pa.type_protection_abilities(defender, move_data, battle):
@@ -120,9 +121,9 @@ def _calculate_damage(
     else:
         crit_mult = 1
 
-    if t_mult < 1:
+    if not skip_txt and t_mult < 1:
         battle.add_text("It's not very effective...")
-    elif t_mult > 1:
+    elif not skip_txt and t_mult > 1:
         battle.add_text("It's super effective!")
 
     attacker.calculate_stats_effective(ignore_stats=defender.has_ability("unaware"))
@@ -276,7 +277,7 @@ def _meta_effect_check(
     if _truant_check(attacker, battle, move_data):
         return True
     _normalize_check(attacker, move_data)
-    _extra_flinch_check(attacker, defender, move_data, is_first)
+    _extra_flinch_check(attacker, defender, battle, move_data, is_first)
     return False
 
 
@@ -399,22 +400,7 @@ def _pre_process_status(
             if randrange(2) < 1:
                 battle.add_text("It hurt itself in its confusion!")
                 self_attack = Move(
-                    [
-                        0,
-                        "self-attack",
-                        1,
-                        "typeless",
-                        40,
-                        1,
-                        999,
-                        0,
-                        10,
-                        2,
-                        1,
-                        "",
-                        "",
-                        "",
-                    ]
+                    [0, "self-attack", 1, "typeless", 40, 1, 999, 0, 10, 2, 1, "", "", ""]
                 )
                 _calculate_damage(
                     attacker, attacker, battlefield, battle, self_attack, crit_chance=0
@@ -814,10 +800,11 @@ def cure_nv_status(status: int, recipient: pk.Pokemon, battle: bt.Battle):
         text = " thawed out!"
     elif status == gs.PARALYZED:
         text = " was cured of paralysis!"
-    elif status == gs.POISONED or status == gs.BADLY_POISONED:
-        text = " was cured of poison!"
     elif status == gs.ASLEEP:
         text = " woke up!"
+    else:
+        text = " was cured of poison!"
+
     recipient.nv_status = 0
     battle.add_text(recipient.nickname + text)
 
@@ -922,7 +909,7 @@ def _normalize_check(attacker: pk.Pokemon, move_data: Move):
 
 
 def _extra_flinch_check(
-    attacker: pk.Pokemon, defender: pk.Pokemon, move_data: Move, is_first: bool
+    attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, move_data: Move, is_first: bool
 ):
     if attacker.item == "king's-rock" or attacker.item == "razor-fang":
         if (
@@ -931,7 +918,7 @@ def _extra_flinch_check(
             and is_first
             and randrange(10) < 1
         ):
-            pm._flinch(defender, battle, is_first)
+            _flinch(defender, battle, is_first)
 
 
 def _mold_breaker_check(
@@ -1167,9 +1154,14 @@ def _ef_010(
     else:
         num_hits = 5
     nh = num_hits
+    dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data, skip_fc=True)
+    if not dmg:
+        nh = 0
+    else:
+        nh -= 1
     while nh and defender.is_alive:
         _calculate_damage(
-            attacker, defender, battlefield, battle, move_data, skip_fc=True
+            attacker, defender, battlefield, battle, move_data, skip_fc=True, skip_txt=True
         )
         nh -= 1
     battle.add_text("Hit " + str(num_hits) + " time(s)!")
@@ -1192,7 +1184,7 @@ def _ef_011(
         return True
     elif defender.is_alive:
         _calculate_damage(
-            attacker, defender, battlefield, battle, move_data, skip_fc=True
+            attacker, defender, battlefield, battle, move_data, skip_fc=True, skip_txt=True
         )
     else:
         battle.add_text("Hit 1 time(s)!")
@@ -2704,7 +2696,7 @@ def _ef_092(
         and attacker.last_move.name == move_data.name
     ):
         move_data.ef_stat = min(5, int(attacker.last_move.ef_stat) + 1)
-        move_data.power = move_data.o_power * (2 ** (move.data.ef_stat - 1))
+        move_data.power = move_data.o_power * (2 ** (move_data.ef_stat - 1))
     else:
         move_data.ef_stat = 1
 
@@ -2923,7 +2915,7 @@ def _ef_103(
         and not defender.encore_count
         and defender.last_move
         and defender.last_move.cur_pp
-        and defender.last_move not in ENCORE_CHECK
+        and defender.last_move not in gd.ENCORE_CHECK
         and any([move.name == defender.last_move.name for move in defender.moves])
     ):
         defender.next_moves.clear()
@@ -4322,6 +4314,7 @@ def _ef_177(
                 attacker,
                 randrange(len(attacker.moves)),
                 text_skip=True,
+                can_skip=True
             )
         defender.give_item(None)
     return True

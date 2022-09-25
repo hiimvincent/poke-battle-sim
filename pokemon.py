@@ -33,10 +33,30 @@ class Pokemon:
         nickname: str = None,
         friendship: int = 0,
     ):
+        """
+        Creating a Pokemon object involves five required and six optional fields.
+
+        Required:
+
+        - name_or_id: this can either be a Pokemon's real name such as 'Pikachu' or its Pokedex id (25)
+        - level: this is the Pokemon's level as an interger between 1 and 100 inclusive by default
+        - moves: this is a list of names of the Pokemon's moves, max of 4 by defeault
+        - gender: this is the Pokemon's gender, either 'male', 'female', or 'typeless' by default
+        - stats: either the Pokemon's actual stats (stats_actual) or its ivs, evs, and nature
+
+        Optional:
+        - ability: Pokemon's ability; if not used, assumed that Pokemon has ability not relevant to battle
+        - nature: Pokemon's nature, not required if stats_actual provided; if not used, any effect that
+        takes nature into account will process the worst-case scenario for the Pokemon
+        - item: Pokemon's held item
+        - status: Pokemon's non-volatile status such as poisoned or paralyzed
+        - nickname: Pokemon's unique nickname
+        - friendship: Pokemon's friendship value as an int between 0 and 255 by default
+        """
 
         self.stats_base = PokeSim.get_pokemon(name_or_id)
         if not self.stats_base:
-            raise Exception
+            raise Exception("Attempted to create Pokemon with invalid name or id")
 
         self.id = int(self.stats_base[gs.NDEX])
         self.name = self.stats_base[gs.NAME]
@@ -51,7 +71,7 @@ class Pokemon:
         self.gen = int(self.stats_base[gs.GEN])
 
         if not isinstance(level, int) or level < gs.LEVEL_MIN or level > gs.LEVEL_MAX:
-            raise Exception
+            raise Exception("Attempted to create Pokemon with invalid level")
         self.level = level
 
         if (
@@ -59,25 +79,25 @@ class Pokemon:
             or not isinstance(gender, str)
             or gender.lower() not in gs.POSSIBLE_GENDERS
         ):
-            raise Exception
+            raise Exception("Attempted to create Pokemon with invalid gender")
         self.gender = gender
 
         if not stats_actual and not ivs and not evs:
-            raise Exception
+            raise Exception("Attempted to create Pokemon without providing stats information")
 
         if stats_actual and ivs and evs:
-            raise Exception
+            raise Exception("Attempted to create Pokemon with conflicting stats information")
 
         if stats_actual:
             if not isinstance(stats_actual, list) or len(stats_actual) != gs.STAT_NUM:
-                raise Exception
+                raise Exception("Attempted to create Pokemon with invalid stats")
             if not all(
                 [
                     isinstance(s, int) and gs.STAT_ACTUAL_MIN < s < gs.STAT_ACTUAL_MAX
                     for s in stats_actual
                 ]
             ):
-                raise Exception
+                raise Exception("Attempted to create Pokemon with invalid stats")
             self.stats_actual = stats_actual
             self.ivs = None
             self.evs = None
@@ -90,11 +110,11 @@ class Pokemon:
                 or len(ivs) != gs.STAT_NUM
                 or len(evs) != gs.STAT_NUM
             ):
-                raise Exception
+                raise Exception("Attempted to create Pokemon with invalid evs or ivs")
             if not all(
                 [isinstance(iv, int) and gs.IV_MIN <= iv <= gs.IV_MAX for iv in ivs]
             ):
-                raise Exception
+                raise Exception("Attempted to create Pokemon with invalid ivs")
             self.ivs = ivs
             if (
                 not all(
@@ -102,24 +122,24 @@ class Pokemon:
                 )
                 or sum(evs) > gs.EV_TOTAL_MAX
             ):
-                raise Exception
+                raise Exception("Attempted to create Pokemon with invalid evs")
             self.evs = evs
             self.nature_effect = PokeSim.nature_conversion(nature.lower())
             if not self.nature_effect:
-                raise Exception
+                raise Exception("Attempted to create Pokemon without providing its nature")
             self.nature = nature.lower()
             self.calculate_stats_actual()
 
         self.max_hp = self.stats_actual[gs.HP]
-        if cur_hp and (cur_hp < 0 or cur_hp > self.max_hp):
-            raise Exception
+        if cur_hp and (not isinstance(cur_hp, int) or cur_hp < 0 or cur_hp > self.max_hp):
+            raise Exception("Attempted to create Pokemon with invalid hp value")
         if not cur_hp:
             cur_hp = self.stats_actual[gs.HP]
         self.cur_hp = cur_hp
 
         moves_data = PokeSim.get_move_data(moves)
         if not moves_data:
-            raise Exception
+            raise Exception("Attempted to create Pokemon with invalid moveset")
         self.moves = [Move(move_d) for move_d in moves_data]
         for i in range(len(self.moves)):
             self.moves[i].pos = i
@@ -128,16 +148,16 @@ class Pokemon:
         if ability and (
             not isinstance(ability, str) or not PokeSim.check_ability(ability.lower())
         ):
-            raise Exception
+            raise Exception("Attempted to create Pokemon with invalid ability")
         self.o_ability = ability.lower() if ability else None
         self.ability = self.o_ability
 
         if item and (not isinstance(item, str) or not PokeSim.check_item(item.lower())):
-            raise Exception
+            raise Exception("Attempted to create Pokemon with invalid held item")
         self.o_item = item.lower() if item else None
 
         if nickname and not isinstance(nickname, str):
-            raise Exception
+            raise Exception("Attempted to create Pokemon with invalid nickname")
         self.nickname = nickname if nickname else self.name
         self.nickname = self.nickname.upper()
 
@@ -145,7 +165,7 @@ class Pokemon:
         self.trainer = None
         if status:
             if status not in gs.NV_STATUSES:
-                raise Exception
+                raise Exception("Attempted to create Pokemon afflicted with invalid status")
             self.nv_status = gs.NV_STATUSES[status]
         else:
             self.nv_status = 0
@@ -157,7 +177,7 @@ class Pokemon:
             self.nv_counter = 0
 
         if not isinstance(friendship, int) or friendship < 0 or friendship > 255:
-            raise Exception
+            raise Exception("Attempted to create Pokemon with invalid friendship value")
         self.friendship = friendship
 
         self.is_alive = self.cur_hp != 0
