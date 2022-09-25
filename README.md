@@ -57,7 +57,7 @@ Mechanics not implemented in PokeBattleSim include:
 
 This package was created and is managed by Vincent Johnson.
 
-References used 
+References used during development:
 
 [Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/Main_Page)
 
