@@ -1,10 +1,10 @@
-# PokeBattleSim
+# poke-battle-sim
 
-Pokemon Battle Simulator (PokeBattleSim) is an open source Python package that provides efficient, customizable simulation of Pokemon battles. Thanks for checking it out.
+Pokemon Battle Simulator (poke-battle-sim) is an open source Python package that provides efficient, customizable simulation of Pokemon battles. Thanks for checking it out.
 
 ## Overview
 
-PokeBattleSim models, as closely as possible, the mechanics present in the classic Generation IV Pokemon games (Diamond, Pearl, and Platinum). 
+Poke-battle-sim models, as closely as possible, the mechanics present in the classic Generation IV Pokemon games (Diamond, Pearl, and Platinum). 
 
 Currently the package supports all content from Gen I to IV including:
 
@@ -37,7 +37,7 @@ Checkout the documentation and examples for more details.
 
 ## Features
 
-PokeBattleSim includes all functionality present in both (Single) Link Battles and (Single) Trainer Battles in the original Gen IV games.
+Poke-battle-sim includes all functionality present in both (Single) Link Battles and (Single) Trainer Battles in the original Gen IV games.
 
 Although this package was developed with large-scale simulation in mind, it can be used with little modification as the backend for Pokemon or Pokemon-style games.
 
