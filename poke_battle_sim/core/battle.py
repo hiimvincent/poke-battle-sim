@@ -1,18 +1,19 @@
 from __future__ import annotations
 from random import randrange
 
-from move import Move
-from poke_sim import PokeSim
+from poke_battle_sim.core.move import Move
+from poke_battle_sim.poke_sim import PokeSim
 
-import pokemon as pk
-import trainer as tr
-import battlefield as bf
-import process_move as pm
-import process_ability as pa
-import process_item as pi
+import poke_battle_sim.core.pokemon as pk
+import poke_battle_sim.core.trainer as tr
+import poke_battle_sim.core.battlefield as bf
 
-import global_settings as gs
-import global_data as gd
+import poke_battle_sim.util.process_move as pm
+import poke_battle_sim.util.process_ability as pa
+import poke_battle_sim.util.process_item as pi
+
+import poke_battle_sim.conf.global_settings as gs
+import poke_battle_sim.conf.global_data as gd
 
 
 class Battle:
@@ -614,7 +615,7 @@ class Battle:
                     and not selector.current_poke.has_ability("magic-guard")
                     and not (
                         selector.current_poke.has_ability("leaf-guard")
-                        and battlefield.weather == gs.HARSH_SUNLIGHT
+                        and self.battlefield.weather == gs.HARSH_SUNLIGHT
                     )
                 )
             )
@@ -624,7 +625,7 @@ class Battle:
                 self.add_text(selector.current_poke.nickname + " was poisoned!")
             else:
                 selector.current_poke.nv_status = gs.BADLY_POISONED
-                selector.current_pokenv_counter = 1
+                selector.current_poke.nv_counter = 1
                 self.add_text(selector.current_poke.nickname + " was badly poisoned!")
         if selector.stealth_rock and not selector.current_poke.has_ability(
             "magic-guard"

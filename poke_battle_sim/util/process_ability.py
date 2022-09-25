@@ -1,16 +1,17 @@
 from __future__ import annotations
 from random import randrange
 
-from poke_sim import PokeSim
-from move import Move
+from poke_battle_sim.poke_sim import PokeSim
+from poke_battle_sim.core.move import Move
 
-import pokemon as pk
-import battle as bt
-import battlefield as bf
-import process_move as pm
+import poke_battle_sim.core.pokemon as pk
+import poke_battle_sim.core.battle as bt
+import poke_battle_sim.core.battlefield as bf
 
-import global_settings as gs
-import global_data as gd
+import poke_battle_sim.util.process_move as pm
+
+import poke_battle_sim.conf.global_settings as gs
+import poke_battle_sim.conf.global_data as gd
 
 
 def selection_abilities(
@@ -49,7 +50,7 @@ def selection_abilities(
         battle.add_text("The effects of weather disappeared.")
         battlefield.change_weather(gs.CLEAR)
     elif poke.has_ability("own-tempo") and poke.v_status[gs.CONFUSED]:
-        battle.add_text(attacker.nickname + " snapped out of its confusion!")
+        battle.add_text(poke.nickname + " snapped out of its confusion!")
         poke.v_status[gs.CONFUSED] = 0
     elif (
         poke.has_ability("trace")

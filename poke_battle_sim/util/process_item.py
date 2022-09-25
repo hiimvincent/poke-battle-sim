@@ -1,17 +1,18 @@
 from __future__ import annotations
 from random import randrange
 
-from poke_sim import PokeSim
-from move import Move
+from poke_battle_sim.poke_sim import PokeSim
+from poke_battle_sim.core.move import Move
 
-import pokemon as pk
-import trainer as tr
-import battle as bt
-import battlefield as bf
-import process_move as pm
+import poke_battle_sim.core.pokemon as pk
+import poke_battle_sim.core.trainer as tr
+import poke_battle_sim.core.battle as bt
+import poke_battle_sim.core.battlefield as bf
 
-import global_settings as gs
-import global_data as gd
+import poke_battle_sim.util.process_move as pm
+
+import poke_battle_sim.conf.global_settings as gs
+import poke_battle_sim.conf.global_data as gd
 
 
 def use_item(
@@ -35,6 +36,10 @@ def use_item(
         if can_skip:
             return
         raise Exception("Trainer attempted to use invalid item on Pokemon")
+
+    poke = trainer.current_poke
+    if move_target_pos:
+        move = poke.moves[move_target_pos]
 
     if not text_skip:
         battle.add_text(

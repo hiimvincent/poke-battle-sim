@@ -2,17 +2,18 @@ from __future__ import annotations
 from random import randrange
 from queue import Queue
 
-from poke_sim import PokeSim
-from move import Move
+from poke_battle_sim.poke_sim import PokeSim
+from poke_battle_sim.core.move import Move
 
-import battle as bt
-import battlefield as bf
-import process_move as pm
-import process_ability as pa
-import process_item as pi
+import poke_battle_sim.core.battle as bt
+import poke_battle_sim.core.battlefield as bf
 
-import global_settings as gs
-import global_data as gd
+import poke_battle_sim.util.process_move as pm
+import poke_battle_sim.util.process_ability as pa
+import poke_battle_sim.util.process_item as pi
+
+import poke_battle_sim.conf.global_settings as gs
+import poke_battle_sim.conf.global_data as gd
 
 
 class Pokemon:
@@ -571,7 +572,7 @@ class Pokemon:
             return False
         if (
             (
-                grounded
+                self.grounded
                 or (not "flying" in self.types and not self.has_ability("levitate"))
             )
             and enemy_poke.is_alive

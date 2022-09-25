@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-import pokemon as pk
-import battle as bt
-import process_item as pi
+import poke_battle_sim.core.pokemon as pk
+import poke_battle_sim.core.battle as bt
 
-import global_settings as gs
-import global_data as gd
+import poke_battle_sim.util.process_item as pi
+
+import poke_battle_sim.conf.global_settings as gs
+import poke_battle_sim.conf.global_data as gd
+
 
 class Trainer:
     def __init__(self, name: str, poke_list: list[pk.Pokemon], selection: callable = None):
@@ -71,7 +73,7 @@ class Trainer:
         if action == gd.SWITCH:
             return self.can_switch_out()
         if action[gs.ACTION_TYPE] == gd.ITEM:
-            return can_use_move(action)
+            return self.can_use_move(action)
         return False
 
     def can_switch_out(self) -> bool:
@@ -81,13 +83,13 @@ class Trainer:
         if not isinstance(item_action, list) or not isinstance(item_action[gs.ACTION_TYPE], str) or item_action[gs.ACTION_TYPE] != 'item':
             return False
         if len(item_action) == 3:
-            return pi.can_use_item(self, battle, item_action[gs.ACTION_VALUE], item_action[gs.ITEM_TARGET_POS])
+            return pi.can_use_item(self, self.cur_battle, item_action[gs.ACTION_VALUE], item_action[gs.ITEM_TARGET_POS])
         elif len(item_action) == 4:
-            return pi.can_use_item(self, battle, item_action[gs.ACTION_VALUE], item_action[gs.ITEM_TARGET_POS], item_action[gs.MOVE_TARGET_POS])
+            return pi.can_use_item(self, self.cur_battle, item_action[gs.ACTION_VALUE], item_action[gs.ITEM_TARGET_POS], item_action[gs.MOVE_TARGET_POS])
         return False
 
     def can_use_move(self, move_action: list[str]) -> bool:
-        if not isinstance(item_action, list) or not isinstance(item_action[gs.ACTION_TYPE], str) or item_action[gs.ACTION_TYPE] != 'move':
+        if not isinstance(move_action, list) or not isinstance(move_action[gs.ACTION_TYPE], str) or move_action[gs.ACTION_TYPE] != 'move':
             return False
         if len(move_action) == 2:
             return any([move_action[gs.ACTION_VALUE] == move.name for move in self.current_poke.get_available_moves()])

@@ -1,7 +1,7 @@
 import csv
 import random
 
-import global_settings as gs
+import conf.global_settings as gs
 
 
 class PokeSim:
@@ -12,11 +12,10 @@ class PokeSim:
     _move_name_to_id = {}
     _type_effectives = []
     _type_to_id = {}
-    _abilities = {}
-    _items = {}
-    # Remove After Testing
     _ability_list = []
+    _abilities = {}
     _item_list = []
+    _items = {}
 
     @classmethod
     def start(cls):
@@ -132,19 +131,27 @@ class PokeSim:
 
     @classmethod
     def get_all_types(cls) -> list:
-        return cls._type_to_id.keys()
+        return list(cls._type_to_id.keys())
 
     @classmethod
     def is_valid_type(cls, type: str) -> bool:
         return type in cls._type_to_id
 
     @classmethod
-    def filter_valid_types(cls, types: list[str]) -> bool:
+    def filter_valid_types(cls, types: list[str]) -> list:
         return [type for type in types if type in cls._type_to_id]
 
     @classmethod
     def get_rand_move(cls) -> list:
         return cls._move_list[random.randrange(gs.COMPLETED_MOVES)]
+
+    @classmethod
+    def get_rand_ability(cls) -> str:
+        return cls._ability_list[random.randrange(len(cls._ability_list))]
+
+    @classmethod
+    def get_rand_item(cls) -> str:
+        return cls._item_list[random.randrange(len(cls._item_list))]
 
     @classmethod
     def check_ability(cls, ability: str) -> bool:

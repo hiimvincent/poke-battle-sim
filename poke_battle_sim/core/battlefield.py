@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import battle as bt
-import process_ability as pa
+import poke_battle_sim.core.battle as bt
 
-import global_settings as gs
+import poke_battle_sim.util.process_ability as pa
+
+import poke_battle_sim.conf.global_settings as gs
 
 
 class Battlefield:

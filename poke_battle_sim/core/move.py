@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import global_settings as gs
+import poke_battle_sim.conf.global_settings as gs
 
 
 class Move:
