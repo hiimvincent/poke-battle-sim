@@ -1,16 +1,3 @@
-[tool.poetry]
-name = "poke-battle-sim"
-version = "0.1.0"
-description = "An open source Python package that provides efficient, customizable simulation of Pokemon battles"
-authors = ["hiimvincent <vincentjohnson1908@gmail.com>"]
-license = "MIT"
-readme = "README.md"
-packages = [{include = "poke_battle_sim"}]
-
-[tool.poetry.dependencies]
-python = "^3.10"
-
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

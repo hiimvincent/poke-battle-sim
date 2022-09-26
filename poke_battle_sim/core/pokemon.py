@@ -378,7 +378,7 @@ class Pokemon:
         self.turn_damage = True
         self.cur_hp -= damage
         self.last_damage_taken = damage
-        pi.on_damage_items(self, self.cur_battle)
+        pi.on_damage_items(self, self.cur_battle, enemy_move)
         return self.last_damage_taken
 
     def faint(self):

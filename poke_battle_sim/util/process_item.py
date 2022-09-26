@@ -354,7 +354,7 @@ def pre_hit_berries(
     return p_mult
 
 
-def on_damage_items(poke: pk.Pokemon, battle: bt.Battle):
+def on_damage_items(poke: pk.Pokemon, battle: bt.Battle, move_data: Move):
     if (
         not poke.is_alive
         or not poke.item in gd.ON_DAMAGE_ITEM_CHECK
@@ -391,15 +391,15 @@ def on_damage_items(poke: pk.Pokemon, battle: bt.Battle):
     elif item == "custap-berry":
         poke.prio_boost = True
     elif item == "enigma-berry":
-        t_mult = pm._calculate_type_ef(defender, move_data)
+        t_mult = pm._calculate_type_ef(poke, move_data)
         if t_mult and t_mult > 1:
-            _eat_item(defender, battle)
-            defender.heal(max(1, defender.max_hp // 4))
+            _eat_item(poke, battle)
+            poke.heal(max(1, poke.max_hp // 4))
 
 
 def pre_move_items(poke: pk.Pokemon):
     if (
-        not poke.item in PRE_MOVE_ITEM_CHECK
+        not poke.item in gd.PRE_MOVE_ITEM_CHECK
         or poke.has_ability("klutz")
         or poke.embargo_count
     ):

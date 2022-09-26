@@ -542,23 +542,9 @@ class Battle:
         self.add_text(winner.name + " has defeated " + loser.name + "!")
         self.winner = winner
 
-    def _process_other(
-        self, attacker: tr.Trainer, defender: tr.Trainer, a_move: list[str]
-    ):
-        if a_move == gd.SWITCH:
-            if attacker.can_switch_out():
-                _process_selection(attacker)
-            else:
-                raise Exception("Trainer attempted to switch out Pokemon that's trapped")
-        if a_move[gs.ACTION_VALUE] == "recharging":
-            self.add_text(attacker.current_poke.nickname + " must recharge!")
-            attacker.current_poke.recharging = False
-        if a_move[gs.ACTION_VALUE] == "biding":
-            self.add_text(attacker.current_poke.nickname + " is storing energy!")
-
     def _process_selection(self, selector: tr.Trainer) -> bool:
         if self.winner:
-            return
+            return True
         old_poke = selector.current_poke
         if selector.selection:
             selector.selection(self)
@@ -644,6 +630,20 @@ class Battle:
         pa.enemy_selection_abilities(selector.current_poke, self.battlefield, self)
         pa.selection_abilities(selector.current_poke, self.battlefield, self)
         return False
+
+    def _process_other(
+        self, attacker: tr.Trainer, defender: tr.Trainer, a_move: list[str]
+    ):
+        if a_move == gd.SWITCH:
+            if attacker.can_switch_out():
+                self._process_selection(attacker)
+            else:
+                raise Exception("Trainer attempted to switch out Pokemon that's trapped")
+        if a_move[gs.ACTION_VALUE] == "recharging":
+            self.add_text(attacker.current_poke.nickname + " must recharge!")
+            attacker.current_poke.recharging = False
+        if a_move[gs.ACTION_VALUE] == "biding":
+            self.add_text(attacker.current_poke.nickname + " is storing energy!")
 
     def _faint_check(self):
         if self.winner:

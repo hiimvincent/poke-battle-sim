@@ -1909,12 +1909,14 @@ def _ef_053(
 ) -> bool:
     move_names = [move.name for move in attacker.moves]
     rand_move = PokeSim.get_rand_move()
-    # counter check for loop
+    attempts = 0
     while (
-        rand_move[gs.MOVE_NAME] in move_names
-        or rand_move[gs.MOVE_NAME] in gd.METRONOME_CHECK
+        attempts < 50
+        and (rand_move[gs.MOVE_NAME] in move_names
+        or rand_move[gs.MOVE_NAME] in gd.METRONOME_CHECK)
     ):
         rand_move = PokeSim.get_rand_move()
+        attempts += 1
     rand_move = Move(rand_move)
     battle.add_text(attacker.nickname + " used " + cap_name(rand_move.name) + "!")
     _process_effect(attacker, defender, battlefield, battle, rand_move, is_first)
@@ -4930,7 +4932,6 @@ def _ef_211(
     defender.trainer.light_screen = 0
     defender.trainer.reflect = 0
     defender.trainer.mist = 0
-    # battle.add_text(attacker.nickname + ' blew away ...')
 
 
 def _ef_212(
