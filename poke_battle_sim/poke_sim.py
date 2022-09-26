@@ -1,7 +1,7 @@
 import csv
 import random
 
-import conf.global_settings as gs
+import poke_battle_sim.conf.global_settings as gs
 
 
 class PokeSim:

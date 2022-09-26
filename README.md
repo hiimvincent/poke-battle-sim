@@ -18,7 +18,7 @@ Currently the package supports all content from Gen I to IV including:
 Setting up a battle is a simple as a few lines of code.
 
 ```python
-import poke-battle-sim as pb
+import poke_battle_sim as pb
 
 pikachu = pb.Pokemon(...)
 ash = pb.Trainer(“Ash”, [pikachu])
