@@ -1,10 +1,11 @@
 # CSV Paths
-POKEMON_STATS_PATH = './csv/pokemon_stats.csv'
-NATURES_PATH = './csv/natures.csv'
-MOVES_PATH = './csv/move_list.csv'
-TYPE_EF_PATH = './csv/type_effectiveness.csv'
-ABILITIES_PATH = './csv/abilities.csv'
-ITEMS_PATH = './csv/items_gen4.csv'
+DATA_DIR = 'data'
+POKEMON_STATS_CSV = 'pokemon_stats.csv'
+NATURES_CSV = 'natures.csv'
+MOVES_CSV = 'move_list.csv'
+TYPE_EF_CSV = 'type_effectiveness.csv'
+ABILITIES_CSV = 'abilities.csv'
+ITEMS_CSV = 'items_gen4.csv'
 
 # Stat Ranges
 LEVEL_MIN, LEVEL_MAX = 1, 100

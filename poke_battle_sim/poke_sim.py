@@ -1,3 +1,5 @@
+from pkg_resources import resource_filename
+
 import csv
 import random
 
@@ -19,7 +21,7 @@ class PokeSim:
 
     @classmethod
     def start(cls):
-        with open(gs.POKEMON_STATS_PATH) as csv_file:
+        with open(resource_filename(gs.DATA_DIR, gs.POKEMON_STATS_CSV)) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             for row in csv_reader:
@@ -28,13 +30,13 @@ class PokeSim:
                 cls._pokemon_stats.append(row)
                 cls._name_to_id[row[1]] = row[0]
 
-        with open(gs.NATURES_PATH) as csv_file:
+        with open(resource_filename(gs.DATA_DIR, gs.NATURES_CSV)) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             for row in csv_reader:
                 cls._natures[row[0]] = (int(row[1]), int(row[2]))
 
-        with open(gs.MOVES_PATH) as csv_file:
+        with open(resource_filename(gs.DATA_DIR, gs.MOVES_CSV)) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             for row in csv_reader:
@@ -44,7 +46,7 @@ class PokeSim:
                 cls._move_list.append(row)
                 cls._move_name_to_id[row[1]] = row[0]
 
-        with open(gs.TYPE_EF_PATH) as csv_file:
+        with open(resource_filename(gs.DATA_DIR, gs.TYPE_EF_CSV)) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             line_count = 0
@@ -54,14 +56,14 @@ class PokeSim:
                 cls._type_effectives.append(row)
                 line_count += 1
 
-        with open(gs.ABILITIES_PATH) as csv_file:
+        with open(resource_filename(gs.DATA_DIR, gs.ABILITIES_CSV)) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             for row in csv_reader:
                 cls._abilities[row[1]] = (row[0], row[2])
                 cls._ability_list.append(row[1])
 
-        with open(gs.ITEMS_PATH) as csv_file:
+        with open(resource_filename(gs.DATA_DIR, gs.ITEMS_CSV)) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             for row in csv_reader:
