@@ -1,7 +1,6 @@
-from pkg_resources import resource_filename
-
 import csv
 import random
+import importlib.resources
 
 import poke_battle_sim.conf.global_settings as gs
 
@@ -21,7 +20,10 @@ class PokeSim:
 
     @classmethod
     def start(cls):
-        with open(resource_filename(gs.DATA_DIR, gs.POKEMON_STATS_CSV)) as csv_file:
+        if len(cls._pokemon_stats):
+            return
+
+        with open(importlib.resources.files(gs.DATA_DIR).joinpath(gs.POKEMON_STATS_CSV)) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             for row in csv_reader:
@@ -30,13 +32,13 @@ class PokeSim:
                 cls._pokemon_stats.append(row)
                 cls._name_to_id[row[1]] = row[0]
 
-        with open(resource_filename(gs.DATA_DIR, gs.NATURES_CSV)) as csv_file:
+        with open(importlib.resources.files(gs.DATA_DIR).joinpath(gs.NATURES_CSV)) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             for row in csv_reader:
                 cls._natures[row[0]] = (int(row[1]), int(row[2]))
 
-        with open(resource_filename(gs.DATA_DIR, gs.MOVES_CSV)) as csv_file:
+        with open(importlib.resources.files(gs.DATA_DIR).joinpath(gs.MOVES_CSV)) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             for row in csv_reader:
@@ -46,7 +48,7 @@ class PokeSim:
                 cls._move_list.append(row)
                 cls._move_name_to_id[row[1]] = row[0]
 
-        with open(resource_filename(gs.DATA_DIR, gs.TYPE_EF_CSV)) as csv_file:
+        with open(importlib.resources.files(gs.DATA_DIR).joinpath(gs.TYPE_EF_CSV)) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             line_count = 0
@@ -56,14 +58,14 @@ class PokeSim:
                 cls._type_effectives.append(row)
                 line_count += 1
 
-        with open(resource_filename(gs.DATA_DIR, gs.ABILITIES_CSV)) as csv_file:
+        with open(importlib.resources.files(gs.DATA_DIR).joinpath(gs.ABILITIES_CSV)) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             for row in csv_reader:
                 cls._abilities[row[1]] = (row[0], row[2])
                 cls._ability_list.append(row[1])
 
-        with open(resource_filename(gs.DATA_DIR, gs.ITEMS_CSV)) as csv_file:
+        with open(importlib.resources.files(gs.DATA_DIR).joinpath(gs.ITEMS_CSV)) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=",")
             next(csv_reader)
             for row in csv_reader:

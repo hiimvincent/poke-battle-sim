@@ -1,10 +1,10 @@
 # poke-battle-sim
 
-Pokemon Battle Simulator (poke-battle-sim) is an open source Python package that provides efficient, customizable simulation of Pokemon battles. Thanks for checking it out.
+Pokemon Battle Simulator (```poke-battle-sim```) is an open source Python package that provides efficient, customizable simulation of Pokemon battles. Thanks for checking it out.
 
 ## Overview
 
-Poke-battle-sim models, as closely as possible, the mechanics present in the classic Generation IV Pokemon games (Diamond, Pearl, and Platinum). 
+```poke-battle-sim``` emulates the mechanics present in the original Generation IV Pokemon games (Diamond, Pearl, and Platinum) while also providing the ability to modify and expand upon traditional Pokemon battles.
 
 Currently the package supports all content from Gen I to IV including:
 
@@ -13,18 +13,29 @@ Currently the package supports all content from Gen I to IV including:
 - 122 Abilities
 - 535 Items
 
+## Installation
+
+```poke-battle-sim``` can be installed through pip using:
+
+```
+pip install poke-battle-sim
+```
+
+The package is also available on [PyPi](https://pypi.org/project/poke-battle-sim/) and [GitHub](https://github.com/hiimvincent/poke-battle-sim).
+
+
 ## Getting Started
 
-Setting up a battle is a simple as a few lines of code.
+Setting up a battle is as simple as a few lines of code.
 
 ```python
 import poke_battle_sim as pb
 
 pikachu = pb.Pokemon(...)
-ash = pb.Trainer(“Ash”, [pikachu])
+ash = pb.Trainer('Ash', [pikachu])
 
 starmie = pb.Pokemon(...)
-misty = pb.Trainer(‘Misty, [starmie])
+misty = pb.Trainer(‘Misty', [starmie])
 
 battle = pb.Battle(ashe, misty)
 battle.start()
@@ -37,7 +48,7 @@ Checkout the documentation and examples for more details.
 
 ## Features
 
-Poke-battle-sim includes all functionality present in both (Single) Link Battles and (Single) Trainer Battles in the original Gen IV games.
+```poke-battle-sim``` includes all functionality present in both (Single) Link Battles and (Single) Trainer Battles in the original Gen IV games.
 
 Although this package was developed with large-scale simulation in mind, it can be used with little modification as the backend for Pokemon or Pokemon-style games.
 
@@ -47,7 +58,7 @@ Double Battles or other battle formats introduced in later generations are not c
 
 Certain mechanics present in the original games were not possible or practical to implement due to hardware-specific and region-specific behavior.
 
-Mechanics not implemented in PokeBattleSim include:
+Mechanics not implemented in ```poke-battle-sim``` include:
 
 - Using Nintendo DS audio volume data in damage calculation
 - Using terrain-based type and power modifications

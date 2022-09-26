@@ -1,5 +1,5 @@
 # CSV Paths
-DATA_DIR = 'data'
+DATA_DIR = 'poke_battle_sim.data'
 POKEMON_STATS_CSV = 'pokemon_stats.csv'
 NATURES_CSV = 'natures.csv'
 MOVES_CSV = 'move_list.csv'
