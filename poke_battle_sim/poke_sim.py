@@ -9,6 +9,7 @@ class PokeSim:
     _pokemon_stats = []
     _name_to_id = {}
     _natures = {}
+    _nature_list = []
     _move_list = []
     _move_name_to_id = {}
     _type_effectives = []
@@ -37,6 +38,7 @@ class PokeSim:
             next(csv_reader)
             for row in csv_reader:
                 cls._natures[row[0]] = (int(row[1]), int(row[2]))
+                cls._nature_list.append(row[0])
 
         with open(importlib.resources.files(gs.DATA_DIR).joinpath(gs.MOVES_CSV)) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=",")
@@ -156,6 +158,26 @@ class PokeSim:
     @classmethod
     def get_rand_item(cls) -> str:
         return cls._item_list[random.randrange(len(cls._item_list))]
+
+    @classmethod
+    def get_rand_poke_id(cls) -> int:
+        return random.randrange(1, len(cls._pokemon_stats))
+
+    @classmethod
+    def get_rand_stats(cls) -> list[int]:
+        return [random.randrange(gs.STAT_ACTUAL_MIN, gs.STAT_ACTUAL_MAX + 1) for _ in range(6)]
+
+    @classmethod
+    def get_rand_gender(cls) -> str:
+        return gs.POSSIBLE_GENDERS[random.randrange(len(gs.POSSIBLE_GENDERS))]
+
+    @classmethod
+    def get_rand_level(cls) -> int:
+        return random.randrange(gs.LEVEL_MIN, gs.LEVEL_MAX + 1)
+
+    @classmethod
+    def get_rand_nature(cls) -> str:
+        return cls._nature_list[random.randrange(len(cls._nature_list))]
 
     @classmethod
     def check_ability(cls, ability: str) -> bool:

@@ -35,24 +35,25 @@ class Pokemon:
         friendship: int = 0,
     ):
         """
-        Creating a Pokemon object involves five required and six optional fields.
+        Creating a Pokemon object involves five required and seven optional fields.
 
         Required:
 
         - name_or_id: this can either be a Pokemon's real name such as 'Pikachu' or its Pokedex id (25)
+        - stats: either the Pokemon's actual stats (stats_actual) or its ivs, evs, and nature
         - level: this is the Pokemon's level as an interger between 1 and 100 inclusive by default
         - moves: this is a list of names of the Pokemon's moves, max of 4 by defeault
         - gender: this is the Pokemon's gender, either 'male', 'female', or 'typeless' by default
-        - stats: either the Pokemon's actual stats (stats_actual) or its ivs, evs, and nature
 
         Optional:
         - ability: Pokemon's ability; if not used, assumed that Pokemon has ability not relevant to battle
         - nature: Pokemon's nature, not required if stats_actual provided; if not used, any effect that
         takes nature into account will process the worst-case scenario for the Pokemon
         - item: Pokemon's held item
+        - cur_hp: Pokemon's current hp, used if Pokemon's current hp is less than its max hp
         - status: Pokemon's non-volatile status such as poisoned or paralyzed
-        - nickname: Pokemon's unique nickname
         - friendship: Pokemon's friendship value as an int between 0 and 255 by default
+        - nickname: Pokemon's unique nickname
         """
 
         self.stats_base = PokeSim.get_pokemon(name_or_id)
@@ -86,7 +87,7 @@ class Pokemon:
         if not stats_actual and not ivs and not evs:
             raise Exception("Attempted to create Pokemon without providing stats information")
 
-        if stats_actual and ivs and evs:
+        if stats_actual and (ivs or evs):
             raise Exception("Attempted to create Pokemon with conflicting stats information")
 
         if stats_actual:

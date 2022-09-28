@@ -36,6 +36,10 @@ class Trainer:
             raise Exception(
                 "Attempted to create Trainer with invalid number of Pokemon"
             )
+        if any([poke.trainer for poke in poke_list]):
+            raise Exception(
+                "Attempted to create Trainer with Pokemon in another Trainer's party"
+            )
         if not name or not isinstance(name, str):
             raise Exception("Attempted to create Trainer without providing name")
         if selection and not isinstance(selection, callable):

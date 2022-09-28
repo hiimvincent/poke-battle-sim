@@ -811,3 +811,6 @@ class Battle:
 
     def is_finished(self) -> bool:
         return not not self.winner
+
+    def get_winner(self) -> tr.Trainer | None:
+        return self.winner
