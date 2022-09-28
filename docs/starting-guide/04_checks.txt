@@ -1,0 +1,30 @@
+Battle Checks
+
+Because a Battle will fail if an invalid action is inputted during a turn, it may be useful to preemptively check whether an action is valid before calling turn. There are several function available in Trainer for this purpose.
+
+Switching Out:
+
+can_switch_out: a function that returns True if the Trainer’s current Pokemon is able to switch out and False if it is not.
+
+Ex.  check_1 = ash.can_switch_out()
+
+Using a Move:
+
+can_use_move: a function that returns True if the Trainer’s current Pokemon is able to use a particular move and False if it is not. The format of input should be the same as the format of a turn action. Note that there are several reasons a Pokemon may not be able to use a move, such as the move being disabled, the pp being zero, or the move not being in the Pokemon’s current list of moves.
+
+Ex. check_2 = ash.can_use_move([‘move’, ‘thunderbolt’])
+
+Using an Item:
+
+Can_use_item: a function that returns True if the Trainer is able to use a certain item on a certain Pokemon in its party and False if it cannot. The format of input should be the same as the format of a turn action.
+
+Ex. check_3 = ash.can_use_item([‘item’, ‘super-potion’, ‘1’])
+
+*Note that ‘1’ represents the position of the target Pokemon in the Trainer’s party (zero-indexed), i.e. Ash is attempting to use a super potion on the second Pokemon in his party. This format is used to avoid name collisions in the event that a Trainer has duplicates of the same Pokemon type.
+
+General Check:
+
+To check in general that an action is valid, it is easiest to call the is_valid_action function. This checks whether the Trainer is attempting to perform one of the three valid action types, and that the action they are attempting to perform is itself valid. The format of input should be the same as the format of a turn action.
+
+Ex. gen_check = ash.is_valid_action(player_action_input)
+

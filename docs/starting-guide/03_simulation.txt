@@ -1,0 +1,30 @@
+Battle Simulation
+
+Once a Battle is created, it must be started using the start function.
+
+Ex. first_battle.start()
+
+After the Battle has been started, Trainers may begin to perform actions in the battle including telling their current Pokemon to use a move, switching out their current Pokemon, or using an item from their bag. These actions are communicated through the turn function.
+
+Both trainers are required to provide a valid action for a turn to be processed.
+
+The three types of valid actions are:
+Moves - formatted as ['move', $move_name]
+Items - formatted as ['item', $item, $item_target_pos, $move_target_name?]
+Switch-out - formatted as ['other', 'switch']
+
+
+Certain moves and switching out will call the respective trainer's selection function.
+
+If either trainer provides an invalid action, the turn will abort and an exception will be raised.
+
+Ex. first_battle.turn(t1_turn=[‘move’, ‘thunderbolt’], t2_turn=[‘other’, ‘switch’])
+
+The battle will continue to accept turns until all of a Trainer’s Pokemon faint and a winner is determined. To see if a battle is over, it may be useful to call the get_winner or is_finished functions.
+
+get_winner: will return the victorious Trainer if the battle has finished and None if the battle is ongoing.
+
+Ex. winner_optional = not battle.get_winner()
+
+is_finished: will return True if the battle has finished and False if the battle is still ongoing
+

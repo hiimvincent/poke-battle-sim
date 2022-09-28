@@ -1,0 +1,52 @@
+Randomization
+
+If you are interested in performing randomized simulations of Pokemon battles, there are several useful methods in the PokeSim class (where the csv data is processed). 
+
+Moves:
+
+get_rand_move: gives random move within the move csv
+
+Ex. r_move = PokeSim.get_rand_move()
+
+Abilities:
+
+get_rand_ability: gives random ability within the ability csv
+
+Ex. r_ability = PokeSim.get_rand_ability()
+
+Items:
+
+get_rand_item: gives random item within the item csv
+
+Ex. r_item = PokeSim.get_rand_item()
+
+Pokemon:
+
+get_rand_poke_id: gives random Pokemon id within Pokemon csv
+
+Ex. r_poke_id = PokeSim.get_rand_poke_id()
+
+Stats:
+
+get_rand_stats: gives random stat list within allowed stat range
+
+Ex. r_stats = PokeSim.get_rand_stats()
+
+Gender:
+
+get_rand_gender: gives random gender within defined possible genders
+
+Ex. r_gender = PokeSim.get_rand_gender()
+
+Level:
+
+get_rand_level: gives random level within allowed level range
+
+Ex. r_level = PokeSim.get_rand_level()
+
+Nature:
+
+get_rand_nature: gives random nature within the natures csv
+
+Ex. r_nature = PokeSim.get_rand_nature()
+

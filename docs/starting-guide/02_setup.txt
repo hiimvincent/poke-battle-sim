@@ -1,0 +1,72 @@
+Battle Setup
+
+This section will explain the different components of Battles and what is required to set up a valid Battle.
+
+- Pokemon -
+
+The most fundamental objects in poke-battle-sim are Pokemon. There are many different ways to set up your Pokemon depending on which mechanics you care about and want present in your simulations.
+
+The minimum amount of information required to create a Pokemon is:
+
+(1) Species: i.e. is it Charmander or Squirtle 
+
+(2) Stats: the hp, atk, def, sp. atk, sp. def, and spd values of the Pokemon
+
+(3) Level: normally an integer between 1 and 100
+
+(4) Moves: all the moves the Pokemon can currently use
+
+(5) Gender: normally either male, female or genderless
+
+Species is expressed through the name_or_id parameter, meaning you can identify a Pokemon’s species either by its name (ex. “Pikachu”) or its National Dex ID (ex. 25).
+
+*All multi-word names use dashes instead of spaces, i.e. “mime-jr.”
+
+Stats can be expressed in two ways depending on what information you have available. The six stat numbers that are displayed when viewing a party Pokemon in the original games are expressed through stats_actual (ex. [145, 90, 213, 81, 109, 126]). You can also choose to express a Pokemon’s stats through its ivs, evs, and nature. This method will calculate the actual stats if for some reason they are not available. All three pieces of data must be present or else this method will fail. An example input might be: ivs=[31, 31, 31, 0, 0, 31], evs=[0, 255, 0, 10, 25, 100], nature=’timid’. Note that you can only use one of these ways when creating a Pokemon, if both are used it will fail.
+
+*Stat values are always read in the order [hp, atk, def, sp. def, sp. Atk, spd]
+
+Level is expressed through the level parameter, i.e. level=99.
+
+Moves are expressed as a list of move names. Like the original games, a Pokemon cannot have duplicate moves. An example move list might be moves=[‘scratch’, ‘thunderbolt’, ‘volt-tackle’, ‘iron-tail’]
+
+Gender is expressed through the gender parameter, i.e. gender=”female”
+
+There are also several optional parameters, some of which significantly affect battle mechanics while others are purely cosmetic.
+
+(1) Ability: in most cases this should also be identified, as it can change the outcome of a battle. If a Pokemon’s ability does not affect battle or it is unknown, ability can be left empty and it will be treated internally as benign. Ex. ability=”intimidate”.
+
+(2) Item: the held item of a Pokemon. Does not need to be filled out if a Pokemon does not have a held item or has a held item that does not affect battle mechanics. Note that while it is technically valid to provide a held item that has no in-battle effect (like tms), it will simply be ignored by all internal item processing. Ex. item=”oran-berry”
+
+(3) Nature: although this is required if expressing stats with ivs/evs, if you provide stats_actual you may also provide nature which can affect minor battle mechanics such as secondary berry effects.
+
+(4) Current HP: used if a Pokemon’s current hp differs from its maximum hp. Current hp should be an integer between 1 and the max hp. Ex. cur_hp=124
+
+(5) Status: used if a Pokemon is afflicted with a non-volatile status while entering battle such as sleep, paralysis, or burn. Status ids can be found in global settings, ex. status=global_settings.BURN
+
+(6) Friendship: relevant only if a Pokemon uses a move that depends on friendship levels. Normally an integer between 0 and 255. If no friendship level is provided, friendship is assumed to be 0. Ex. friendship=124.
+
+(7) Nickname: what the Pokemon will be referred to as during the battle. If no nickname is provided, the Pokemon will be referred to by its type name (i.e. bulbasaur). Ex. nickname=”firebeast123”.
+
+- Trainer -
+
+Trainers hold a collection of Pokemon in their party and are the building blocks of battles. Compared to Pokemon, creating a Trainer requires relatively little information.
+
+The minimum amount of information required to create a Trainer is:
+
+(1) Name: what the Trainer will be referred to as during the battle. Ex. name=”Ash”.
+
+(2) Pokemon List: a list of all the Pokemon in the Trainer’s party. The Pokemon in this list must be Pokemon that have already been created and don’t already have a Trainer. Ex. poke_list=[magikarp_1, my_pikachu, squirtle_bff]
+
+Optional:
+
+(1) Selection: it is also recommended (but not required) to provide a selection function. A selection function will be called whenever a selection in battle needs to be made, such as when a Pokemon faints, switches out, or uses Baton Pass. The only requirement of the selection function is to change the Trainer’s current_poke field to a different Pokemon in the party that is already alive. If this requirement is not satisfied or a selection function is not provided, the first available Pokemon in the party will be automatically selected. Ex. selection=player_sel_func
+
+*The selection function will not be called when a Trainer uses an item on a Pokemon.
+
+- Battle -
+
+A battle object is what facilitates battle simulations in poke-battle-sim. Each battle requires a separate battle object to be created. The only requirement for creating a battle is exactly two Trainers. However both these trainers must be unique, not in battle, and not sharing any Pokemon in their parties. Additionally all Pokemon in their parties must also not be in battle.
+
+Ex. first_battle = poke_battle_sim.Battle(t1=ash, t2=misty)
+

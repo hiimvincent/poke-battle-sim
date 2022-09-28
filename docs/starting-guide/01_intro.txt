@@ -1,0 +1,16 @@
+Welcome to poke-battle-sim!
+
+This starting guide was created to provide the necessary information for setting up complex battles in poke-battle-sim, as well as to explain some of the internal processes that allow the package to function.
+
+The starting guide includes:
+
+- Battle Setup: How to set up different parts of a Battle
+
+- Battle Simulation: How to simulate battles
+
+- Battle Checks: How to check whether turn actions are valid
+
+- Randomization: How to randomize battles
+
+If you are still unsure  about how to use the package after reading the starting guide, please check out the poke-battle-sim example project.
+
