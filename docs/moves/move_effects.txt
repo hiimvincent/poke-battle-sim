@@ -1,0 +1,122 @@
+Move Effects
+
+This document explains the effect id system for move processing and the most common effect ids in the Gen I to IV move list.
+
+The way that moves are differentiated from each other and processed in poke-battle-sim is the effect id of each move. Most moves have a effect id that uniquely correspond to that move’s effect.
+
+Since poke-battle-sim uses exclusively 1v1 battles, effects are often explained in terms of the attacker (Pokemon that used the move) and the defender (the enemy Trainer’s current Pokemon).
+
+*Each move’s effect id can be found in its effect_id column in the move_list csv.
+
+For instance, Trick Room has an effect id of 212, and no other move shares that effect id.
+
+There are, however, some basic effect types that are shared by a large number of moves.
+
+The majority of these shared effects are identified between the effect ids 0 and 17. Below are the effects that correspond to each of these shared ids:
+
+0 - Any effect that does not affect a trainer battle’s outcome or effects that, for practical reasons, were implemented out of the process_move function.
+
+Ex. Pay Day, Teleport, Follow Me
+
+1 - Moves with no secondary effect (includes moves with special accuracy or priority)
+
+Ex. Water Gun, Strength, Quick Attack
+
+2 - Moves that have a secondary effect chance to change a single stat stage of the attacker
+
+The chance that the secondary effect will activate is indicated by effect_chance
+
+The amount the stat stage will change by if activated is indicated by effect_amt
+
+The stat stage that will be affected if activated is indicated by effect_stat
+
+The default format (found in global_settings) for effect_stat is:
+
+0 HP (placeholder for consistency)
+1 Atk
+2 Def
+3 Sp. Atk
+4 Sp. Def
+5 Speed
+6 Accuracy
+7 Evasion
+
+*Note that the format of effect id 2 is also used by most effects that change a stat stage
+
+Ex. Meteor Mash, Metal Claw, Psycho Boost
+
+3 - Moves that have a secondary effect chance to change a single stat stage of the defender
+
+Ex. Acid, Psychic, Bubble
+
+4 - Moves that have a secondary effect chance to give attacker non-volatile status
+
+The default format for the non-volatile status that will be afflicted is:
+
+1 Burn
+2 Freeze 
+3 Paralysis
+4 Poison
+5 Sleep
+6 Badly poisoned
+
+This format is shared by other effects that inflict non-volatile statuses
+
+*Note this effect is not present in any moves in Gen I to IV
+
+Ex. None
+
+5 - Moves that have a secondary effect chance to give defender non-volatile status
+
+Ex. Poison Jab, Force Palm, Dragon Breath
+
+6 - Moves that have a secondary effect chance to confuse defender
+
+Ex. Signal Beam, Dynamic Punch, Water Pulse
+
+7 - Moves that have a secondary effect chance to make defender flinch
+
+Ex. Waterfall, Rock Slide, Hyper Fang
+
+8 - Moves that have +1 critical hit stage modifier
+
+Ex. Crabhammer, Slash, Aeroblast
+
+9 - Moves that are guaranteed to make the defender flinch
+
+Ex. Fake Out 
+
+10 Multi-hit moves that can hit 2-5 times per turn
+
+Ex. Fury Swipes, Barrage, Pin Missile
+
+11 Moves that hit twice per turn
+
+Ex. Double Kick,  Bonemerang, Double Hit
+
+12 Moves that change the battlefield’s weather
+	
+*Note Weather changing moves are currently implemented individually
+
+Ex. None
+
+13 Status moves with primary effect to give defender non-volatile status
+
+Ex. Toxic, Hypnosis, Spore
+
+14 Status moves with primary effect to confuse defender
+
+	Ex. Confuse Ray, Sweet Kiss, Teeter Dance
+
+15 Placeholder move from legacy effect system
+	
+	Ex. None
+
+16 Status moves with primary effect to change single stat stage of the attacker
+
+	Ex. Swords Dance, Howl, Growth
+
+17  Status moves with primary effect to change single stat stage of the defender
+
+	Ex. Rock Polish, Fake Tears, Cotton Spore
+

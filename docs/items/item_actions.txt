@@ -1,0 +1,28 @@
+Item Actions
+
+This document explains the item system in poke-battle-sim and how to correctly format item actions during a battle turn.
+
+Although using items is not allowed in the original games’ traditional link battles, poke-battle-sim includes this optional mechanic for npc battles or customized battles.
+
+Only items that can be used in battle in the Gen IV games are able to be used in poke-battle-sim. In addition, like the original games, items that will have no effect in a certain situation, such as using a Potion on a Pokemon with full health are also not able to used.
+
+You can check whether a Trainer can use an item on a specific Pokemon using the can_use_item function.
+
+*Note that poke-battle-sim does not track a Trainer’s inventory, meaning it may be necessary to check whether the Trainer actually has the item they are attempting to use.
+
+In order to use the can_use_item function and to actually use an item during a turn, an item action must be constructed correctly.
+
+An item action can consist of either three of four parts.
+
+Item actions are formatted as: ['item', $item, $item_target_pos, $move_target_name?]
+
+‘Item’ indicates that the Trainer is attempting to use an item.
+
+$item indicates the name of the item, such as ‘hyper-potion’
+
+$item_target_pos indicates the position of the item target (zero-indexed), meaning the item_target_pos would be 1 if you attempt to use an item on the second Pokemon in your party.
+
+*Position is used instead of name or id to avoid duplicate collisions
+
+$move_target_name is only used when an item targets a single move and indicates the position of the move in the target Pokemon’s move list (also zero-indexed).
+
