@@ -35,7 +35,7 @@ pikachu = pb.Pokemon(...)
 ash = pb.Trainer('Ash', [pikachu])
 
 starmie = pb.Pokemon(...)
-misty = pb.Trainer(‘Misty', [starmie])
+misty = pb.Trainer('Misty', [starmie])
 
 battle = pb.Battle(ashe, misty)
 battle.start()
@@ -44,7 +44,7 @@ battle.turn()
 print(battle.get_all_text())
 ```
 
-Checkout the documentation and examples for more details.
+Check out the ```docs```  and example project for more details.
 
 ## Features
 
@@ -78,5 +78,9 @@ References used during development:
 
 [Pokemon Fan Wiki](https://pokemon.fandom.com/wiki/Pok%C3%A9mon_Wiki)
 
+Supporting packages:
 
+[Black](https://github.com/psf/black) was used to reformat this repository.
+
+[Setuptools](https://github.com/pypa/setuptools) was used to build this package. 
 
