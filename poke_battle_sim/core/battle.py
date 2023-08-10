@@ -550,7 +550,7 @@ class Battle:
             selector.selection(self)
         if not selector.current_poke.is_alive or selector.current_poke is old_poke:
             for p in selector.poke_list:
-                if p.is_alive and not p is old_poke:
+                if p.is_alive and p is not old_poke:
                     selector.current_poke = p
                     break
         if not selector.current_poke.is_alive or selector.current_poke is old_poke:

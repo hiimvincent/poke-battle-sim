@@ -37,7 +37,7 @@ ash = pb.Trainer('Ash', [pikachu])
 starmie = pb.Pokemon(...)
 misty = pb.Trainer('Misty', [starmie])
 
-battle = pb.Battle(ashe, misty)
+battle = pb.Battle(ash, misty)
 battle.start()
 battle.turn()
 
