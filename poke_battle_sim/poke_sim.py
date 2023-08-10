@@ -149,11 +149,11 @@ class PokeSim:
 
     @classmethod
     def get_rand_move(cls) -> list:
-        return cls._move_list[random.randrange(gs.COMPLETED_MOVES)]
+        return random.choice(cls._move_list)
 
     @classmethod
     def get_rand_ability(cls) -> str:
-        return cls._ability_list[random.randrange(len(cls._ability_list))]
+        return random.choice(cls._ability_list)
 
     @classmethod
     def get_rand_item(cls) -> str:

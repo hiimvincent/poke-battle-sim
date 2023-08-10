@@ -18,7 +18,6 @@ NATURE_DEC, NATURE_INC = 0.9, 1.1
 # Misc Settings
 POKE_NUM_MIN, POKE_NUM_MAX = 1, 6
 POSSIBLE_GENDERS = ['male', 'female', 'genderless']
-COMPLETED_MOVES = 467
 
 # Non-volatile Statuses
 BURNED = 1
