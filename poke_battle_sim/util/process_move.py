@@ -297,18 +297,9 @@ def _process_effect(
     inv_bypass = False
     cc_ib = [crit_chance, inv_bypass]
 
-    if _MOVE_EFFECTS[ef_id](
+    _MOVE_EFFECTS[ef_id](
         attacker, defender, battlefield, battle, move_data, is_first, cc_ib
-    ):
-        _calculate_damage(
-            attacker,
-            defender,
-            battlefield,
-            battle,
-            move_data,
-            crit_chance=cc_ib[0],
-            inv_bypass=cc_ib[0],
-        )
+    )
 
 
 def _calculate_crit(crit_chance: int = None) -> bool:
@@ -2164,7 +2155,6 @@ def _ef_066(
 ) -> bool:
     if not defender.is_alive or _calculate_type_ef(defender, move_data) == 0:
         _failed(battle)
-        return True
     else:
         dmg = defender.max_hp // 2
         defender.take_damage(dmg if dmg > 0 else 1, move_data)

@@ -88,8 +88,6 @@ class Battle:
         t2_move_data = None
         t1_mv_check_bypass = False
         t2_mv_check_bypass = False
-        t1_first = None
-        faster_did_selection = False
 
         t1_move, t1_move_data, t1_mv_check_bypass = self._pre_process_move(
             self.t1, [t1_move, t1_move_data, t1_mv_check_bypass]

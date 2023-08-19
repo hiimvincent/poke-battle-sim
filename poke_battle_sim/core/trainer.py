@@ -42,15 +42,21 @@ class Trainer:
             )
         if not name or not isinstance(name, str):
             raise Exception("Attempted to create Trainer without providing name")
-        if selection and not isinstance(selection, callable):
+        if selection and not callable(selection):
             raise Exception(
                 "Attempted to create Trainer with invalid selection function"
             )
-        self.selection = selection
-        self.name = name
+
         self.poke_list = poke_list
         for poke in self.poke_list:
-            poke.trainer = self
+            if poke.trainer is None:
+                poke.trainer = self
+            else:
+                raise Exception(
+                    "Attempted to create Trainer with duplicate Pokemon"
+                )
+        self.selection = selection
+        self.name = name
         self.in_battle = False
 
     def start_pokemon(self, battle: bt.Battle):

@@ -95,7 +95,7 @@ class Pokemon:
                 raise Exception("Attempted to create Pokemon with invalid stats")
             if not all(
                 [
-                    isinstance(s, int) and gs.STAT_ACTUAL_MIN < s < gs.STAT_ACTUAL_MAX
+                    isinstance(s, int) and gs.STAT_ACTUAL_MIN <= s < gs.STAT_ACTUAL_MAX
                     for s in stats_actual
                 ]
             ):
