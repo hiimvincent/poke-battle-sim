@@ -76,9 +76,9 @@ class Battle:
 
         To check which actions are valid, refer to is_valid_actions() in Trainer.
         """
-        self.turn_count += 1
         if not self.battle_started:
             raise Exception("Cannot use turn on Battle that hasn't started")
+        self.turn_count += 1
         if self.is_finished():
             return
 
