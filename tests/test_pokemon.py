@@ -82,6 +82,59 @@ class TestPokemon(unittest.TestCase):
             Pokemon(25, 22, ['tackle'], 'male', stats_actual=[100, 100, 100, 100, 100, 100], cur_hp=150)
         self.assertEqual(str(context.exception), "Attempted to create Pokemon with invalid hp value")
 
+    def test_initialize_pokemon_with_ev_iv_nature(self):
+        pokemon = Pokemon(25, 22, ['tackle'], 'male', ivs=[16, 16, 16, 16, 16, 16], evs=[0, 0, 0, 0, 0, 0], nature="quirky")
+
+        self.assertEqual(pokemon.id, 25)
+        self.assertEqual(pokemon.name, 'pikachu')
+        self.assertEqual(pokemon.nickname, 'PIKACHU')
+        self.assertEqual(pokemon.gender, 'male')
+        self.assertEqual(pokemon.level, 22)
+        self.assertEqual(pokemon.types, ('electric', ''))
+        self.assertEqual(pokemon.cur_hp, 28)
+        self.assertEqual(pokemon.max_hp, 28)
+        self.assertEqual(pokemon.stats_actual, [28, 32, 26, 30, 27, 48])
+        self.assertEqual(pokemon.ivs, [16, 16, 16, 16, 16, 16])
+        self.assertEqual(pokemon.evs, [0, 0, 0, 0, 0, 0])
+        self.assertEqual(pokemon.nature, 'quirky')
+        self.assertEqual(pokemon.nature_effect, (4, 4))
+        self.assertIsNone(pokemon.trainer)
+
+    def test_initialize_pokemon_with_iv_only(self):
+        with self.assertRaises(Exception) as context:
+            Pokemon(25, 22, ['tackle'], 'male', ivs=[16, 16, 16, 16, 16, 16], nature="quirky")
+        self.assertEqual(str(context.exception), "Attempted to create Pokemon with invalid evs or ivs")
+
+    def test_initialize_pokemon_with_ev_only(self):
+        with self.assertRaises(Exception) as context:
+            Pokemon(25, 22, ['tackle'], 'male', evs=[50, 50, 50, 50, 50, 50], nature="quirky")
+        self.assertEqual(str(context.exception), "Attempted to create Pokemon with invalid evs or ivs")
+
+    def test_initialize_pokemon_without_nature(self):
+        with self.assertRaises(Exception) as context:
+            Pokemon(25, 22, ['tackle'], 'male', ivs=[16, 16, 16, 16, 16, 16], evs=[50, 50, 50, 50, 50, 50])
+        self.assertEqual(str(context.exception), "Attempted to create Pokemon without providing its nature")
+
+    def test_initialize_pokemon_with_invalid_nature(self):
+        with self.assertRaises(Exception) as context:
+            Pokemon(25, 22, ['tackle'], 'male', ivs=[16, 16, 16, 16, 16, 16], evs=[50, 50, 50, 50, 50, 50], nature="a_nature_that_does_not_exist")
+        self.assertEqual(str(context.exception), "Attempted to create Pokemon with invalid nature")
+
+    def test_initialize_pokemon_with_too_much_iv(self):
+        with self.assertRaises(Exception) as context:
+            Pokemon(25, 22, ['tackle'], 'male', ivs=[16, 32, 16, 16, 16, 16], evs=[50, 50, 50, 50, 50, 50], nature="quirky")
+        self.assertEqual(str(context.exception), "Attempted to create Pokemon with invalid ivs")
+
+    def test_initialize_pokemon_with_too_much_ev(self):
+        with self.assertRaises(Exception) as context:
+            Pokemon(25, 22, ['tackle'], 'male', ivs=[16, 16, 16, 16, 16, 16], evs=[10, 253, 10, 10, 10, 10], nature="quirky")
+        self.assertEqual(str(context.exception), "Attempted to create Pokemon with invalid evs")
+
+    def test_initialize_pokemon_with_too_much_total_ev(self):
+        with self.assertRaises(Exception) as context:
+            Pokemon(25, 22, ['tackle'], 'male', ivs=[16, 16, 16, 16, 16, 16], evs=[248, 252, 11, 0, 0, 0], nature="quirky")
+        self.assertEqual(str(context.exception), "Attempted to create Pokemon with invalid evs")
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -126,9 +126,11 @@ class Pokemon:
             ):
                 raise Exception("Attempted to create Pokemon with invalid evs")
             self.evs = evs
+            if not nature:
+                raise Exception("Attempted to create Pokemon without providing its nature")
             self.nature_effect = PokeSim.nature_conversion(nature.lower())
             if not self.nature_effect:
-                raise Exception("Attempted to create Pokemon without providing its nature")
+                raise Exception("Attempted to create Pokemon with invalid nature")
             self.nature = nature.lower()
             self.calculate_stats_actual()
 
