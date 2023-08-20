@@ -33,6 +33,26 @@ class TestPokemon(unittest.TestCase):
         self.assertEqual(pokemon.stats_actual, [100, 100, 100, 100, 100, 100])
         self.assertIsNone(pokemon.trainer)
 
+    def test_initialize_pokemon_with_none_moveset(self):
+        with self.assertRaises(Exception) as context:
+            Pokemon(25, 22, None, 'male', stats_actual=[100, 100, 100, 100, 100, 100])
+        self.assertEqual(str(context.exception), "Attempted to create Pokemon with no moveset")
+
+    def test_initialize_pokemon_without_moves(self):
+        with self.assertRaises(Exception) as context:
+            Pokemon(25, 22, [], 'male', stats_actual=[100, 100, 100, 100, 100, 100])
+        self.assertEqual(str(context.exception), "Attempted to create Pokemon with no moveset")
+
+    def test_initialize_pokemon_with_too_much_moves(self):
+        with self.assertRaises(Exception) as context:
+            Pokemon(25, 22, ['pound', 'karate-chop', 'double-slap', 'comet-punch', 'mega-punch'], 'male', stats_actual=[100, 100, 100, 100, 100, 100])
+        self.assertEqual(str(context.exception), "Attempted to create Pokemon with too much moves")
+
+    def test_initialize_pokemon_with_duplicate_move(self):
+        with self.assertRaises(Exception) as context:
+            Pokemon(25, 22, ['tackle', 'tackle'], 'male', stats_actual=[100, 100, 100, 100, 100, 100])
+        self.assertEqual(str(context.exception), "Attempted to create Pokemon with invalid moveset")
+
     def test_initialize_pokemon_with_bad_id(self):
         with self.assertRaises(Exception) as context:
             Pokemon(10400, 22, ['tackle'], 'male', stats_actual=[100, 100, 100, 100, 100, 100])

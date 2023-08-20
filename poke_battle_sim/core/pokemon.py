@@ -141,6 +141,10 @@ class Pokemon:
             cur_hp = self.stats_actual[gs.HP]
         self.cur_hp = cur_hp
 
+        if not moves:
+            raise Exception("Attempted to create Pokemon with no moveset")
+        if len(moves) > gs.MOVES_MAX:
+            raise Exception("Attempted to create Pokemon with too much moves")
         moves_data = PokeSim.get_move_data(moves)
         if not moves_data:
             raise Exception("Attempted to create Pokemon with invalid moveset")

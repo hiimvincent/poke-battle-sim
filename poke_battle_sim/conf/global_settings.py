@@ -84,6 +84,9 @@ STATUS = 1
 PHYSICAL = 2
 SPECIAL = 3
 
+# Move Range
+MOVES_MAX = 4
+
 # Base Pokemon Stats Formatting
 NDEX = 0
 NAME = 1
