@@ -54,7 +54,7 @@ class Battlefield:
             self.weather = weather
             pa.weather_change_abilities(self.cur_battle, self)
 
-    def process_weather_effects(self, poke: pk.Pokemon):
+    def process_weather_effects(self, poke: Pokemon):
         if not poke.is_alive or self.weather_count >= 999:
             return
         if (

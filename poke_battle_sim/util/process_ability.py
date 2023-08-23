@@ -237,8 +237,8 @@ def on_hit_abilities(
     elif (
         defender.has_ability("poison-point")
         and made_contact
-        and not "steel" in attacker.types
-        and not "poison" in attacker.types
+        and "steel" not in attacker.types
+        and "poison" not in attacker.types
         and randrange(10) < 3
     ):
         pm.poison(attacker, battle)

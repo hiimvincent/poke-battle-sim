@@ -4,7 +4,7 @@ from unittest.mock import patch
 from poke_battle_sim import Trainer, Pokemon, Battle
 
 
-class TestPokemon(unittest.TestCase):
+class TestBattle(unittest.TestCase):
 
     @patch('poke_battle_sim.util.process_move._calculate_crit')
     def test_simple_battle(self, mock_calculate_crit):
@@ -238,6 +238,25 @@ class TestPokemon(unittest.TestCase):
             battle = Battle(trainer_1, trainer_2)
             battle.turn(["move", "tackle"], ["move", "tackle"])
         self.assertEqual(str(context.exception), "Cannot use turn on Battle that hasn't started")
+
+    def test_launch_battle_with_trainer_already_in_battle(self):
+        with self.assertRaises(Exception) as context:
+            pokemon_1 = Pokemon(1, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+            trainer_1 = Trainer('Ash', [pokemon_1])
+
+            pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+            trainer_2 = Trainer('Misty', [pokemon_2])
+
+            pokemon_3 = Pokemon(7, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+            trainer_3 = Trainer('Red', [pokemon_3])
+
+            battle_1 = Battle(trainer_1, trainer_2)
+            battle_1.start()
+
+            battle_2 = Battle(trainer_1, trainer_3)
+            battle_2.start()
+
+        self.assertEqual(str(context.exception), "Attempted to create Battle with Trainer already in battle")
 
 
 if __name__ == '__main__':

@@ -1,7 +1,6 @@
 from __future__ import annotations
 from random import randrange
 
-from poke_battle_sim.poke_sim import PokeSim
 from poke_battle_sim.core.move import Move
 
 import poke_battle_sim.core.pokemon as pk
@@ -138,24 +137,25 @@ def can_use_item(
     item_target_pos: str,
     move_target_pos: str = None,
 ):
-    if not isinstance(item, str) or not item in gd.USABLE_ITEM_CHECK:
+    if not isinstance(item, str) or item not in gd.USABLE_ITEM_CHECK:
         return False
     if (
         not isinstance(item_target_pos, str)
-        or any([not num.is_digit() for num in item_target_pos])
-        or item_target_pos >= len(trainer.poke_list)
+        or any([not num.isdigit() for num in item_target_pos])
+        or int(item_target_pos) >= len(trainer.poke_list)
     ):
         return False
-    poke = trainer.poke_list[int(item_target_pos)]
+    poke = trainer.current_poke
     if poke.embargo_count:
         return False
     if move_target_pos and (
-        any([not num.is_digit() for num in move_target_pos])
-        or move_target_pos >= len(poke.moves)
+        any([not num.isdigit() for num in move_target_pos])
+        or int(move_target_pos) >= len(poke.moves)
     ):
         return False
+    move = None
     if move_target_pos:
-        move = poke.moves[move_target_pos]
+        move = poke.moves[int(move_target_pos)]
 
     if item in gd.HEALING_ITEM_CHECK:
         return poke.cur_hp < poke.max_hp
