@@ -1,10 +1,31 @@
-# poke-battle-sim
+# Pykemon
 
-Pokemon Battle Simulator (```poke-battle-sim```) is an open source Python package that provides efficient, customizable simulation of Pokemon battles. Thanks for checking it out.
+Pykemon is a python package for Pokemon that emulates Pokemon battle as seen in the original Pokemon games.
+
+This package is a fork on the original poke-battle-sim package, which can be found on [Github](https://github.com/hiimvincent/poke-battle-sim) and on [PyPI](https://pypi.org/project/poke-battle-sim/).
+
+## Poke-battle-sim
+
+Pokemon Battle Simulator (```poke-battle-sim```) is an open-source Python package that provides efficient, customizable simulation of Pokemon battles. Thanks for checking it out.
+
+### Differences
+
+Here are the distinctions between Pykemon and PokeBattleSim:
+
+#### Fixes
+- Pokemons can now be initialized with id.
+- Damage calculations now occurs only once.
+- A pokemon can now have only one max HP (particularly useful for Shedinja).
+- A pokemon can't be used multiple time in a same team anymore.
+- Max EVs are decreased to 252 instead of 255, as it may be consider a bug patched in games after the 6th generation.
+- Using an unstarted battle now raises a personalized exception.
+- The number of moves for Pokemons is now limited to 4.
+- Crashes upon using items have been corrected.
+- Embargo mechanics now cancel item usage as intended.
 
 ## Overview
 
-```poke-battle-sim``` emulates the mechanics present in the original Generation IV Pokemon games (Diamond, Pearl, and Platinum) while also providing the ability to modify and expand upon traditional Pokemon battles.
+Pykemon emulates the mechanics present in the original Generation IV Pokemon games (Diamond, Pearl, and Platinum) while also providing the ability to modify and expand upon traditional Pokemon battles.
 
 Currently the package supports all content from Gen I to IV including:
 
@@ -12,17 +33,6 @@ Currently the package supports all content from Gen I to IV including:
 - 467 Moves
 - 122 Abilities
 - 535 Items
-
-## Installation
-
-```poke-battle-sim``` can be installed through pip using:
-
-```
-pip install poke-battle-sim
-```
-
-The package is also available on [PyPi](https://pypi.org/project/poke-battle-sim/) and [GitHub](https://github.com/hiimvincent/poke-battle-sim).
-
 
 ## Getting Started
 
@@ -39,16 +49,16 @@ misty = pb.Trainer('Misty', [starmie])
 
 battle = pb.Battle(ash, misty)
 battle.start()
-battle.turn()
+battle.turn(...)
 
 print(battle.get_all_text())
 ```
 
-Check out the ```docs```  and example project for more details.
+Check out the ```docs``` or tests for more details.
 
 ## Features
 
-```poke-battle-sim``` includes all functionality present in both (Single) Link Battles and (Single) Trainer Battles in the original Gen IV games.
+Pykemon includes all functionality present in both (Single) Link Battles and (Single) Trainer Battles in the original Gen IV games.
 
 Although this package was developed with large-scale simulation in mind, it can be used with little modification as the backend for Pokemon or Pokemon-style games.
 
@@ -66,7 +76,7 @@ Mechanics not implemented in ```poke-battle-sim``` include:
 
 ## Credit
 
-This package was created and is managed by Vincent Johnson.
+This package was originally created and managed by Vincent Johnson.
 
 References used during development:
 
