@@ -81,19 +81,19 @@ class PokeSim:
         return cls._name_to_id[name]
 
     @classmethod
-    def get_valid_name_or_id(cls, name_or_id: str | int) -> int | None:
+    def get_pokemon_id(cls, name_or_id: str | int) -> int | None:
         if not isinstance(name_or_id, (str, int)):
-            return
+            return None
         p_id = name_or_id
         if isinstance(name_or_id, str):
-            p_id = cls._convert_name_to_id(name_or_id)
+            p_id = cls._convert_name_to_id(name_or_id.lower())
         if 0 < p_id < len(cls._pokemon_stats):
             return p_id
-        return
+        return None
 
     @classmethod
     def get_pokemon(cls, name_or_id: str | int) -> list | None:
-        p_id = cls.get_valid_name_or_id(name_or_id.lower())
+        p_id = cls.get_pokemon_id(name_or_id)
         if not p_id:
             return
         return cls._pokemon_stats[p_id - 1]
@@ -157,7 +157,7 @@ class PokeSim:
 
     @classmethod
     def get_rand_item(cls) -> str:
-        return cls._item_list[random.randrange(len(cls._item_list))]
+        return random.choice(cls._item_list)
 
     @classmethod
     def get_rand_poke_id(cls) -> int:
@@ -177,7 +177,7 @@ class PokeSim:
 
     @classmethod
     def get_rand_nature(cls) -> str:
-        return cls._nature_list[random.randrange(len(cls._nature_list))]
+        return random.choice(cls._nature_list)
 
     @classmethod
     def check_ability(cls, ability: str) -> bool:

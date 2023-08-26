@@ -11,7 +11,7 @@ ITEMS_CSV = 'items_gen4.csv'
 LEVEL_MIN, LEVEL_MAX = 1, 100
 STAT_ACTUAL_MIN, STAT_ACTUAL_MAX = 1, 500
 IV_MIN, IV_MAX = 0, 31
-EV_MIN, EV_MAX = 0, 255
+EV_MIN, EV_MAX = 0, 252
 EV_TOTAL_MAX = 510
 NATURE_DEC, NATURE_INC = 0.9, 1.1
 
@@ -83,6 +83,9 @@ STAT_TO_NAME = ['Health', 'Attack', 'Defense', 'Sp. Atk', 'Sp. Def', 'Speed', 'a
 STATUS = 1
 PHYSICAL = 2
 SPECIAL = 3
+
+# Move Range
+MOVES_MAX = 4
 
 # Base Pokemon Stats Formatting
 NDEX = 0

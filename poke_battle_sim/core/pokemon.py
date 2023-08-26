@@ -6,7 +6,6 @@ from poke_battle_sim.poke_sim import PokeSim
 from poke_battle_sim.core.move import Move
 
 import poke_battle_sim.core.battle as bt
-import poke_battle_sim.core.battlefield as bf
 
 import poke_battle_sim.util.process_move as pm
 import poke_battle_sim.util.process_ability as pa
@@ -95,7 +94,7 @@ class Pokemon:
                 raise Exception("Attempted to create Pokemon with invalid stats")
             if not all(
                 [
-                    isinstance(s, int) and gs.STAT_ACTUAL_MIN < s < gs.STAT_ACTUAL_MAX
+                    isinstance(s, int) and gs.STAT_ACTUAL_MIN <= s < gs.STAT_ACTUAL_MAX
                     for s in stats_actual
                 ]
             ):
@@ -126,9 +125,11 @@ class Pokemon:
             ):
                 raise Exception("Attempted to create Pokemon with invalid evs")
             self.evs = evs
+            if not nature:
+                raise Exception("Attempted to create Pokemon without providing its nature")
             self.nature_effect = PokeSim.nature_conversion(nature.lower())
             if not self.nature_effect:
-                raise Exception("Attempted to create Pokemon without providing its nature")
+                raise Exception("Attempted to create Pokemon with invalid nature")
             self.nature = nature.lower()
             self.calculate_stats_actual()
 
@@ -139,6 +140,10 @@ class Pokemon:
             cur_hp = self.stats_actual[gs.HP]
         self.cur_hp = cur_hp
 
+        if not moves:
+            raise Exception("Attempted to create Pokemon with no moveset")
+        if len(moves) > gs.MOVES_MAX:
+            raise Exception("Attempted to create Pokemon with too much moves")
         moves_data = PokeSim.get_move_data(moves)
         if not moves_data:
             raise Exception("Attempted to create Pokemon with invalid moveset")
@@ -531,7 +536,7 @@ class Pokemon:
             self.reset_transform()
         self.reset_stats()
         if self.has_ability("natural-cure") and self.nv_status:
-            pm._cure_nv_status(self.nv_status, self, self.cur_battle)
+            pm.cure_nv_status(self.nv_status, self, self.cur_battle)
 
     def update_last_moves(self):
         if self.last_move_next:
@@ -645,7 +650,7 @@ class Pokemon:
                 + "'s Aftermath!"
             )
 
-    def give_item(self, item: str):
+    def give_item(self, item: str | None):
         self.item = item
         self.h_item = item
         if not item:
