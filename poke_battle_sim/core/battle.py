@@ -250,12 +250,14 @@ class Battle:
         elif a_move[gs.ACTION_TYPE] == "item":
             if len(a_move) >= 4:
                 pi.use_item(
+                    attacker,
+                    self,
                     a_move[gs.ACTION_VALUE],
-                    a_move[gs.ITEM_POKE_TARGET],
-                    a_move[gs.ITEM_MOVE_TARGET],
+                    a_move[gs.ITEM_TARGET_POS],
+                    a_move[gs.MOVE_TARGET_POS],
                 )
             elif len(a_move) == 3:
-                pi.use_item(a_move[gs.ACTION_VALUE], a_move[gs.ITEM_POKE_TARGET])
+                pi.use_item(attacker, self, a_move[gs.ACTION_VALUE], a_move[gs.ITEM_TARGET_POS])
             else:
                 raise Exception("Trainer attempted to use item with invalid data format")
         elif self._process_pp(attacker.current_poke, a_move_data):
@@ -353,7 +355,7 @@ class Battle:
                 self.add_text(trainer.name + "'s Lucky Chant wore off!")
         if (
             trainer.imprisoned_poke
-            and not trainer.imprisoned_poke is other.current_poke
+            and trainer.imprisoned_poke is not other.current_poke
         ):
             trainer.imprisoned_poke = None
         if poke.perish_count and poke.is_alive:
@@ -443,7 +445,7 @@ class Battle:
 
         if poke.v_status[gs.FLINCHED]:
             poke.v_status[gs.FLINCHED] = 0
-        if poke.foresight_target and not poke.foresight_target is other:
+        if poke.foresight_target and poke.foresight_target is not other:
             poke.foresight_target = None
         if poke.bide_count:
             poke.bide_count -= 1
@@ -540,7 +542,7 @@ class Battle:
         self.add_text(winner.name + " has defeated " + loser.name + "!")
         self.winner = winner
 
-    def _process_selection(self, selector: tr.Trainer) -> bool:
+    def _process_selection(self, selector: tr.Trainer, can_skip: bool = True) -> bool:
         if self.winner:
             return True
         old_poke = selector.current_poke
@@ -552,7 +554,10 @@ class Battle:
                     selector.current_poke = p
                     break
         if not selector.current_poke.is_alive or selector.current_poke is old_poke:
-            return True
+            if can_skip:
+                return True
+            else:
+                raise Exception("Trainer attempted make an invalid switch out")
         if old_poke.is_alive:
             old_poke.switch_out()
         self.add_text(
@@ -591,8 +596,8 @@ class Battle:
             and (
                 selector.current_poke.grounded
                 or (
-                    not "flying" in selector.current_poke.types
-                    and not "steel" in selector.current_poke.types
+                    "flying" not in selector.current_poke.types
+                    and "steel" not in selector.current_poke.types
                     and not selector.current_poke.magnet_rise
                     and not selector.current_poke.has_ability("immunity")
                     and not selector.current_poke.has_ability("levitate")
@@ -634,7 +639,7 @@ class Battle:
     ):
         if a_move == gd.SWITCH:
             if attacker.can_switch_out():
-                self._process_selection(attacker)
+                self._process_selection(attacker, can_skip=False)
             else:
                 raise Exception("Trainer attempted to switch out Pokemon that's trapped")
         if a_move[gs.ACTION_VALUE] == "recharging":

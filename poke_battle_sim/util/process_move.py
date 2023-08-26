@@ -74,6 +74,10 @@ def _calculate_type_ef(defender: pk.Pokemon, move_data: Move) -> float:
     return t_mult
 
 
+def _calculate_random_multiplier_damage() -> float:
+    return randrange(85, 101) / 100
+
+
 def _calculate_damage(
     attacker: pk.Pokemon,
     defender: pk.Pokemon,
@@ -178,7 +182,7 @@ def _calculate_damage(
         stab = 1.5 if not attacker.has_ability("adaptability") else 2
     else:
         stab = 1
-    random_mult = randrange(85, 101) / 100
+    random_mult = _calculate_random_multiplier_damage()
 
     berry_mult = pi.pre_hit_berries(attacker, defender, battle, move_data, t_mult)
     item_mult = pi.damage_mult_items(attacker, defender, battle, move_data, t_mult)
@@ -435,7 +439,7 @@ def confuse(
         or recipient.has_ability("own-tempo")
     ):
         if forced:
-            _failed(battle)
+            failed(battle)
         return
     if _safeguard_check(recipient, battle):
         return
@@ -476,7 +480,7 @@ def infatuate(
         or defender.has_ability("oblivious")
     ):
         if forced:
-            _failed(battle)
+            failed(battle)
         return
     if (attacker.gender == "male" and defender.gender == "female") or (
         attacker.gender == "female" and defender.gender == "male"
@@ -498,7 +502,7 @@ def give_stat_change(
 ):
     if not recipient.is_alive:
         if forced:
-            _failed(battle)
+            failed(battle)
         return
     if (
         amount < 0
@@ -510,7 +514,7 @@ def give_stat_change(
         )
     ):
         if forced:
-            _failed(battle)
+            failed(battle)
         return
     if (
         amount < 0
@@ -525,7 +529,7 @@ def give_stat_change(
         r_stat = recipient.accuracy_stage
         if amount < 0 and recipient.has_ability("keen-eye"):
             if forced:
-                _failed(battle)
+                failed(battle)
             return
         recipient.accuracy_stage = _fit_stat_bounds(recipient.accuracy_stage + amount)
     elif stat == 7:
@@ -535,7 +539,7 @@ def give_stat_change(
         r_stat = recipient.stat_stages[stat]
         if stat == gs.ATK and amount < 0 and recipient.has_ability("hyper-cutter"):
             if forced:
-                _failed(battle)
+                failed(battle)
             return
         recipient.stat_stages[stat] = _fit_stat_bounds(
             recipient.stat_stages[stat] + amount
@@ -613,13 +617,13 @@ def burn(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         )
     ):
         if forced:
-            _failed(battle)
+            failed(battle)
         return
     if _safeguard_check(recipient, battle):
         return
     if "fire" in recipient.types:
         if forced:
-            _failed(battle)
+            failed(battle)
         return
     if not forced and recipient.has_ability("shield-dust"):
         return
@@ -645,13 +649,13 @@ def freeze(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         )
     ):
         if forced:
-            _failed(battle)
+            failed(battle)
         return
     if _safeguard_check(recipient, battle):
         return
     if "ice" in recipient.types:
         if forced:
-            _failed(battle)
+            failed(battle)
         return
     if not forced and recipient.has_ability("shield-dust"):
         return
@@ -677,7 +681,7 @@ def paralyze(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         )
     ):
         if forced:
-            _failed(battle)
+            failed(battle)
         return
     if _safeguard_check(recipient, battle):
         return
@@ -705,7 +709,7 @@ def poison(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         )
     ):
         if forced:
-            _failed(battle)
+            failed(battle)
         return
     if _safeguard_check(recipient, battle):
         return
@@ -734,7 +738,7 @@ def sleep(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False):
         )
     ):
         if forced:
-            _failed(battle)
+            failed(battle)
         return
     if _safeguard_check(recipient, battle):
         return
@@ -762,7 +766,7 @@ def badly_poison(recipient: pk.Pokemon, battle: bt.Battle, forced: bool = False)
         )
     ):
         if forced:
-            _failed(battle)
+            failed(battle)
         return
     if _safeguard_check(recipient, battle):
         return
@@ -786,19 +790,21 @@ def cure_nv_status(status: int, recipient: pk.Pokemon, battle: bt.Battle):
         status == gs.POISONED and recipient.nv_status == gs.BADLY_POISONED
     ):
         return
-    if status == gs.BURNED:
-        text = "'s burn was healed!"
-    elif status == gs.FROZEN:
-        text = " thawed out!"
-    elif status == gs.PARALYZED:
-        text = " was cured of paralysis!"
-    elif status == gs.ASLEEP:
-        text = " woke up!"
-    else:
-        text = " was cured of poison!"
+    if recipient is recipient.trainer.current_poke:
+        if status == gs.BURNED:
+            text = "'s burn was healed!"
+        elif status == gs.FROZEN:
+            text = " thawed out!"
+        elif status == gs.PARALYZED:
+            text = " was cured of paralysis!"
+        elif status == gs.ASLEEP:
+            text = " woke up!"
+        else:
+            text = " was cured of poison!"
+        battle.add_text(recipient.nickname + text)
 
     recipient.nv_status = 0
-    battle.add_text(recipient.nickname + text)
+    recipient.nv_counter = 0
 
 
 def cure_confusion(recipient: pk.Pokemon, battle: bt.Battle):
@@ -879,7 +885,7 @@ def _soundproof_check(defender: pk.Pokemon, battle: bt.Battle, move_data: Move) 
 
 def _grounded_check(attacker: pk.Pokemon, battle: bt.Battle, move_data: Move) -> bool:
     if attacker.grounded and move_data.name in gd.GROUNDED_CHECK:
-        _failed(battle)
+        failed(battle)
         return True
     return False
 
@@ -967,7 +973,7 @@ def cap_name(move_name: str) -> str:
     return " ".join(words)
 
 
-def _failed(battle: bt.Battle):
+def failed(battle: bt.Battle):
     battle.add_text("But, it failed!")
 
 
@@ -1122,7 +1128,7 @@ def _ef_009(
     cc_ib: list,
 ) -> bool:
     if attacker.has_moved:
-        _failed(battle)
+        failed(battle)
         return True
     dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
     if defender.is_alive and dmg:
@@ -1528,7 +1534,7 @@ def _ef_032(
 ) -> bool:
     has_disabled = not all([not move.disabled for move in defender.moves])
     if not defender.last_move or not defender.last_move.cur_pp or has_disabled:
-        _failed(battle)
+        failed(battle)
     else:
         disabled_move = defender.last_move
         disabled_move.disabled = randrange(4, 8)
@@ -1555,7 +1561,7 @@ def _ef_033(
         battle.add_text(attacker.trainer.name + "'s team became shrouded in mist!")
         attacker.trainer.mist = 5
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_034(
@@ -1612,7 +1618,7 @@ def _ef_036(
     ):
         defender.take_damage(attacker.last_damage_taken * 2, move_data)
     else:
-        _failed(battle)
+        failed(battle)
     return True
 
 
@@ -1768,7 +1774,7 @@ def _ef_044(
             attacker.nickname + " learned " + cap_name(attacker.copied.name)
         )
     else:
-        _failed(battle)
+        failed(battle)
 
 def _ef_046(
     attacker: pk.Pokemon,
@@ -1821,13 +1827,13 @@ def _ef_049(
     num_turns = 5 if attacker.item != "light-clay" else 8
     if move_data.ef_stat == 1:
         if t.light_screen:
-            _failed(battle)
+            failed(battle)
             return True
         t.light_screen = num_turns
         battle.add_text("Light Screen raised " + t.name + "'s team's Special Defense!")
     elif move_data.ef_stat == 2:
         if t.reflect:
-            _failed(battle)
+            failed(battle)
             return True
         t.reflect = num_turns
         battle.add_text("Light Screen raised " + t.name + "'s team's Defense!")
@@ -1931,7 +1937,7 @@ def _ef_054(
             attacker, defender, battlefield, battle, defender.last_move, is_first
         )
     else:
-        _failed(battle)
+        failed(battle)
     return True
 
 
@@ -1945,7 +1951,7 @@ def _ef_055(
     cc_ib: list,
 ) -> bool:
     if not defender.is_alive:
-        _failed(battle)
+        failed(battle)
         return True
     if attacker.has_ability("damp") or defender.has_ability("damp"):
         battle.add_text(attacker.nickname + " cannot use Self Destruct!")
@@ -1993,7 +1999,7 @@ def _ef_057(
             attacker.heal(heal_amt)
         battle.add_text(defender.nickname + "'s dream was eaten!")
     else:
-        _failed(battle)
+        failed(battle)
     return True
 
 
@@ -2033,7 +2039,7 @@ def _ef_059(
         attacker.transform(defender)
         battle.add_text(attacker.nickname + " transformed into " + defender.name + "!")
     else:
-        _failed(battle)
+        failed(battle)
     return True
 
 
@@ -2077,7 +2083,7 @@ def _ef_062(
     cc_ib: list,
 ) -> bool:
     if not defender.is_alive:
-        _failed(battle)
+        failed(battle)
         return True
     if attacker.has_ability("damp") or defender.has_ability("damp"):
         battle.add_text(attacker.nickname + " cannot use Explosion!")
@@ -2107,7 +2113,7 @@ def _ef_063(
         battle.add_text(attacker.nickname + " went to sleep!")
         attacker.heal(attacker.max_hp)
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_064(
@@ -2124,7 +2130,7 @@ def _ef_064(
     ]
     move_types = PokeSim.filter_valid_types(move_types)
     if not len(move_types):
-        _failed(battle)
+        failed(battle)
         return True
     attacker.types = (move_types[randrange(len(move_types))], None)
 
@@ -2154,7 +2160,7 @@ def _ef_066(
     cc_ib: list,
 ) -> bool:
     if not defender.is_alive or _calculate_type_ef(defender, move_data) == 0:
-        _failed(battle)
+        failed(battle)
     else:
         dmg = defender.max_hp // 2
         defender.take_damage(dmg if dmg > 0 else 1, move_data)
@@ -2171,7 +2177,7 @@ def _ef_067(
     cc_ib: list,
 ) -> bool:
     if attacker.substitute:
-        _failed(battle)
+        failed(battle)
         return True
     if attacker.cur_hp - attacker.max_hp // 4 < 0:
         battle.add_text("But it does not have enough HP left to make a substitute!")
@@ -2213,7 +2219,7 @@ def _ef_069(
         or not defender.last_move
         or attacker.is_move(defender.last_move.name)
     ):
-        _failed(battle)
+        failed(battle)
         return True
     attacker.moves[move_data.pos] = Move(defender.last_move.md)
 
@@ -2284,7 +2290,7 @@ def _ef_072(
         defender.perma_trapped = True
         battle.add_text(defender.nickname + " can no longer escape!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_073(
@@ -2301,7 +2307,7 @@ def _ef_073(
         attacker.mr_target = defender
         battle.add_text(attacker.nickname + " took aim at " + defender.nickname + "!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_074(
@@ -2321,7 +2327,7 @@ def _ef_074(
         defender.v_status[gs.NIGHTMARE] = 1
         battle.add_text(defender.nickname + " began having a nightmare!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_075(
@@ -2353,7 +2359,7 @@ def _ef_076(
         if dmg and randrange(10) < 3:
             _flinch(defender, battle, is_first)
     else:
-        _failed(battle)
+        failed(battle)
     return True
 
 
@@ -2372,7 +2378,7 @@ def _ef_077(
             and attacker.stat_stages[gs.DEF] == 6
             and attacker.stat_stages[gs.SPD] == -6
         ):
-            _failed(battle)
+            failed(battle)
             return True
         if attacker.stat_stages[gs.ATK] < 6:
             give_stat_change(attacker, battle, gs.ATK, 1)
@@ -2382,7 +2388,7 @@ def _ef_077(
             give_stat_change(attacker, battle, gs.SPD, -1, bypass=True)
     else:
         if not defender.is_alive or defender.v_status[gs.CURSE] or defender.substitute:
-            _failed(battle)
+            failed(battle)
             return True
         attacker.take_damage(attacker.max_hp // 2)
         defender.v_status[gs.CURSE] = 1
@@ -2430,7 +2436,7 @@ def _ef_079(
     if not attacker.last_move_hit_by or not PokeSim.is_valid_type(
         attacker.last_move_hit_by.type
     ):
-        _failed(battle)
+        failed(battle)
         return True
     last_move_type = attacker.last_move_hit_by.type
     types = PokeSim.get_all_types()
@@ -2447,7 +2453,7 @@ def _ef_079(
             attacker.nickname + " transformed into the " + new_type.upper() + " type!"
         )
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_080(
@@ -2475,7 +2481,7 @@ def _ef_080(
             + "!"
         )
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_081(
@@ -2488,14 +2494,14 @@ def _ef_081(
     cc_ib: list,
 ) -> bool:
     if attacker.substitute:
-        _failed(battle)
+        failed(battle)
     p_chance = min(8, 2**attacker.protect_count)
     if randrange(p_chance) < 1:
         attacker.invulnerable = True
         attacker.protect = True
         attacker.protect_count += 1
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_082(
@@ -2508,7 +2514,7 @@ def _ef_082(
     cc_ib: list,
 ) -> bool:
     if attacker.max_hp // 2 > attacker.cur_hp or attacker.stat_stages[gs.ATK] == 6:
-        _failed(battle)
+        failed(battle)
         return True
     battle.add_text(attacker.nickname + " cut its own HP and maximized its Attack!")
     attacker.stat_stages[gs.ATK] = 6
@@ -2530,7 +2536,7 @@ def _ef_083(
             "Spikes were scattered all around the feet of " + enemy.name + "'s team!"
         )
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_084(
@@ -2546,7 +2552,7 @@ def _ef_084(
         defender.foresight_target = True
         battle.add_text(attacker.nickname + " identified " + defender.nickname + "!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_085(
@@ -2592,7 +2598,7 @@ def _ef_087(
         battlefield.weather_count = 5 if attacker.item != "smooth-rock" else 8
         battle.add_text("A sandstorm brewed")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_088(
@@ -2605,13 +2611,13 @@ def _ef_088(
     cc_ib: list,
 ) -> bool:
     if attacker.substitute:
-        _failed(battle)
+        failed(battle)
     p_chance = min(8, 2**attacker.protect_count)
     if randrange(p_chance) < 1:
         attacker.endure = True
         attacker.protect_count += 1
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_089(
@@ -2671,7 +2677,7 @@ def _ef_091(
         give_stat_change(defender, battle, gs.ATK, 2)
         confuse(defender, battle, forced=True)
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_092(
@@ -2716,7 +2722,7 @@ def _ef_094(
     cc_ib: list,
 ) -> bool:
     if attacker.nv_status != gs.ASLEEP:
-        _failed(battle)
+        failed(battle)
         return True
     pos_moves = [move for move in attacker.moves if move.name != "sleep-talk"]
     sel_move = Move(pos_moves[randrange(len(pos_moves))].md)
@@ -2808,7 +2814,7 @@ def _ef_099(
         t.safeguard = 5
         battle.add_text(t.name + "'s team became cloaked in a mystical veil!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_100(
@@ -2826,7 +2832,7 @@ def _ef_100(
         attacker.cur_hp = min(new_hp, attacker.max_hp)
         defender.cur_hp = min(new_hp, defender.max_hp)
     else:
-        _failed(battle)
+        failed(battle)
     return True
 
 
@@ -2879,7 +2885,7 @@ def _ef_102(
     t = attacker.trainer
     old_poke = attacker
     if t.num_fainted >= len(t.poke_list) - 1 or battle._process_selection(t):
-        _failed(battle)
+        failed(battle)
     t.current_poke.v_status = attacker.v_status.copy()
     t.current_poke.stat_stages = attacker.stat_stages.copy()
     t.current_poke.perish_count = attacker.perish_count
@@ -2920,7 +2926,7 @@ def _ef_103(
                 defender.encore_move = move
         battle.add_text(defender.nickname + " received an encore!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_104(
@@ -3014,7 +3020,7 @@ def _ef_108(
         battlefield.weather_count = 5 if attacker.item != "damp-rock" else 8
         battle.add_text("It started to rain!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_109(
@@ -3031,7 +3037,7 @@ def _ef_109(
         battlefield.weather_count = 5 if attacker.item != "heat-rock" else 8
         battle.add_text("The sunlight turned harsh!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_110(
@@ -3053,7 +3059,7 @@ def _ef_110(
     ):
         defender.take_damage(attacker.last_damage_taken * 2, move_data)
     else:
-        _failed(battle)
+        failed(battle)
     return True
 
 
@@ -3075,7 +3081,7 @@ def _ef_111(
             attacker.nickname + " copied " + defender.nickname + "'s stat changes!"
         )
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_112(
@@ -3121,7 +3127,7 @@ def _ef_113(
         t.fs_count = 3
         battle.add_text(attacker.nickname + " foresaw an attack!")
     else:
-        _failed(battle)
+        failed(battle)
     return True
 
 
@@ -3135,7 +3141,7 @@ def _ef_114(
     cc_ib: list,
 ) -> bool:
     if not defender.is_alive:
-        _failed(battle)
+        failed(battle)
         return True
     poke_hits = [poke for poke in attacker.trainer.poke_list if not poke.nv_status]
     num_hits = 0
@@ -3180,7 +3186,7 @@ def _ef_116(
         give_stat_change(attacker, battle, gs.DEF, 1)
         give_stat_change(attacker, battle, gs.SP_DEF, 1)
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_117(
@@ -3200,7 +3206,7 @@ def _ef_117(
         attacker.stat_stages[gs.SP_DEF] -= attacker.stockpile
         battle.add_text(attacker.nickname + "'s stockpile effect wore off!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_118(
@@ -3219,7 +3225,7 @@ def _ef_118(
         attacker.stat_stages[gs.SP_DEF] -= attacker.stockpile
         battle.add_text(attacker.nickname + "'s stockpile effect wore off!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_119(
@@ -3236,7 +3242,7 @@ def _ef_119(
         battlefield.weather_count = 5 if attacker.item != "icy-rock" else 8
         battle.add_text("It started to hail!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_120(
@@ -3252,7 +3258,7 @@ def _ef_120(
         defender.tormented = True
         battle.add_text(defender.nickname + " was subjected to Torment!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_121(
@@ -3272,7 +3278,7 @@ def _ef_121(
         give_stat_change(defender, battle, gs.SP_ATK, 1)
         confuse(defender, battle)
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_122(
@@ -3318,7 +3324,7 @@ def _ef_124(
     cc_ib: list,
 ) -> bool:
     if not defender.is_alive:
-        _failed(battle)
+        failed(battle)
         return True
     if attacker.turn_damage:
         battle._pop_text()
@@ -3336,7 +3342,7 @@ def _ef_125(
     cc_ib: list,
 ) -> bool:
     if not defender.is_alive:
-        _failed(battle)
+        failed(battle)
         return True
     if defender.nv_status == gs.PARALYZED:
         move_data.power *= 2
@@ -3389,7 +3395,7 @@ def _ef_128(
         defender.taunt = randrange(3, 6)
         battle.add_text(defender.nickname + " fell for the taunt!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_129(
@@ -3401,7 +3407,7 @@ def _ef_129(
     is_first: bool,
     cc_ib: list,
 ) -> bool:
-    _failed(battle)
+    failed(battle)
 
 
 def _ef_130(
@@ -3436,7 +3442,7 @@ def _ef_130(
                 defender.nickname + " obtained one " + cap_name(defender.item) + "."
             )
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_131(
@@ -3464,7 +3470,7 @@ def _ef_131(
             + "!"
         )
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_132(
@@ -3481,7 +3487,7 @@ def _ef_132(
         t.wish = 2
         t.wish_poke = attacker.nickname
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_133(
@@ -3509,7 +3515,7 @@ def _ef_133(
             is_first,
         )
     else:
-        _failed(battle)
+        failed(battle)
     return True
 
 
@@ -3528,7 +3534,7 @@ def _ef_134(
         attacker.trapped = True
         attacker.grounded = True
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_135(
@@ -3560,7 +3566,7 @@ def _ef_136(
         attacker.magic_coat = True
         battle.add_text(attacker.nickname + " shrouded itself with Magic Coat!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_137(
@@ -3579,7 +3585,7 @@ def _ef_137(
             attacker.nickname + " found one " + cap_name(attacker.item) + "!"
         )
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_138(
@@ -3612,7 +3618,7 @@ def _ef_139(
             battle.add_text("It shattered the barrier!")
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
     else:
-        _failed(battle)
+        failed(battle)
     return True
 
 
@@ -3643,7 +3649,7 @@ def _ef_140(
         defender.v_status[gs.DROWSY] = 2
         battle.add_text(attacker.nickname + " made " + defender.nickname + " drowsy!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_141(
@@ -3685,7 +3691,7 @@ def _ef_142(
     ):
         defender.take_damage(defender.cur_hp - attacker.cur_hp)
     else:
-        _failed(battle)
+        failed(battle)
     return True
 
 
@@ -3722,7 +3728,7 @@ def _ef_144(
         defender.give_ability(a_ability)
         battle.add_text(attacker.nickname + " swapped abilities with its target!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_145(
@@ -3742,7 +3748,7 @@ def _ef_145(
         battle.add_text(attacker.nickname + " sealed the opponent's move(s)!")
         t.imprisoned_poke = attacker
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_146(
@@ -3762,7 +3768,7 @@ def _ef_146(
         attacker.nv_status = 0
         battle.add_text(attacker.nickname + "'s status return Trueed to normal!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_147(
@@ -3792,7 +3798,7 @@ def _ef_148(
         attacker.snatch = True
         battle.add_text(attacker.nickname + " waits for a target to make a move!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_149(
@@ -3878,7 +3884,7 @@ def _ef_153(
         attacker.mud_sport = True
         battle.add_text("Electricity's power was weakened")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_154(
@@ -3931,7 +3937,7 @@ def _ef_157(
         give_stat_change(defender, battle, gs.ATK, -1)
         give_stat_change(defender, battle, gs.DEF, -1)
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_158(
@@ -3947,7 +3953,7 @@ def _ef_158(
         give_stat_change(attacker, battle, gs.DEF, 1)
         give_stat_change(attacker, battle, gs.SP_DEF, 1)
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_159(
@@ -3976,7 +3982,7 @@ def _ef_160(
         give_stat_change(attacker, battle, gs.ATK, 1)
         give_stat_change(attacker, battle, gs.DEF, 1)
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_161(
@@ -4050,7 +4056,7 @@ def _ef_164(
         attacker.water_sport = True
         battle.add_text("Fire's power was weakened")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_165(
@@ -4066,7 +4072,7 @@ def _ef_165(
         give_stat_change(attacker, battle, gs.SP_ATK, 1)
         give_stat_change(attacker, battle, gs.SP_DEF, 1)
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_166(
@@ -4082,7 +4088,7 @@ def _ef_166(
         give_stat_change(attacker, battle, gs.ATK, 1)
         give_stat_change(attacker, battle, gs.SPD, 1)
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_167(
@@ -4109,7 +4115,7 @@ def _ef_167(
         t.dd_count = 3
         battle.add_text(attacker.nickname + " chose Doom Desire as its destiny!")
     else:
-        _failed(battle)
+        failed(battle)
     return True
 
 
@@ -4149,7 +4155,7 @@ def _ef_169(
         defender.grounded = True
         battle.add_text("Gravity intensified!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_170(
@@ -4165,7 +4171,7 @@ def _ef_170(
         defender.me_target = True
         battle.add_text(attacker.nickname + " identified " + defender.nickname + "!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_171(
@@ -4214,7 +4220,7 @@ def _ef_173(
 ) -> bool:
     t = attacker.trainer
     if t.num_fainted >= len(t.poke_list) - 1 or battle._process_selection(t):
-        _failed(battle)
+        failed(battle)
     battle.add_text("The healing wish came true!")
     t.current_poke.heal(t.current_poke.max_hp)
     t.current_poke.nv_status = 0
@@ -4252,7 +4258,7 @@ def _ef_175(
         move_data.type, move_data.power = gd.BERRY_DATA[attacker.item]
         attacker.give_item(None)
     else:
-        _failed(battle)
+        failed(battle)
         return True
 
 
@@ -4269,7 +4275,7 @@ def _ef_176(
         battle.add_text(defender.nickname + " fell for the feint!")
         _calculate_damage(attacker, defender, battlefield, battle, move_data)
     else:
-        _failed(battle)
+        failed(battle)
     return True
 
 
@@ -4330,7 +4336,7 @@ def _ef_178(
         for poke in attacker.trainer.poke_list:
             poke.stats_actual[gs.SPD] *= 2
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_179(
@@ -4347,7 +4353,7 @@ def _ef_179(
     if len(ef_stats):
         give_stat_change(attacker, battle, randrange(len(ef_stats)), 2)
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_180(
@@ -4362,7 +4368,7 @@ def _ef_180(
     if not is_first and attacker.turn_damage and defender.is_alive:
         defender.take_damage(int(attacker.last_damage_taken * 1.5))
     else:
-        _failed(battle)
+        failed(battle)
     return True
 
 
@@ -4437,7 +4443,7 @@ def _ef_185(
         defender.embargo_count = 5
         battle.add_text(defender.nickname + " can't use items anymore!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_186(
@@ -4456,7 +4462,7 @@ def _ef_186(
         if attacker.is_alive:
             attacker.give_item(None)
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_187(
@@ -4472,7 +4478,7 @@ def _ef_187(
         give_nv_status(attacker.nv_status, defender, battle)
         attacker.nv_status = 0
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_188(
@@ -4509,7 +4515,7 @@ def _ef_189(
         defender.hb_count = 5
         battle.add_text(defender.nickname + " was prevented from healing!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_190(
@@ -4558,7 +4564,7 @@ def _ef_192(
         defender.ability_suppressed = True
         battle.add_text(defender.nickname + "'s ability was suppressed!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_193(
@@ -4578,7 +4584,7 @@ def _ef_193(
             + "'s team from critical hits!"
         )
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_194(
@@ -4601,7 +4607,7 @@ def _ef_194(
         )
         attacker.mf_move = None
     else:
-        _failed(battle)
+        failed(battle)
     return True
 
 
@@ -4620,7 +4626,7 @@ def _ef_195(
         )
         return True
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_196(
@@ -4648,7 +4654,7 @@ def _ef_196(
             + "!"
         )
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_197(
@@ -4676,7 +4682,7 @@ def _ef_197(
             + "!"
         )
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_198(
@@ -4709,7 +4715,7 @@ def _ef_199(
             for i in range(len(attacker.moves))
         ]
     ):
-        _failed(battle)
+        failed(battle)
         return True
 
 
@@ -4730,7 +4736,7 @@ def _ef_200(
         battle.add_text(defender.nickname + " acquired insomnia!")
         defender.give_ability("insomnia")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_201(
@@ -4743,7 +4749,7 @@ def _ef_201(
     cc_ib: list,
 ) -> bool:
     if not is_first or not attacker.sp_check:
-        _failed(battle)
+        failed(battle)
         return True
 
 
@@ -4782,7 +4788,7 @@ def _ef_203(
             attacker.nickname + " switched stat changes with " + defender.nickname + "!"
         )
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_204(
@@ -4798,7 +4804,7 @@ def _ef_204(
         battle.add_text(attacker.nickname + " surrounded itself with a veil of water!")
         attacker.v_status[gs.AQUA_RING] = 1
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_205(
@@ -4814,7 +4820,7 @@ def _ef_205(
         attacker.magnet_rise = True
         battle.add_text(attacker.nickname + " levitated on electromagnetism!")
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_206(
@@ -4957,7 +4963,7 @@ def _ef_213(
     ):
         give_stat_change(defender, battle, gs.SP_ATK, -2, forced=True)
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_214(
@@ -4977,7 +4983,7 @@ def _ef_214(
             + "'s team!"
         )
     else:
-        _failed(battle)
+        failed(battle)
 
 
 def _ef_215(
@@ -5033,7 +5039,7 @@ def _ef_218(
 ) -> bool:
     t = attacker.trainer
     if t.num_fainted >= len(t.poke_list) - 1:
-        _failed(battle)
+        failed(battle)
     attacker.faint()
     battle._process_selection(t)
     battle.add_text(t.current_poke.nickname + "became cloaked in mystical moonlight!")

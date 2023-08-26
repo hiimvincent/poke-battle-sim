@@ -6,7 +6,6 @@ from poke_battle_sim.poke_sim import PokeSim
 from poke_battle_sim.core.move import Move
 
 import poke_battle_sim.core.battle as bt
-import poke_battle_sim.core.battlefield as bf
 
 import poke_battle_sim.util.process_move as pm
 import poke_battle_sim.util.process_ability as pa
@@ -537,7 +536,7 @@ class Pokemon:
             self.reset_transform()
         self.reset_stats()
         if self.has_ability("natural-cure") and self.nv_status:
-            pm._cure_nv_status(self.nv_status, self, self.cur_battle)
+            pm.cure_nv_status(self.nv_status, self, self.cur_battle)
 
     def update_last_moves(self):
         if self.last_move_next:

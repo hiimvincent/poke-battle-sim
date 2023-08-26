@@ -32,8 +32,6 @@ MAGIC_COAT_CHECK = {'attract', 'block', 'captivate', 'charm', 'confuse-ray', 'co
 
 SNATCH_CHECK = {'acid-armor', 'acupressure', 'agility', 'amnesia', 'aromatherapy', 'barrier', 'belly-drum', 'bulk-up', 'calm-mind', 'camouflage', 'charge', 'cosmic-power', 'defender-order', 'defender-curl', 'double-team', 'dragon-dance', 'focus-energy', 'growth', 'harden', 'heal-bell', 'heal-order', 'howl', 'ingrain', 'iron-defense', 'light-screen', 'meditate', 'milk-drink', 'minimize', 'mist', 'moonlight', 'morning-sun', 'nasty-plot', 'psych-up', 'recover', 'reflect', 'refresh', 'rest', 'rock-polish', 'roost', 'safeguard', 'sharpen', 'slack-off', 'soft-boiled', 'stockpile', 'substitute', 'swallow', 'swords-dance', 'synthesis', 'tail-glow', 'tailwind', 'withdraw'}
 
-GROUNDED_CHECK = {'bounce', 'fly', 'high-jump-kick', 'jump-kick', 'magnet-rise', 'splash'}
-
 SOUNDPROOF_CHECK = {'bug-buzz', 'chatter', 'grass-whistle', 'growl', 'heal-bell', 'hyper-voice', 'metal-sound', 'perish-song', 'roar', 'screech', 'sing', 'snore', 'supersonic', 'uproar'}
 
 FREEZE_CHECK = {'flame-wheel', 'sacred-fire', 'flare-blitz'}
@@ -52,7 +50,7 @@ CONTACT_CHECK = {'pound', 'karate-chop', 'double-slap', 'comet-punch', 'mega-pun
 
 USABLE_ITEM_CHECK = {'potion', 'antidote', 'burn-heal', 'ice-heal', 'awakening', 'parlyz-heal', 'full-restore', 'max-potion', 'hyper-potion', 'super-potion', 'full-heal', 'revive', 'max-revive', 'fresh-water', 'soda-pop', 'lemonade', 'moomoo-milk', 'energypowder', 'energy-root', 'heal-powder', 'revival-herb', 'ether', 'max-ether', 'elixir', 'max-elixir', 'old-gateau', 'guard-spec.', 'dire-hit', 'x-attack', 'x-defense', 'x-speed', 'x-accuracy', 'x-special', 'x-sp.-def', 'blue-flute', 'yellow-flute', 'red-flute', 'cheri-berry', 'chesto-berry', 'pecha-berry', 'rawst-berry', 'aspear-berry', 'leppa-berry', 'oran-berry', 'persim-berry', 'lum-berry', 'sitrus-berry'}
 
-DMG_ITEM_CHECK = {'griseous-orb', 'adamant-orb', 'lustrous-orb','silver-powder', 'insect-plate', 'soul-dew', 'metal-coat', 'iron-plate', 'soft-sand', 'earth-plate', 'hard-stone', 'stone-plate', 'rock-incense', 'miracle-seed', 'meadow-plate', 'rose-incense', 'blackglasses', 'dread-plate', 'black-belt', 'fist-plate', 'magnet', 'zap-plate', 'mystic-water', 'sea-incense', 'wave-incense', 'splash-plate', 'sharp-beak', 'sky-plate', 'poison-barb', 'toxic-plate', 'nevermeltice', 'icicle-plate', 'spell-tag', 'spooky-plate', 'twistedspoon', 'mind-plate', 'odd-incense', 'charcoal', 'flame-plate', 'dragon-fang', 'draco-plate', 'silk-scarf', 'muscle-band', 'wise-glasses', 'metronome'}
+DMG_ITEM_CHECK = {'griseous-orb', 'adamant-orb', 'lustrous-orb', 'silver-powder', 'insect-plate', 'soul-dew', 'metal-coat', 'iron-plate', 'soft-sand', 'earth-plate', 'hard-stone', 'stone-plate', 'rock-incense', 'miracle-seed', 'meadow-plate', 'rose-incense', 'blackglasses', 'dread-plate', 'black-belt', 'fist-plate', 'magnet', 'zap-plate', 'mystic-water', 'sea-incense', 'wave-incense', 'splash-plate', 'sharp-beak', 'sky-plate', 'poison-barb', 'toxic-plate', 'nevermeltice', 'icicle-plate', 'spell-tag', 'spooky-plate', 'twistedspoon', 'mind-plate', 'odd-incense', 'charcoal', 'flame-plate', 'dragon-fang', 'draco-plate', 'silk-scarf', 'muscle-band', 'wise-glasses', 'metronome'}
 
 DMG_MULT_ITEM_CHECK = {'expert-belt', 'life-orb'}
 

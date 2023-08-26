@@ -38,7 +38,7 @@ def use_item(
 
     poke = trainer.current_poke
     if move_target_pos:
-        move = poke.moves[move_target_pos]
+        move = poke.moves[int(move_target_pos)]
 
     if not text_skip:
         battle.add_text(
@@ -51,7 +51,7 @@ def use_item(
         )
 
     if poke.embargo_count:
-        pm._failed(battle)
+        pm.failed(battle)
         return
 
     if item in gd.HEALING_ITEM_CHECK:
@@ -94,9 +94,9 @@ def use_item(
             poke.is_alive = True
             poke.heal(poke.max_hp)
     elif item == "ether" or item == "leppa-berry":
-        poke.restore_pp(move, 10)
+        poke.restore_pp(move.name, 10)
     elif item == "max-ether":
-        poke.restore_pp(move, 999)
+        poke.restore_pp(move.name, 999)
     elif item == "elixir":
         poke.restore_all_pp(10)
     elif item == "max-elixir":

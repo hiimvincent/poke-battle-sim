@@ -155,6 +155,36 @@ class TestPokemon(unittest.TestCase):
             Pokemon(25, 22, ['tackle'], 'male', ivs=[16, 16, 16, 16, 16, 16], evs=[248, 252, 11, 0, 0, 0], nature="quirky")
         self.assertEqual(str(context.exception), "Attempted to create Pokemon with invalid evs")
 
+    def test_initialize_pokemon_with_held_item(self):
+        pokemon = Pokemon(25, 22, ['tackle'], 'male', stats_actual=[100, 100, 100, 100, 100, 100], item="oran-berry")
+
+        self.assertEqual(pokemon.id, 25)
+        self.assertEqual(pokemon.name, 'pikachu')
+        self.assertEqual(pokemon.nickname, 'PIKACHU')
+        self.assertEqual(pokemon.gender, 'male')
+        self.assertEqual(pokemon.o_item, 'oran-berry')
+        self.assertEqual(pokemon.level, 22)
+        self.assertEqual(pokemon.types, ('electric', ''))
+        self.assertEqual(pokemon.cur_hp, 100)
+        self.assertEqual(pokemon.max_hp, 100)
+        self.assertEqual(pokemon.stats_actual, [100, 100, 100, 100, 100, 100])
+        self.assertIsNone(pokemon.trainer)
+
+    def test_initialize_pokemon_with_none_held_item(self):
+        pokemon = Pokemon(25, 22, ['tackle'], 'male', stats_actual=[100, 100, 100, 100, 100, 100], item=None)
+
+        self.assertEqual(pokemon.id, 25)
+        self.assertEqual(pokemon.name, 'pikachu')
+        self.assertEqual(pokemon.nickname, 'PIKACHU')
+        self.assertEqual(pokemon.gender, 'male')
+        self.assertIsNone(pokemon.o_item)
+        self.assertEqual(pokemon.level, 22)
+        self.assertEqual(pokemon.types, ('electric', ''))
+        self.assertEqual(pokemon.cur_hp, 100)
+        self.assertEqual(pokemon.max_hp, 100)
+        self.assertEqual(pokemon.stats_actual, [100, 100, 100, 100, 100, 100])
+        self.assertIsNone(pokemon.trainer)
+
 
 if __name__ == '__main__':
     unittest.main()

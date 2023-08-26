@@ -21,6 +21,7 @@ Here are the distinctions between Pykemon and PokeBattleSim:
 - Using an unstarted battle now raises a personalized exception.
 - The number of moves for Pokemons is now limited to 4.
 - Crashes upon using items have been corrected.
+- fix messages on cure with natural-cure ability.
 - Embargo mechanics now cancel item usage as intended.
 
 ## Overview
