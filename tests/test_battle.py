@@ -504,6 +504,102 @@ class TestBattle(unittest.TestCase):
         self.assertEqual(battle.get_all_text(), expected_battle_text)
         self.assertEqual(battle.t1.current_poke, pokemon_2)
 
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_weather_ball_water_type(self, mock_calculate_crit):
+        pokemon_1 = Pokemon(1, 22, ["weather-ball"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["rain-dance"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        battle.turn(["move", "weather-ball"], ["move", "rain-dance"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'CHARMANDER used Rain Dance!',
+            'It started to rain!',
+            'BULBASAUR used Weather Ball!',
+            "It's super effective!",
+            'Rain continues to fall.'
+        ]
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_weather_ball_rock_type(self, mock_calculate_crit):
+        pokemon_1 = Pokemon(1, 22, ["weather-ball"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["sandstorm"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        battle.turn(["move", "weather-ball"], ["move", "sandstorm"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'CHARMANDER used Sandstorm!',
+            'A sandstorm brewed',
+            'BULBASAUR used Weather Ball!',
+            "It's super effective!",
+            'The sandstorm is raging.',
+            'CHARMANDER is buffeted by the Sandstorm!',
+            'BULBASAUR is buffeted by the Sandstorm!'
+        ]
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_weather_ball_clear_weather(self, mock_calculate_crit):
+        pokemon_1 = Pokemon(1, 22, ["weather-ball"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(92, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        battle.turn(["move", "weather-ball"], ["move", "tackle"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out GASTLY!',
+            'Turn 1:',
+            'GASTLY used Tackle!',
+            'BULBASAUR used Weather Ball!',
+            "It doesn't affect GASTLY"
+        ]
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
 
 if __name__ == '__main__':
     unittest.main()

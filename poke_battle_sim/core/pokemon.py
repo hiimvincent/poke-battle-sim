@@ -650,7 +650,7 @@ class Pokemon:
                 + "'s Aftermath!"
             )
 
-    def give_item(self, item: str):
+    def give_item(self, item: str | None):
         self.item = item
         self.h_item = item
         if not item:

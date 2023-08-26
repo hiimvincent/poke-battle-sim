@@ -15,6 +15,7 @@ Here are the distinctions between Pykemon and PokeBattleSim:
 #### Fixes
 - Pokemons can now be initialized with id.
 - Damage calculations now occurs only once.
+- Weather ball move now use rock type on sandstorm.
 - A pokemon can now have only one max HP (particularly useful for Shedinja).
 - A pokemon can't be used multiple time in a same team anymore.
 - Max EVs are decreased to 252 instead of 255, as it may be consider a bug patched in games after the 6th generation.

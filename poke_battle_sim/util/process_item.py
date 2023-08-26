@@ -37,6 +37,7 @@ def use_item(
         raise Exception("Trainer attempted to use invalid item on Pokemon")
 
     poke = trainer.current_poke
+    move = None
     if move_target_pos:
         move = poke.moves[int(move_target_pos)]
 
@@ -93,9 +94,9 @@ def use_item(
         if not poke.is_alive:
             poke.is_alive = True
             poke.heal(poke.max_hp)
-    elif item == "ether" or item == "leppa-berry":
+    elif move is not None and (item == "ether" or item == "leppa-berry"):
         poke.restore_pp(move.name, 10)
-    elif item == "max-ether":
+    elif move is not None and (item == "max-ether"):
         poke.restore_pp(move.name, 999)
     elif item == "elixir":
         poke.restore_all_pp(10)
@@ -200,7 +201,7 @@ def damage_calc_items(
     attacker: pk.Pokemon, defender: pk.Pokemon, battle: bt.Battle, move_data: Move
 ):
     if (
-        not attacker.item in gd.DMG_ITEM_CHECK
+        attacker.item not in gd.DMG_ITEM_CHECK
         or attacker.has_ability("klutz")
         or attacker.embargo_count
     ):
@@ -297,7 +298,7 @@ def damage_calc_items(
         elif move_data.name == attacker.last_successful_move_next.name:
             attacker.metronome_count = max(10, attacker.metronome_count + 1)
             move_data.power *= int(
-                move_data.power * (1 + (attacker.metronome_count) / 10)
+                move_data.power * (1 + attacker.metronome_count / 10)
             )
         else:
             attacker.metronome_count = 0
@@ -308,7 +309,7 @@ def damage_mult_items(
     defender: pk.Pokemon,
     battle: bt.Battle,
     move_data: Move,
-    t_mult: int,
+    t_mult: float,
 ) -> float:
     i_mult = 1
 
@@ -335,13 +336,13 @@ def pre_hit_berries(
     defender: pk.Pokemon,
     battle: bt.Battle,
     move_data: Move,
-    t_mult: int,
+    t_mult: float,
 ) -> float:
     p_mult = 1
 
     if (
         not defender.is_alive
-        or not defender.item in gd.PRE_HIT_BERRIES
+        or defender.item not in gd.PRE_HIT_BERRIES
         or defender.has_ability("klutz")
         or defender.embargo_count
     ):
@@ -357,7 +358,7 @@ def pre_hit_berries(
 def on_damage_items(poke: pk.Pokemon, battle: bt.Battle, move_data: Move):
     if (
         not poke.is_alive
-        or not poke.item in gd.ON_DAMAGE_ITEM_CHECK
+        or poke.item not in gd.ON_DAMAGE_ITEM_CHECK
         or poke.has_ability("klutz")
         or poke.embargo_count
     ):
@@ -391,7 +392,7 @@ def on_damage_items(poke: pk.Pokemon, battle: bt.Battle, move_data: Move):
     elif item == "custap-berry":
         poke.prio_boost = True
     elif item == "enigma-berry":
-        t_mult = pm._calculate_type_ef(poke, move_data)
+        t_mult = pm.calculate_type_ef(poke, move_data)
         if t_mult and t_mult > 1:
             _eat_item(poke, battle)
             poke.heal(max(1, poke.max_hp // 4))
@@ -523,7 +524,7 @@ def on_hit_items(
     ):
         return
 
-    t_mult = pm._calculate_type_ef(defender, move_data)
+    t_mult = pm.calculate_type_ef(defender, move_data)
     item = defender.item
 
     if item == "jaboca-berry":

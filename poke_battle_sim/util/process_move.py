@@ -39,7 +39,7 @@ def process_move(
     battle._faint_check()
 
 
-def _calculate_type_ef(defender: pk.Pokemon, move_data: Move) -> float:
+def calculate_type_ef(defender: pk.Pokemon, move_data: Move) -> float:
     if move_data.type == "typeless":
         return 1
     if (
@@ -101,7 +101,7 @@ def _calculate_damage(
         return
     if not move_data.power:
         return
-    t_mult = _calculate_type_ef(defender, move_data)
+    t_mult = calculate_type_ef(defender, move_data)
     if not skip_txt and not t_mult or (t_mult < 2 and defender.has_ability("wonder-guard")):
         battle.add_text("It doesn't affect " + defender.nickname)
         return
@@ -146,9 +146,9 @@ def _calculate_damage(
     ad_ratio = atk_ig / def_ig
 
     if attacker.nv_status == gs.BURNED and not attacker.has_ability("guts"):
-        burn = 0.5
+        burn_multiplier = 0.5
     else:
-        burn = 1
+        burn_multiplier = 1
     if attacker.charged and move_data.type == "electric":
         move_data.power *= 2
     if move_data.type == "electric" and (attacker.mud_sport or defender.mud_sport):
@@ -189,7 +189,7 @@ def _calculate_damage(
 
     damage = (
         (2 * attacker.level / 5 + 2) * move_data.power * ad_ratio
-    ) / 50 * burn * screen * weather_mult + 2
+    ) / 50 * burn_multiplier * screen * weather_mult + 2
     damage *= crit_mult * item_mult * random_mult * stab * t_mult * berry_mult
     damage = int(damage)
     if skip_dmg:
@@ -383,7 +383,7 @@ def _pre_process_status(
             battle.add_text(attacker.nickname + " is paralyzed! It can't move!")
             return True
     if attacker.infatuation:
-        if not attacker.infatuation is defender:
+        if attacker.infatuation is not defender:
             attacker.infatuation = None
             battle.add_text(attacker.nickname + " got over its infatuation!")
         elif randrange(2) < 1:
@@ -864,7 +864,7 @@ def _protect_check(defender: pk.Pokemon, battle: bt.Battle, move_data: Move) -> 
     if (
         defender.is_alive
         and defender.protect
-        and not move_data.name in ["feint", "shadow-force"]
+        and move_data.name not in ["feint", "shadow-force"]
         and move_data.target in gd.PROTECT_TARGETS
     ):
         battle.add_text(defender.nickname + " protected itself!")
@@ -1288,7 +1288,7 @@ def _ef_020(
     if defender.has_ability("sturdy"):
         battle.add_text(defender.nickname + " endured the hit!")
         return True
-    if _calculate_type_ef(defender, move_data) != 0:
+    if calculate_type_ef(defender, move_data) != 0:
         defender.take_damage(65535, move_data)
         if not defender.is_alive:
             battle.add_text("It's a one-hit KO!")
@@ -1410,7 +1410,7 @@ def _ef_025(
     dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
     if dmg:
         dmg //= 2
-    elif dmg == 0 and attacker.enemy and _calculate_type_ef(defender, move_data) == 0:
+    elif dmg == 0 and attacker.enemy and calculate_type_ef(defender, move_data) == 0:
         dmg = defender.max_hp // 2
     if not dmg:
         return True
@@ -1516,7 +1516,7 @@ def _ef_031(
     is_first: bool,
     cc_ib: list,
 ) -> bool:
-    if defender.is_alive and _calculate_type_ef(defender, move_data) != 0:
+    if defender.is_alive and calculate_type_ef(defender, move_data) != 0:
         defender.take_damage(move_data.ef_amount, move_data)
     else:
         _missed(attacker, battle)
@@ -1614,7 +1614,7 @@ def _ef_036(
         and defender.last_move
         and attacker.last_move_hit_by.name == defender.last_move.name
         and attacker.last_move_hit_by.category == gs.PHYSICAL
-        and _calculate_type_ef(defender, move_data)
+        and calculate_type_ef(defender, move_data)
     ):
         defender.take_damage(attacker.last_damage_taken * 2, move_data)
     else:
@@ -1631,7 +1631,7 @@ def _ef_037(
     is_first: bool,
     cc_ib: list,
 ) -> bool:
-    if _calculate_type_ef(defender, move_data):
+    if calculate_type_ef(defender, move_data):
         if defender.is_alive:
             defender.take_damage(attacker.level, move_data)
         else:
@@ -1776,6 +1776,7 @@ def _ef_044(
     else:
         failed(battle)
 
+
 def _ef_046(
     attacker: pk.Pokemon,
     defender: pk.Pokemon,
@@ -1907,10 +1908,12 @@ def _ef_053(
     move_names = [move.name for move in attacker.moves]
     rand_move = PokeSim.get_rand_move()
     attempts = 0
-    while (
+    while(
         attempts < 50
-        and (rand_move[gs.MOVE_NAME] in move_names
-        or rand_move[gs.MOVE_NAME] in gd.METRONOME_CHECK)
+        and (
+            rand_move[gs.MOVE_NAME] in move_names
+            or rand_move[gs.MOVE_NAME] in gd.METRONOME_CHECK
+        )
     ):
         rand_move = PokeSim.get_rand_move()
         attempts += 1
@@ -2159,7 +2162,7 @@ def _ef_066(
     is_first: bool,
     cc_ib: list,
 ) -> bool:
-    if not defender.is_alive or _calculate_type_ef(defender, move_data) == 0:
+    if not defender.is_alive or calculate_type_ef(defender, move_data) == 0:
         failed(battle)
     else:
         dmg = defender.max_hp // 2
@@ -2214,7 +2217,7 @@ def _ef_069(
 ) -> bool:
     if (
         attacker.transformed
-        or not move_data in attacker.o_moves
+        or move_data not in attacker.o_moves
         or not defender.is_alive
         or not defender.last_move
         or attacker.is_move(defender.last_move.name)
@@ -2883,7 +2886,6 @@ def _ef_102(
     cc_ib: list,
 ) -> bool:
     t = attacker.trainer
-    old_poke = attacker
     if t.num_fainted >= len(t.poke_list) - 1 or battle._process_selection(t):
         failed(battle)
     t.current_poke.v_status = attacker.v_status.copy()
@@ -3055,7 +3057,7 @@ def _ef_110(
         and defender.last_move
         and attacker.last_move_hit_by.name == defender.last_move.name
         and attacker.last_move_hit_by.category == gs.SPECIAL
-        and _calculate_type_ef(defender, move_data)
+        and calculate_type_ef(defender, move_data)
     ):
         defender.take_damage(attacker.last_damage_taken * 2, move_data)
     else:
@@ -3687,7 +3689,7 @@ def _ef_142(
     if (
         defender.is_alive
         and attacker.cur_hp < defender.cur_hp
-        and _calculate_type_ef(defender, move_data)
+        and calculate_type_ef(defender, move_data)
     ):
         defender.take_damage(defender.cur_hp - attacker.cur_hp)
     else:
@@ -3903,11 +3905,12 @@ def _ef_154(
     elif battlefield.weather == gs.HAIL:
         move_data.type = "ice"
     elif battlefield.weather == gs.SANDSTORM:
-        move_data.type == "rock"
+        move_data.type = "rock"
     else:
         move_data.type = "normal"
     if battlefield.weather != gs.CLEAR:
         move_data.power *= 2
+    _calculate_damage(attacker, defender, battlefield, battle, move_data)
 
 
 def _ef_156(
