@@ -8,11 +8,11 @@ import poke_battle_sim.conf.global_settings as gs
 
 
 class Battlefield:
-    def __init__(self, battle: bt.Battle, terrain: str = gs.OTHER_TERRAIN):
-        self.weather = gs.CLEAR
+    def __init__(self, battle: bt.Battle, terrain: str = gs.OTHER_TERRAIN, weather: str = gs.CLEAR):
+        self.weather = weather
         self._terrain = terrain
         self.acc_modifier = 1
-        self.weather_count = 0
+        self.weather_count = -1
         self.gravity_count = 0
         self.trick_room_count = 0
         self.gravity_stats = None

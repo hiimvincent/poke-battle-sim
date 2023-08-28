@@ -59,12 +59,14 @@ SAND_TOMB = 6
 MAGMA_STORM = 7
 
 # Weather Types
-CLEAR = 0
-HARSH_SUNLIGHT = 1
-RAIN = 2
-SANDSTORM = 3
-HAIL = 4
-FOG = 5
+CLEAR = "clear"
+HARSH_SUNLIGHT = "sunny"
+RAIN = "rain"
+SANDSTORM = "sandstorm"
+HAIL = "hail"
+FOG = "fog"
+
+WEATHERS = [CLEAR, HARSH_SUNLIGHT, RAIN, SANDSTORM, HAIL, FOG]
 
 # Terrain Types
 BUILDING = "building"

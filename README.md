@@ -12,6 +12,9 @@ Pokemon Battle Simulator (```poke-battle-sim```) is an open-source Python packag
 
 Here are the distinctions between Pykemon and PokeBattleSim:
 
+#### Features
+- Possibility to create a battle with a weather.
+
 #### Fixes
 - Pokemons can now be initialized with id.
 - Damage calculations now occurs only once.

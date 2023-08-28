@@ -38,7 +38,7 @@ class TestBattle(unittest.TestCase):
         self.assertEqual(battle.turn_count, 1)
         self.assertEqual(battle.winner, trainer_1)
         self.assertEqual(battle.get_all_text(), expected_battle_text)
-        self.assertEqual(battle.battlefield.terrain, 'other')
+        self.assertEqual(battle.battlefield.get_terrain(), 'other')
 
     def test_battle_with_terrain(self):
         pokemon_1 = Pokemon(1, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
@@ -51,7 +51,7 @@ class TestBattle(unittest.TestCase):
 
         self.assertEqual(battle.t1, trainer_1)
         self.assertEqual(battle.t2, trainer_2)
-        self.assertEqual(battle.battlefield.terrain, 'water')
+        self.assertEqual(battle.battlefield.get_terrain(), 'water')
 
     def test_battle_with_invalid_terrain(self):
         with self.assertRaises(Exception) as context:
@@ -63,6 +63,56 @@ class TestBattle(unittest.TestCase):
 
             Battle(trainer_1, trainer_2, terrain="invalid_terrain")
         self.assertEqual(str(context.exception), "Attempted to create Battle with invalid terrain type")
+
+    def test_battle_with_weather(self):
+        pokemon_1 = Pokemon(1, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[1, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2, weather="rain")
+
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.battlefield.weather, 'rain')
+
+    def test_battle_with_invalid_weather(self):
+        with self.assertRaises(Exception) as context:
+            pokemon_1 = Pokemon(1, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+            trainer_1 = Trainer('Ash', [pokemon_1])
+
+            pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[1, 100, 100, 100, 100, 1])
+            trainer_2 = Trainer('Misty', [pokemon_2])
+
+            Battle(trainer_1, trainer_2, weather="invalid_weather")
+        self.assertEqual(str(context.exception), "Attempted to create Battle with invalid weather")
+
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_battle_with_weather_has_infinite_duration(self, mock_calculate_crit):
+        pokemon_1 = Pokemon(1, 22, ["tackle"], "male", stats_actual=[100, 1, 100, 100, 100, 100])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[100, 1, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2, weather="rain")
+        battle.start()
+
+        expected_battle_text = ['Ash sent out BULBASAUR!', 'Misty sent out CHARMANDER!']
+
+        mock_calculate_crit.return_value = False
+        for turn_i in range(1, 12):
+            battle.turn(["move", "tackle"], ["move", "tackle"])
+            expected_battle_text += [
+                'Turn ' + str(turn_i) + ':', 'BULBASAUR used Tackle!', 'CHARMANDER used Tackle!', 'Rain continues to fall.'
+            ]
+            self.assertEqual(battle.battlefield.weather, 'rain')
+
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 11)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
 
     @patch('poke_battle_sim.util.process_move._calculate_crit')
     def test_critical_damage(self, mock_calculate_crit):

@@ -17,12 +17,16 @@ import poke_battle_sim.conf.global_data as gd
 
 
 class Battle:
-    def __init__(self, t1: tr.Trainer, t2: tr.Trainer, terrain: str = gs.OTHER_TERRAIN):
+    def __init__(self, t1: tr.Trainer, t2: tr.Trainer, terrain: str = gs.OTHER_TERRAIN, weather: str = gs.CLEAR):
         """
         Creating a battle object requires exactly two Trainers with a valid party size
         and no overlapping Pokemon or Pokemon already in battle.
 
         The order of Trainers does not affect any battle mechanics.
+
+        Two optional parameters can be added :
+        - terrain: the name of the terrain
+        - weather: the starting weather
         """
         if not isinstance(t1, tr.Trainer) or not isinstance(t2, tr.Trainer):
             raise Exception("Attempted to create Battle with invalid Trainer")
@@ -40,13 +44,15 @@ class Battle:
                 raise Exception("Attempted to create Battle with Pokemon already in battle")
         if not isinstance(terrain, str) or terrain not in gs.TERRAINS:
             raise Exception("Attempted to create Battle with invalid terrain type")
+        if not isinstance(weather, str) or weather not in gs.WEATHERS:
+            raise Exception("Attempted to create Battle with invalid weather")
 
         self.t1 = t1
         self.t2 = t2
         self.battle_started = False
         self.all_text = []
         self.cur_text = []
-        self.battlefield = bf.Battlefield(self, terrain=terrain)
+        self.battlefield = bf.Battlefield(self, terrain=terrain, weather=weather)
 
     def start(self):
         self.t1.start_pokemon(self)
