@@ -38,6 +38,31 @@ class TestBattle(unittest.TestCase):
         self.assertEqual(battle.turn_count, 1)
         self.assertEqual(battle.winner, trainer_1)
         self.assertEqual(battle.get_all_text(), expected_battle_text)
+        self.assertEqual(battle.battlefield.terrain, 'other')
+
+    def test_battle_with_terrain(self):
+        pokemon_1 = Pokemon(1, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[1, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2, terrain="water")
+
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.battlefield.terrain, 'water')
+
+    def test_battle_with_invalid_terrain(self):
+        with self.assertRaises(Exception) as context:
+            pokemon_1 = Pokemon(1, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+            trainer_1 = Trainer('Ash', [pokemon_1])
+
+            pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[1, 100, 100, 100, 100, 1])
+            trainer_2 = Trainer('Misty', [pokemon_2])
+
+            Battle(trainer_1, trainer_2, terrain="invalid_terrain")
+        self.assertEqual(str(context.exception), "Attempted to create Battle with invalid terrain type")
 
     @patch('poke_battle_sim.util.process_move._calculate_crit')
     def test_critical_damage(self, mock_calculate_crit):
@@ -600,10 +625,11 @@ class TestBattle(unittest.TestCase):
         self.assertIsNone(battle.winner)
         self.assertEqual(battle.get_all_text(), expected_battle_text)
 
+    @patch('poke_battle_sim.util.process_move.give_nv_status')
     @patch('poke_battle_sim.util.process_move._calculate_hit_or_miss')
     @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
     @patch('poke_battle_sim.util.process_move._calculate_crit')
-    def test_fire_blast(self, mock_calculate_crit, mock_calculate_multiplier, mock_calculate_hit_or_miss):
+    def test_fire_blast(self, mock_calculate_crit, mock_calculate_multiplier, mock_calculate_hit_or_miss, mock_status):
         pokemon_1 = Pokemon(1, 22, ["fire-blast"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
         trainer_1 = Trainer('Ash', [pokemon_1])
 
@@ -636,10 +662,12 @@ class TestBattle(unittest.TestCase):
         self.assertIsNone(battle.winner)
         self.assertEqual(battle.get_all_text(), expected_battle_text)
 
-    @patch('poke_battle_sim.util.process_move._calculate_hit_or_miss')
+    @patch('poke_battle_sim.util.process_move.give_nv_status')
     @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
     @patch('poke_battle_sim.util.process_move._calculate_crit')
-    def test_default_natural_power(self, mock_calculate_crit, mock_calculate_multiplier, mock_calculate_hit_or_miss):
+    def test_default_natural_power(
+            self, mock_calculate_crit, mock_calculate_multiplier, mock_status
+    ):
         pokemon_1 = Pokemon(1, 22, ["nature-power"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
         trainer_1 = Trainer('Ash', [pokemon_1])
 
@@ -651,7 +679,6 @@ class TestBattle(unittest.TestCase):
 
         mock_calculate_crit.return_value = False
         mock_calculate_multiplier.return_value = 1.0
-        mock_calculate_hit_or_miss.return_value = True
         battle.turn(["move", "nature-power"], ["move", "tackle"])
 
         expected_battle_text = [
@@ -664,6 +691,347 @@ class TestBattle(unittest.TestCase):
         ]
 
         self.assertEqual(pokemon_2.cur_hp, 81)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move.give_nv_status')
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_natural_power_in_building(
+            self, mock_calculate_crit, mock_calculate_multiplier, mock_status
+    ):
+        pokemon_1 = Pokemon(1, 22, ["nature-power"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2, "building")
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "nature-power"], ["move", "tackle"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'BULBASAUR used Nature Power!',
+            'Nature Power turned into Tri Attack!',
+            'CHARMANDER used Tackle!'
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 81)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_natural_power_in_sand(
+            self, mock_calculate_crit, mock_calculate_multiplier
+    ):
+        pokemon_1 = Pokemon(1, 22, ["nature-power"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2, "sand")
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "nature-power"], ["move", "tackle"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'BULBASAUR used Nature Power!',
+            'Nature Power turned into Earthquake!',
+            "It's super effective!",
+            'CHARMANDER used Tackle!'
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 53)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._flinch')
+    @patch('poke_battle_sim.util.process_move._calculate_hit_or_miss')
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_natural_power_in_cave(
+            self, mock_calculate_crit, mock_calculate_multiplier, mock_calculate_hit_or_miss, mock_flinch
+    ):
+        pokemon_1 = Pokemon(1, 22, ["nature-power"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2, "cave")
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        mock_calculate_hit_or_miss.return_value = True
+        battle.turn(["move", "nature-power"], ["move", "tackle"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'BULBASAUR used Nature Power!',
+            'Nature Power turned into Rock Slide!',
+            "It's super effective!",
+            'CHARMANDER used Tackle!'
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 64)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_natural_power_in_tall_grass(
+            self, mock_calculate_crit, mock_calculate_multiplier
+    ):
+        pokemon_1 = Pokemon(1, 22, ["nature-power"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2, "tall-grass")
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "nature-power"], ["move", "tackle"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'BULBASAUR used Nature Power!',
+            'Nature Power turned into Seed Bomb!',
+            "It's not very effective...",
+            'CHARMANDER used Tackle!'
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 86)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._calculate_hit_or_miss')
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_natural_power_in_water(
+            self, mock_calculate_crit, mock_calculate_multiplier, mock_calculate_hit_or_miss
+    ):
+        pokemon_1 = Pokemon(1, 22, ["nature-power"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2, "water")
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        mock_calculate_hit_or_miss.return_value = True
+        battle.turn(["move", "nature-power"], ["move", "tackle"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'BULBASAUR used Nature Power!',
+            'Nature Power turned into Hydro Pump!',
+            "It's super effective!",
+            'CHARMANDER used Tackle!'
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 49)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move.give_nv_status')
+    @patch('poke_battle_sim.util.process_move._calculate_hit_or_miss')
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_natural_power_in_snow(
+            self, mock_calculate_crit, mock_calculate_multiplier, mock_calculate_hit_or_miss, mock_status
+    ):
+        pokemon_1 = Pokemon(1, 22, ["nature-power"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2, "snow")
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        mock_calculate_hit_or_miss.return_value = True
+        battle.turn(["move", "nature-power"], ["move", "tackle"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'BULBASAUR used Nature Power!',
+            'Nature Power turned into Blizzard!',
+            "It's not very effective...",
+            'CHARMANDER used Tackle!'
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 88)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move.give_nv_status')
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_natural_power_in_ice(
+            self, mock_calculate_crit, mock_calculate_multiplier, mock_status
+    ):
+        pokemon_1 = Pokemon(1, 22, ["nature-power"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2, "ice")
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "nature-power"], ["move", "tackle"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'BULBASAUR used Nature Power!',
+            'Nature Power turned into Ice Beam!',
+            "It's not very effective...",
+            'CHARMANDER used Tackle!'
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 90)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_earthquake(
+            self, mock_calculate_crit, mock_calculate_multiplier
+    ):
+        pokemon_1 = Pokemon(1, 22, ["earthquake"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "earthquake"], ["move", "tackle"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'BULBASAUR used Earthquake!',
+            "It's super effective!",
+            'CHARMANDER used Tackle!'
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 53)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_earthquake_in_digging_opponent(
+            self, mock_calculate_crit, mock_calculate_multiplier
+    ):
+        pokemon_1 = Pokemon(1, 22, ["earthquake"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["dig"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "earthquake"], ["move", "dig"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'CHARMANDER burrowed its way under the ground!',
+            'BULBASAUR used Earthquake!',
+            "It's super effective!"
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 10)
+        self.assertEqual(pokemon_1.moves[0].power, 100)
 
         self.assertTrue(battle.battle_started)
         self.assertEqual(battle.t1, trainer_1)

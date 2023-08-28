@@ -66,6 +66,20 @@ SANDSTORM = 3
 HAIL = 4
 FOG = 5
 
+# Terrain Types
+BUILDING = "building"
+DISTORSION_WORLD = "distorsion-world"
+SAND = "sand"
+CAVE = "cave"
+TALL_GRASS = "tall-grass"
+WATER = "water"
+SNOW = "snow"
+ICE = "ice"
+OTHER_TERRAIN = "other"
+
+TERRAINS = [BUILDING, DISTORSION_WORLD, SAND, CAVE, TALL_GRASS, WATER, SNOW, ICE, OTHER_TERRAIN]
+
+
 # Stat Ordering Format
 HP = 0
 ATK = 1

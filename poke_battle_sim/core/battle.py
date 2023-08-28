@@ -17,7 +17,7 @@ import poke_battle_sim.conf.global_data as gd
 
 
 class Battle:
-    def __init__(self, t1: tr.Trainer, t2: tr.Trainer):
+    def __init__(self, t1: tr.Trainer, t2: tr.Trainer, terrain: str = gs.OTHER_TERRAIN):
         """
         Creating a battle object requires exactly two Trainers with a valid party size
         and no overlapping Pokemon or Pokemon already in battle.
@@ -38,12 +38,15 @@ class Battle:
         for t2_poke in t2.poke_list:
             if t2_poke.in_battle:
                 raise Exception("Attempted to create Battle with Pokemon already in battle")
+        if not isinstance(terrain, str) or terrain not in gs.TERRAINS:
+            raise Exception("Attempted to create Battle with invalid terrain type")
 
         self.t1 = t1
         self.t2 = t2
         self.battle_started = False
         self.all_text = []
         self.cur_text = []
+        self.battlefield = bf.Battlefield(self, terrain=terrain)
 
     def start(self):
         self.t1.start_pokemon(self)
@@ -52,7 +55,6 @@ class Battle:
         self.t2.in_battle = True
         self.t1_faint = False
         self.t2_faint = False
-        self.battlefield = bf.Battlefield(self)
         self.battle_started = True
         self.winner = None
         self.last_move = None

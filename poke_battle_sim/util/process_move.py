@@ -331,7 +331,13 @@ def _invulnerability_check(
     if attacker.has_ability("no-guard") or defender.has_ability("no-guard"):
         return False
     if defender.invulnerable:
-        if defender.in_air or defender.in_ground or defender.in_water:
+        if defender.in_air:
+            _missed(attacker, battle)
+        elif defender.in_ground:
+            if move_data.name == "earthquake":
+                return False
+            _missed(attacker, battle)
+        elif defender.in_water:
             _missed(attacker, battle)
         return True
     return False
@@ -1430,8 +1436,7 @@ def _ef_026(
 ) -> bool:
     if defender.in_ground:
         move_data.power *= 2
-        cc_ib[1] = True
-
+    _calculate_damage(attacker, defender, battlefield, battle, move_data)
 
 def _ef_027(
     attacker: pk.Pokemon,
@@ -3363,9 +3368,25 @@ def _ef_126(
     is_first: bool,
     cc_ib: list,
 ) -> bool:
-    selected_move = Move(PokeSim.get_single_move("tri-attack"))
+    if battlefield.get_terrain() in [gs.BUILDING, gs.DISTORSION_WORLD]:
+        selected_move = Move(PokeSim.get_single_move("tri-attack"))
+    elif battlefield.get_terrain() == gs.SAND:
+        selected_move = Move(PokeSim.get_single_move("earthquake"))
+    elif battlefield.get_terrain() == gs.CAVE:
+        selected_move = Move(PokeSim.get_single_move("rock-slide"))
+    elif battlefield.get_terrain() == gs.TALL_GRASS:
+        selected_move = Move(PokeSim.get_single_move("seed-bomb"))
+    elif battlefield.get_terrain() == gs.WATER:
+        selected_move = Move(PokeSim.get_single_move("hydro-pump"))
+    elif battlefield.get_terrain() == gs.SNOW:
+        selected_move = Move(PokeSim.get_single_move("blizzard"))
+    elif battlefield.get_terrain() == gs.ICE:
+        selected_move = Move(PokeSim.get_single_move("ice-beam"))
+    else:
+        selected_move = Move(PokeSim.get_single_move("tri-attack"))
+    effect_move = _MOVE_EFFECTS[selected_move.ef_id]
     battle.add_text(cap_name(move_data.name) + " turned into " + cap_name(selected_move.name) + "!")
-    return _ef_065(
+    return effect_move(
         attacker,
         defender,
         battlefield,
@@ -4142,7 +4163,7 @@ def _ef_168(
     cc_ib: list,
 ) -> bool:
     attacker.heal(max(1, attacker.max_hp // 2))
-    if not is_first or not "flying" in attacker.types:
+    if not is_first or "flying" not in attacker.types:
         return True
     attacker.r_types = attacker.types
     other_type = [type for type in attacker.types if type != "flying"]
@@ -4264,7 +4285,7 @@ def _ef_175(
     if (
         attacker.item
         and attacker.item in gd.BERRY_DATA
-        and not battlefield.weather in [gs.HARSH_SUNLIGHT, gs.RAIN]
+        and battlefield.weather not in [gs.HARSH_SUNLIGHT, gs.RAIN]
         and not attacker.has_ability("klutz")
         and not attacker.embargo_count
     ):
