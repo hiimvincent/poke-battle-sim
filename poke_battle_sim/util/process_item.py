@@ -400,7 +400,7 @@ def on_damage_items(poke: pk.Pokemon, battle: bt.Battle, move_data: Move):
 
 def pre_move_items(poke: pk.Pokemon):
     if (
-        not poke.item in gd.PRE_MOVE_ITEM_CHECK
+        poke.item not in gd.PRE_MOVE_ITEM_CHECK
         or poke.has_ability("klutz")
         or poke.embargo_count
     ):
@@ -416,7 +416,7 @@ def pre_move_items(poke: pk.Pokemon):
 def stat_calc_items(poke: pk.Pokemon):
     if (
         not poke.is_alive
-        or not poke.item in gd.STAT_CALC_ITEM_CHECK
+        or poke.item not in gd.STAT_CALC_ITEM_CHECK
         or poke.has_ability("klutz")
         or poke.embargo_count
     ):
@@ -463,7 +463,7 @@ def stat_calc_items(poke: pk.Pokemon):
 def status_items(poke: pk.Pokemon, battle: bt.Battle):
     if (
         not poke.is_alive
-        or not poke.item in gd.STATUS_ITEM_CHECK
+        or poke.item not in gd.STATUS_ITEM_CHECK
         or poke.has_ability("klutz")
         or poke.embargo_count
     ):
@@ -518,13 +518,12 @@ def on_hit_items(
 ):
     if (
         not move_data
-        or not defender.item in gd.ON_HIT_ITEM_CHECK
+        or defender.item not in gd.ON_HIT_ITEM_CHECK
         or defender.has_ability("klutz")
         or defender.embargo_count
     ):
         return
 
-    t_mult = pm.calculate_type_ef(defender, move_data)
     item = defender.item
 
     if item == "jaboca-berry":
@@ -558,11 +557,11 @@ def homc_items(
     i_mult = 1
 
     if (
-        not defender.item in gd.HOMC_ITEM_CHECK
+        defender.item not in gd.HOMC_ITEM_CHECK
         or defender.has_ability("klutz")
         or defender.embargo_count
     ) and (
-        not attacker.item in gd.HOMC_ITEM_CHECK
+        attacker.item not in gd.HOMC_ITEM_CHECK
         or attacker.has_ability("klutz")
         or attacker.embargo_count
     ):
@@ -582,7 +581,7 @@ def homc_items(
 def end_turn_items(poke: pk.Pokemon, battle: bt.Battle):
     if (
         not poke.is_alive
-        or not poke.item in gd.END_TURN_ITEM_CHECK
+        or poke.item not in gd.END_TURN_ITEM_CHECK
         or poke.has_ability("klutz")
         or poke.embargo_count
     ):

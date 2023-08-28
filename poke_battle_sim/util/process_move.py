@@ -247,18 +247,18 @@ def _calculate_hit_or_miss(
         return True
 
     if ma == -1:
-        res = randrange(1, 101) <= attacker.level - defender.level + 30
+        result_hit = randrange(1, 101) <= attacker.level - defender.level + 30
     else:
         hit_threshold = (
             ma * stage_mult * battlefield.acc_modifier * item_mult * ability_mult
         )
-        res = randrange(1, 101) <= hit_threshold
-    if not res:
+        result_hit = randrange(1, 101) <= hit_threshold
+    if not result_hit:
         if defender.evasion_stage > 0:
             battle.add_text(defender.nickname + " avoided the attack!")
         else:
             _missed(attacker, battle)
-    return res
+    return result_hit
 
 
 def _meta_effect_check(
@@ -3363,7 +3363,17 @@ def _ef_126(
     is_first: bool,
     cc_ib: list,
 ) -> bool:
-    move_data = Move(PokeSim.get_move_data(["swift"])[0])
+    selected_move = Move(PokeSim.get_single_move("tri-attack"))
+    battle.add_text(cap_name(move_data.name) + " turned into " + cap_name(selected_move.name) + "!")
+    return _ef_065(
+        attacker,
+        defender,
+        battlefield,
+        battle,
+        selected_move,
+        is_first,
+        cc_ib,
+    )
 
 
 def _ef_127(

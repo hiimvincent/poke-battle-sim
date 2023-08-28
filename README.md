@@ -24,6 +24,7 @@ Here are the distinctions between Pykemon and PokeBattleSim:
 - Crashes upon using items have been corrected.
 - fix messages on cure with natural-cure ability.
 - Embargo mechanics now cancel item usage as intended.
+- Nature Power now launch by default Tri Attack.
 
 ## Overview
 
