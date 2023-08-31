@@ -1090,6 +1090,78 @@ class TestBattle(unittest.TestCase):
         self.assertIsNone(battle.winner)
         self.assertEqual(battle.get_all_text(), expected_battle_text)
 
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_stealth_roc(self, mock_calculate_crit):
+        pokemon_1 = Pokemon(1, 22, ["stealth-rock"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        pokemon_3 = Pokemon(5, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2, pokemon_3])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        battle.turn(["move", "stealth-rock"], ["move", "tackle"])
+        battle.turn(["move", "stealth-rock"], ["other", "switch"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'CHARMANDER used Tackle!',
+            'BULBASAUR used Stealth Rock!',
+            "Pointed stones float in the air around Misty's team!",
+            'Turn 2:',
+            'Misty sent out CHARMELEON!',
+            'Pointed stones dug into CHARMELEON!',
+            'BULBASAUR used Stealth Rock!',
+            'But, it failed!'
+        ]
+
+        self.assertEqual(pokemon_3.cur_hp, 75)
+
+        self.assertEqual(battle.t1.stealth_rock, 0)
+        self.assertEqual(battle.t2.stealth_rock, 1)
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 2)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    def test_defog_stealth_roc(self):
+        pokemon_1 = Pokemon(1, 22, ["defog"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["stealth-rock"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        battle.turn(["move", "defog"], ["move", "stealth-rock"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'CHARMANDER used Stealth Rock!',
+            "Pointed stones float in the air around Ash's team!",
+            'BULBASAUR used Defog!',
+            "CHARMANDER's evasion fell!"
+        ]
+
+        self.assertEqual(battle.t1.stealth_rock, 0)
+        self.assertEqual(battle.t2.stealth_rock, 0)
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
 
 if __name__ == '__main__':
     unittest.main()

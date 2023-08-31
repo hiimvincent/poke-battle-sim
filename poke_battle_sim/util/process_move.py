@@ -4955,13 +4955,13 @@ def _ef_211(
         battle.add_text(_stat_text(defender, gs.EVA, -1))
         if defender.evasion_stage > -6:
             defender.evasion_stage -= 1
-    defender.trainer.spikes = 0
-    defender.trainer.toxic_spikes = 0
-    defender.stealth_rock = 0
-    defender.trainer.safeguard = 0
-    defender.trainer.light_screen = 0
-    defender.trainer.reflect = 0
-    defender.trainer.mist = 0
+    attacker.trainer.spikes = 0
+    attacker.trainer.toxic_spikes = 0
+    attacker.trainer.stealth_rock = 0
+    attacker.trainer.safeguard = 0
+    attacker.trainer.light_screen = 0
+    attacker.trainer.reflect = 0
+    attacker.trainer.mist = 0
 
 
 def _ef_212(
@@ -5010,7 +5010,7 @@ def _ef_214(
     cc_ib: list,
 ) -> bool:
     if not defender.trainer.stealth_rock:
-        defender.trainer.steal_rock = 1
+        defender.trainer.stealth_rock = 1
         battle.add_text(
             "Pointed stones float in the air around "
             + defender.trainer.name
