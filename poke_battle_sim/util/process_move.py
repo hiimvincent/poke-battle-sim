@@ -2954,7 +2954,7 @@ def _ef_104(
         t = attacker.trainer
         t.spikes = 0
         t.toxic_spikes = 0
-        t.steal_rock = 0
+        t.stealth_rock = 0
     return True
 
 

@@ -1162,6 +1162,42 @@ class TestBattle(unittest.TestCase):
         self.assertIsNone(battle.winner)
         self.assertEqual(battle.get_all_text(), expected_battle_text)
 
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_rapid_spin_stealth_roc(self, mock_calculate_crit, mock_calculate_multiplier):
+        pokemon_1 = Pokemon(1, 22, ["rapid-spin"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["stealth-rock"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "rapid-spin"], ["move", "stealth-rock"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'CHARMANDER used Stealth Rock!',
+            "Pointed stones float in the air around Ash's team!",
+            'BULBASAUR used Rapid Spin!'
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 88)
+
+        self.assertEqual(battle.t1.stealth_rock, 0)
+        self.assertEqual(battle.t2.stealth_rock, 0)
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
 
 if __name__ == '__main__':
     unittest.main()
