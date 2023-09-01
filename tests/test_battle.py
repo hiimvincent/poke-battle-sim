@@ -1198,6 +1198,113 @@ class TestBattle(unittest.TestCase):
         self.assertIsNone(battle.winner)
         self.assertEqual(battle.get_all_text(), expected_battle_text)
 
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_surf(
+            self, mock_calculate_crit, mock_calculate_multiplier
+    ):
+        pokemon_1 = Pokemon(1, 22, ["surf"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "surf"], ["move", "tackle"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'BULBASAUR used Surf!',
+            "It's super effective!",
+            'CHARMANDER used Tackle!'
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 58)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_gust(
+            self, mock_calculate_crit, mock_calculate_multiplier
+    ):
+        pokemon_1 = Pokemon(1, 22, ["gust"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "gust"], ["move", "tackle"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'BULBASAUR used Gust!',
+            'CHARMANDER used Tackle!'
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 90)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_gust_in_air_opponent(
+            self, mock_calculate_crit, mock_calculate_multiplier
+    ):
+        pokemon_1 = Pokemon(1, 22, ["gust"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["bounce"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "gust"], ["move", "bounce"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'CHARMANDER sprang up!',
+            'BULBASAUR used Gust!'
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 81)
+        self.assertEqual(pokemon_1.moves[0].power, 40)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
 
 if __name__ == '__main__':
     unittest.main()

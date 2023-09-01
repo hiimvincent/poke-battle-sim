@@ -28,7 +28,7 @@ Here are the distinctions between Pykemon and PokeBattleSim:
 - Weather ball move now use rock type on sandstorm.
 - Embargo mechanics now cancel item usage as intended.
 - Nature Power now launch by default Tri Attack or the move associated with the terrain defined in the battle.
-- Earthquake damages are now calculated.
+- Earthquake, Gust and Surf damages are now calculated.
 - Stealth Rock is now taken into account.
 - Defog now clear all hazards on the attacking pokemon side.
 - Rapid Spin now clean stealth rocks.

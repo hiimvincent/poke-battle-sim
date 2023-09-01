@@ -332,6 +332,8 @@ def _invulnerability_check(
         return False
     if defender.invulnerable:
         if defender.in_air:
+            if move_data.name == "gust":
+                return False
             _missed(attacker, battle)
         elif defender.in_ground:
             if move_data.name == "earthquake":
@@ -1259,9 +1261,7 @@ def _ef_018(
     is_first: bool,
     cc_ib: list,
 ) -> bool:
-    if defender.in_water:
-        move_data.power *= 2
-        cc_ib[1] = True
+    _calculate_damage(attacker, defender, battlefield, battle, move_data)
 
 
 def _ef_019(
@@ -1330,8 +1330,8 @@ def _ef_022(
     cc_ib: list,
 ) -> bool:
     if defender.in_air:
-        cc_ib[1] = True
         move_data.power *= 2
+    _calculate_damage(attacker, defender, battlefield, battle, move_data)
 
 
 def _ef_023(
