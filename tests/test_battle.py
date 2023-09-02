@@ -1236,6 +1236,186 @@ class TestBattle(unittest.TestCase):
 
     @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
     @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_surf_in_diving_opponent(
+            self, mock_calculate_crit, mock_calculate_multiplier
+    ):
+        pokemon_1 = Pokemon(1, 22, ["surf"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["dive"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "surf"], ["move", "dive"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'CHARMANDER hid underwater!',
+            'BULBASAUR used Surf!',
+            "It's super effective!"
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 19)
+        self.assertEqual(pokemon_1.moves[0].power, 90)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._generate_2_to_5')
+    @patch('poke_battle_sim.util.process_move._calculate_hit_or_miss')
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_whirlpool(
+            self, mock_calculate_crit, mock_calculate_multiplier, mock_calculate_hit_or_miss, mock_turns
+    ):
+        pokemon_1 = Pokemon(1, 22, ["whirlpool"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        mock_calculate_hit_or_miss.return_value = True
+        mock_turns.return_value = 2
+        battle.turn(["move", "whirlpool"], ["move", "tackle"])
+
+        self.assertEqual(pokemon_2.cur_hp, 75)
+        self.assertEqual(pokemon_2.binding_poke, pokemon_1)
+        self.assertEqual(pokemon_2.binding_type, "Whirlpool")
+        self.assertEqual(pokemon_2.v_status[3], 1)
+
+        battle.turn(["move", "whirlpool"], ["move", "tackle"])
+
+        self.assertEqual(pokemon_2.cur_hp, 50)
+        self.assertIsNone(pokemon_2.binding_poke)
+        self.assertIsNone(pokemon_2.binding_type)
+
+        battle.turn(["move", "whirlpool"], ["move", "tackle"])
+
+        self.assertEqual(pokemon_2.cur_hp, 25)
+        self.assertEqual(pokemon_2.binding_poke, pokemon_1)
+        self.assertEqual(pokemon_2.binding_type, "Whirlpool")
+        self.assertEqual(pokemon_2.v_status[3], 1)
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'BULBASAUR used Whirlpool!',
+            "It's super effective!",
+            'CHARMANDER was trapped in the vortex!',
+            'CHARMANDER used Tackle!',
+            'CHARMANDER is hurt by Whirlpool!',
+            'Turn 2:',
+            'BULBASAUR used Whirlpool!',
+            "It's super effective!",
+            'CHARMANDER used Tackle!',
+            'CHARMANDER is hurt by Whirlpool!',
+            'Turn 3:',
+            'BULBASAUR used Whirlpool!',
+            "It's super effective!",
+            'CHARMANDER was trapped in the vortex!',
+            'CHARMANDER used Tackle!',
+            'CHARMANDER is hurt by Whirlpool!'
+        ]
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 3)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_whirlpool_in_diving_opponent(
+            self, mock_calculate_crit, mock_calculate_multiplier
+    ):
+        pokemon_1 = Pokemon(1, 22, ["whirlpool"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["dive"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "whirlpool"], ["move", "dive"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'CHARMANDER hid underwater!',
+            'BULBASAUR used Whirlpool!',
+            "It's super effective!",
+            'CHARMANDER was trapped in the vortex!',
+            'CHARMANDER is hurt by Whirlpool!'
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 60)
+        self.assertEqual(pokemon_1.moves[0].power, 35)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_low_kick_in_diving_opponent(
+            self, mock_calculate_crit, mock_calculate_multiplier
+    ):
+        pokemon_1 = Pokemon(1, 22, ["low-kick"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["dive"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "low-kick"], ["move", "dive"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'CHARMANDER hid underwater!',
+            'BULBASAUR used Low Kick!'
+        ]
+
+        self.assertEqual(pokemon_2.cur_hp, 94)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
     def test_gust(
             self, mock_calculate_crit, mock_calculate_multiplier
     ):

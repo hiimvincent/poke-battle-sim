@@ -340,6 +340,8 @@ def _invulnerability_check(
                 return False
             _missed(attacker, battle)
         elif defender.in_water:
+            if move_data.name in ["surf", "whirlpool", "low-kick"]:
+                return False
             _missed(attacker, battle)
         return True
     return False
@@ -1261,6 +1263,8 @@ def _ef_018(
     is_first: bool,
     cc_ib: list,
 ) -> bool:
+    if defender.in_water:
+        move_data.power *= 2
     _calculate_damage(attacker, defender, battlefield, battle, move_data)
 
 
@@ -1363,6 +1367,8 @@ def _ef_024(
     is_first: bool,
     cc_ib: list,
 ) -> bool:
+    if move_data.name == "whirlpool" and defender.in_water:
+        move_data.power *= 2
     dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
     if (
         defender.is_alive
@@ -1370,10 +1376,9 @@ def _ef_024(
         and not defender.substitute
         and not defender.v_status[gs.BINDING_COUNT]
     ):
-        defender.v_status[gs.BINDING_COUNT] = (
-            _generate_2_to_5() if attacker.item != "grip-claw" else 5
-        )
+        defender.v_status[gs.BINDING_COUNT] = _generate_2_to_5() if attacker.item != "grip-claw" else 5
         defender.binding_poke = attacker
+
         if move_data.ef_stat == gs.BIND:
             defender.binding_type = "Bind"
             battle.add_text(
@@ -1602,6 +1607,7 @@ def _ef_035(
         move_data.power = 100
     else:
         move_data.power = 120
+    _calculate_damage(attacker, defender, battlefield, battle, move_data)
 
 
 def _ef_036(
