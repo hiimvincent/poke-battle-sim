@@ -226,6 +226,8 @@ def _calculate_hit_or_miss(
         d_eva_stage = 0
     if defender.has_ability("unaware"):
         a_acc_stage = 0
+    if move_data.name == "stomp" and defender.minimized:
+        d_eva_stage = 0
     stage = a_acc_stage - d_eva_stage
     stage_mult = max(3, 3 + stage) / max(3, 3 - stage)
     ability_mult = pa.homc_abilities(attacker, defender, battlefield, battle, move_data)
@@ -233,10 +235,10 @@ def _calculate_hit_or_miss(
         attacker, defender, battlefield, battle, move_data, is_first
     )
 
-    ma = move_data.acc
+    move_accuracy = move_data.acc
     if _special_move_acc(attacker, defender, battlefield, battle, move_data):
         return True
-    if not ma:
+    if not move_accuracy:
         return True
     if defender.mr_count and defender.mr_target and attacker is defender.mr_target:
         return True
@@ -246,13 +248,13 @@ def _calculate_hit_or_miss(
         attacker.next_will_hit = False
         return True
 
-    if ma == -1:
-        result_hit = randrange(1, 101) <= attacker.level - defender.level + 30
+    if move_accuracy == -1:
+        result_hit = get_move_precision() <= attacker.level - defender.level + 30
     else:
         hit_threshold = (
-            ma * stage_mult * battlefield.acc_modifier * item_mult * ability_mult
+            move_accuracy * stage_mult * battlefield.acc_modifier * item_mult * ability_mult
         )
-        result_hit = randrange(1, 101) <= hit_threshold
+        result_hit = get_move_precision() <= hit_threshold
     if not result_hit:
         if defender.evasion_stage > 0:
             battle.add_text(defender.nickname + " avoided the attack!")
@@ -438,6 +440,10 @@ def _generate_2_to_5() -> int:
     else:
         num_hits = 5
     return num_hits
+
+
+def get_move_precision() -> int:
+    return randrange(1, 101)
 
 
 def confuse(

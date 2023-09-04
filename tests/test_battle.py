@@ -1485,6 +1485,160 @@ class TestBattle(unittest.TestCase):
         self.assertIsNone(battle.winner)
         self.assertEqual(battle.get_all_text(), expected_battle_text)
 
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_struggle(self, mock_calculate_crit, mock_calculate_multiplier):
+        pokemon_1 = Pokemon(1, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        pokemon_1.moves[0].cur_pp = 0
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["splash"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "tackle"], ["move", "splash"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'BULBASAUR has no moves left!',
+            'BULBASAUR used Struggle!',
+            'BULBASAUR is hit with recoil!',
+            'CHARMANDER used Splash!',
+            'But nothing happened!'
+        ]
+
+        self.assertEqual(pokemon_1.cur_hp, 75)
+        self.assertEqual(pokemon_1.cur_hp, 75)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.last_move.name, 'splash')
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_stomp(
+            self, mock_calculate_crit, mock_calculate_multiplier
+    ):
+        pokemon_1 = Pokemon(1, 22, ["stomp"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "stomp"], ["move", "tackle"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'BULBASAUR used Stomp!',
+            'CHARMANDER used Tackle!'
+        ]
+
+        self.assertEqual(pokemon_2.evasion_stage, 0)
+        self.assertEqual(pokemon_2.cur_hp, 84)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move.get_move_precision')
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_stomp_in_minimized_opponent(
+            self, mock_calculate_crit, mock_calculate_multiplier, mock_move_precision
+    ):
+        pokemon_1 = Pokemon(1, 22, ["stomp"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["minimize"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        mock_move_precision.return_value = 76
+        battle.turn(["move", "stomp"], ["move", "minimize"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'CHARMANDER used Minimize!',
+            "CHARMANDER's evasion rose!",
+            'BULBASAUR used Stomp!'
+        ]
+
+        self.assertEqual(pokemon_2.evasion_stage, 1)
+        self.assertEqual(pokemon_2.cur_hp, 70)
+        self.assertEqual(pokemon_1.moves[0].power, 65)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move.get_move_precision')
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_stomp_in_other_evasion_move_opponent(
+            self, mock_calculate_crit, mock_calculate_multiplier, mock_move_precision
+    ):
+        pokemon_1 = Pokemon(1, 22, ["stomp"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["double-team"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        mock_move_precision.return_value = 76
+        battle.turn(["move", "stomp"], ["move", "double-team"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'CHARMANDER used Double Team!',
+            "CHARMANDER's evasion rose!",
+            'BULBASAUR used Stomp!',
+            'CHARMANDER avoided the attack!'
+        ]
+
+        self.assertEqual(pokemon_2.evasion_stage, 1)
+        self.assertEqual(pokemon_2.cur_hp, 100)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
 
 if __name__ == '__main__':
     unittest.main()
