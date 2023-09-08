@@ -1639,6 +1639,219 @@ class TestBattle(unittest.TestCase):
         self.assertIsNone(battle.winner)
         self.assertEqual(battle.get_all_text(), expected_battle_text)
 
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_absorb(
+            self, mock_calculate_crit, mock_calculate_multiplier
+    ):
+        pokemon_1 = Pokemon(1, 22, ["absorb"], "male", stats_actual=[100, 100, 100, 100, 100, 1], cur_hp=50)
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(7, 22, ["splash"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "absorb"], ["move", "splash"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out SQUIRTLE!',
+            'Turn 1:',
+            'SQUIRTLE used Splash!',
+            'But nothing happened!',
+            'BULBASAUR used Absorb!',
+            "It's super effective!",
+            "SQUIRTLE had it's energy drained!"
+        ]
+
+        self.assertEqual(pokemon_1.cur_hp, 59)
+        self.assertEqual(pokemon_2.cur_hp, 82)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
+    @patch('poke_battle_sim.util.process_move._calculate_crit')
+    def test_absorb_on_heal_block(
+            self, mock_calculate_crit, mock_calculate_multiplier
+    ):
+        pokemon_1 = Pokemon(1, 22, ["absorb"], "male", stats_actual=[100, 100, 100, 100, 100, 1], cur_hp=50)
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(7, 22, ["heal-block"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        mock_calculate_crit.return_value = False
+        mock_calculate_multiplier.return_value = 1.0
+        battle.turn(["move", "absorb"], ["move", "heal-block"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out SQUIRTLE!',
+            'Turn 1:',
+            'SQUIRTLE used Heal Block!',
+            'BULBASAUR was prevented from healing!',
+            'BULBASAUR used Absorb!',
+            "It's super effective!"
+        ]
+
+        self.assertEqual(pokemon_1.cur_hp, 50)
+        self.assertEqual(pokemon_2.cur_hp, 82)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    def test_leech_seed(self):
+        pokemon_1 = Pokemon(1, 22, ["leech-seed"], "male", stats_actual=[100, 100, 100, 100, 100, 100], cur_hp=50)
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(7, 22, ["splash"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        battle.turn(["move", "leech-seed"], ["move", "splash"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out SQUIRTLE!',
+            'Turn 1:',
+            'BULBASAUR used Leech Seed!',
+            'SQUIRTLE was seeded!',
+            'SQUIRTLE used Splash!',
+            'But nothing happened!',
+            "SQUIRTLE's health is sapped by Leech Seed!",
+            'BULBASAUR regained health!'
+        ]
+
+        self.assertEqual(pokemon_1.cur_hp, 62)
+        self.assertEqual(pokemon_2.cur_hp, 88)
+        self.assertEqual(pokemon_2.v_status[2], 1)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    def test_leech_seed_on_heal_block(self):
+        pokemon_1 = Pokemon(1, 22, ["leech-seed"], "male", stats_actual=[100, 100, 100, 100, 100, 1], cur_hp=50)
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(7, 22, ["heal-block"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        battle.turn(["move", "leech-seed"], ["move", "heal-block"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out SQUIRTLE!',
+            'Turn 1:',
+            'SQUIRTLE used Heal Block!',
+            'BULBASAUR was prevented from healing!',
+            'BULBASAUR used Leech Seed!',
+            'SQUIRTLE was seeded!',
+            "SQUIRTLE's health is sapped by Leech Seed!"
+        ]
+
+        self.assertEqual(pokemon_1.cur_hp, 50)
+        self.assertEqual(pokemon_2.cur_hp, 88)
+        self.assertEqual(pokemon_2.v_status[2], 1)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    def test_aqua_ring(self):
+        pokemon_1 = Pokemon(1, 22, ["aqua-ring"], "male", stats_actual=[100, 100, 100, 100, 100, 100], cur_hp=50)
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(7, 22, ["splash"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        battle.turn(["move", "aqua-ring"], ["move", "splash"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out SQUIRTLE!',
+            'Turn 1:',
+            'BULBASAUR used Aqua Ring!',
+            'BULBASAUR surrounded itself with a veil of water!',
+            'SQUIRTLE used Splash!',
+            'But nothing happened!',
+            "A veil of water restored BULBASAUR's HP!"
+        ]
+
+        self.assertEqual(pokemon_1.cur_hp, 56)
+        self.assertEqual(pokemon_2.cur_hp, 100)
+        self.assertEqual(pokemon_1.v_status[8], 1)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
+    def test_aqua_ring_on_heal_block(self):
+        pokemon_1 = Pokemon(1, 22, ["aqua-ring"], "male", stats_actual=[100, 100, 100, 100, 100, 1], cur_hp=50)
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(7, 22, ["heal-block"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2)
+        battle.start()
+
+        battle.turn(["move", "aqua-ring"], ["move", "heal-block"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out SQUIRTLE!',
+            'Turn 1:',
+            'SQUIRTLE used Heal Block!',
+            'BULBASAUR was prevented from healing!',
+            'BULBASAUR used Aqua Ring!',
+            'BULBASAUR surrounded itself with a veil of water!'
+        ]
+
+        self.assertEqual(pokemon_1.cur_hp, 50)
+        self.assertEqual(pokemon_2.cur_hp, 100)
+        self.assertEqual(pokemon_1.v_status[8], 1)
+
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertEqual(battle.turn_count, 1)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
 
 if __name__ == '__main__':
     unittest.main()

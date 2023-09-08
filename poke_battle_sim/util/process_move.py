@@ -1671,8 +1671,9 @@ def _ef_038(
         if attacker.item == "big-root":
             heal_amt = int(heal_amt * 1.3)
         if not defender.has_ability("liquid-ooze"):
-            attacker.heal(heal_amt, text_skip=True)
-            battle.add_text(defender.nickname + " had it's energy drained!")
+            if attacker.heal_block_count == 0:
+                attacker.heal(heal_amt, text_skip=True)
+                battle.add_text(defender.nickname + " had it's energy drained!")
         else:
             attacker.take_damage(heal_amt)
             battle.add_text(attacker.nickname + " sucked up the liquid ooze!")
@@ -2913,7 +2914,7 @@ def _ef_102(
     t.current_poke.embargo_count = attacker.embargo_count
     t.current_poke.magnetic_rise = attacker.magnet_rise
     t.current_poke.substitute = attacker.substitute
-    t.current_poke.hb_count = attacker.hb_count
+    t.current_poke.heal_block_count = attacker.heal_block_count
     t.current_poke.power_trick = attacker.power_trick
     if not attacker.has_ability("multitype"):
         t.current_poke.ability_supressed = attacker.ability_suppressed
@@ -4557,8 +4558,8 @@ def _ef_189(
     is_first: bool,
     cc_ib: list,
 ) -> bool:
-    if defender.is_alive and not defender.hb_count:
-        defender.hb_count = 5
+    if defender.is_alive and not defender.heal_block_count:
+        defender.heal_block_count = 5
         battle.add_text(defender.nickname + " was prevented from healing!")
     else:
         failed(battle)

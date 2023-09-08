@@ -30,6 +30,7 @@ Here are the distinctions between Pykemon and PokeBattleSim:
 - Nature Power now launch by default Tri Attack or the move associated with the terrain defined in the battle.
 - Earthquake, Gust and Surf damages are now calculated.
 - Whirlpool and Low Kick now deal double damage on under water pokemons.
+- Heal Block now work as intended.
 - Stomp now break through opponent evasion if caused by Minimize.
 - Stealth Rock is now taken into account.
 - Defog now clear all hazards on the attacking pokemon side.

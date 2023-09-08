@@ -245,7 +245,7 @@ class Pokemon:
         self.bide_dmg = 0
         self.protect_count = 0
         self.embargo_count = 0
-        self.hb_count = 0
+        self.heal_block_count = 0
         self.uproar = 0
         self.stockpile = 0
         self.charged = 0
@@ -442,8 +442,6 @@ class Pokemon:
             av_moves = [move for move in av_moves if move.category != gs.STATUS]
         if self.grounded and av_moves:
             av_moves = [move for move in av_moves if move not in gd.GROUNDED_CHECK]
-        if self.hb_count and av_moves:
-            av_moves = [move for move in av_moves if move not in gd.HEAL_BLOCK_CHECK]
         if (
             self.trainer.imprisoned_poke
             and self.trainer.imprisoned_poke is self.enemy.current_poke

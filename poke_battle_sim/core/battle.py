@@ -311,16 +311,17 @@ class Battle:
         if trainer.wish:
             trainer.wish -= 1
             if not trainer.wish:
-                self.add_text(trainer.wish_poke + "'s wish came true!")
-                trainer.current_poke.heal(trainer.current_poke.max_hp // 2)
+                if poke.heal_block_count == 0:
+                    self.add_text(trainer.wish_poke + "'s wish came true!")
+                    trainer.current_poke.heal(trainer.current_poke.max_hp // 2)
                 trainer.wish_poke = None
-        if poke.v_status[gs.INGRAIN]:
+        if poke.v_status[gs.INGRAIN] and poke.heal_block_count == 0:
             self.add_text(poke.nickname + " absorbed nutrients with its roots!")
             heal_amt = max(1, poke.max_hp // 16)
             if poke.item == "big-root":
                 heal_amt = int(heal_amt * 1.3)
             poke.heal(heal_amt, text_skip=True)
-        if poke.v_status[gs.AQUA_RING]:
+        if poke.v_status[gs.AQUA_RING] and poke.heal_block_count == 0:
             self.add_text("A veil of water restored " + poke.nickname + "'s HP!")
             heal_amt = max(1, poke.max_hp // 16)
             if poke.item == "big-root":
@@ -427,7 +428,8 @@ class Battle:
             )
             if other.is_alive:
                 if not poke.has_ability("liquid-ooze"):
-                    other.heal(heal_amt)
+                    if other.heal_block_count == 0:
+                        other.heal(heal_amt)
                 else:
                     other.take_damage(heal_amt)
                     self.add_text(other.nickname + " sucked up the liquid ooze!")
@@ -481,9 +483,9 @@ class Battle:
             poke.embargo_count -= 1
             if not poke.encore_count:
                 self.add_text(poke.nickname + " can use items again!")
-        if poke.hb_count:
-            poke.hb_count -= 1
-            if not poke.hb_count:
+        if poke.heal_block_count:
+            poke.heal_block_count -= 1
+            if not poke.heal_block_count:
                 self.add_text(poke.nickname + "'s Heal Block wore off!")
         if poke.uproar:
             poke.uproar -= 1

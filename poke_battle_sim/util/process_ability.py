@@ -182,14 +182,14 @@ def end_turn_abilities(poke: pk.Pokemon, battle: bt.Battle):
 def type_protection_abilities(
     defender: pk.Pokemon, move_data: Move, battle: bt.Battle
 ) -> bool:
-    if defender.has_ability("volt-absorb") and move_data.type == "electric":
+    if defender.has_ability("volt-absorb") and move_data.type == "electric" and defender.heal_block_count == 0:
         battle.add_text(
             defender.nickname + " absorbed " + move_data.name + " with Volt Absorb!"
         )
         if not defender.cur_hp == defender.max_hp:
             defender.heal(defender.max_hp // 4)
         return True
-    elif defender.has_ability("water-absorb") and move_data.type == "water":
+    elif defender.has_ability("water-absorb") and move_data.type == "water" and defender.heal_block_count == 0:
         battle.add_text(
             defender.nickname + " absorbed " + move_data.name + " with Water Absorb!"
         )
