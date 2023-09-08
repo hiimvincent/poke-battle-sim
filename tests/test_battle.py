@@ -234,9 +234,8 @@ class TestBattle(unittest.TestCase):
         pokemon_1 = Pokemon(1, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
         trainer_1 = Trainer('Ash', [pokemon_1])
 
-        def selection_misty(battle: Battle):
-            misty = battle.t2
-            misty.current_poke = misty.poke_list[-1]
+        def selection_misty(trainer: Trainer):
+            trainer.current_poke = trainer.poke_list[-1]
         pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[1, 100, 100, 100, 100, 1])
         pokemon_3 = Pokemon(5, 22, ["tackle"], "male", stats_actual=[1, 100, 100, 100, 100, 1])
         pokemon_4 = Pokemon(6, 22, ["tackle"], "male", stats_actual=[1, 100, 100, 100, 100, 1])
@@ -270,9 +269,8 @@ class TestBattle(unittest.TestCase):
         pokemon_1 = Pokemon(1, 22, ["tackle"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
         trainer_1 = Trainer('Ash', [pokemon_1])
 
-        def selection_misty(battle: Battle):
-            misty = battle.t2
-            misty.current_poke = misty.poke_list[0]
+        def selection_misty(trainer: Trainer):
+            trainer.current_poke = trainer.poke_list[0]
 
         pokemon_2 = Pokemon(4, 22, ["tackle"], "male", stats_actual=[1, 100, 100, 100, 100, 1])
         pokemon_3 = Pokemon(5, 22, ["tackle"], "male", stats_actual=[1, 100, 100, 100, 100, 1])
@@ -1340,10 +1338,11 @@ class TestBattle(unittest.TestCase):
         self.assertIsNone(battle.winner)
         self.assertEqual(battle.get_all_text(), expected_battle_text)
 
+    @patch('poke_battle_sim.util.process_move._calculate_hit_or_miss')
     @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
     @patch('poke_battle_sim.util.process_move._calculate_crit')
     def test_whirlpool_in_diving_opponent(
-            self, mock_calculate_crit, mock_calculate_multiplier
+            self, mock_calculate_crit, mock_calculate_multiplier, mock_calculate_hit_or_miss
     ):
         pokemon_1 = Pokemon(1, 22, ["whirlpool"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
         trainer_1 = Trainer('Ash', [pokemon_1])
@@ -1356,6 +1355,7 @@ class TestBattle(unittest.TestCase):
 
         mock_calculate_crit.return_value = False
         mock_calculate_multiplier.return_value = 1.0
+        mock_calculate_hit_or_miss.return_value = True
         battle.turn(["move", "whirlpool"], ["move", "dive"])
 
         expected_battle_text = [
@@ -1369,6 +1369,8 @@ class TestBattle(unittest.TestCase):
             'CHARMANDER is hurt by Whirlpool!'
         ]
 
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
         self.assertEqual(pokemon_2.cur_hp, 60)
         self.assertEqual(pokemon_1.moves[0].power, 35)
 
@@ -1377,7 +1379,6 @@ class TestBattle(unittest.TestCase):
         self.assertEqual(battle.t2, trainer_2)
         self.assertEqual(battle.turn_count, 1)
         self.assertIsNone(battle.winner)
-        self.assertEqual(battle.get_all_text(), expected_battle_text)
 
     @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
     @patch('poke_battle_sim.util.process_move._calculate_crit')
@@ -1449,10 +1450,11 @@ class TestBattle(unittest.TestCase):
         self.assertIsNone(battle.winner)
         self.assertEqual(battle.get_all_text(), expected_battle_text)
 
+    @patch('poke_battle_sim.util.process_move._calculate_hit_or_miss')
     @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
     @patch('poke_battle_sim.util.process_move._calculate_crit')
     def test_gust_in_air_opponent(
-            self, mock_calculate_crit, mock_calculate_multiplier
+            self, mock_calculate_crit, mock_calculate_multiplier, mock_calculate_hit_or_miss
     ):
         pokemon_1 = Pokemon(1, 22, ["gust"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
         trainer_1 = Trainer('Ash', [pokemon_1])
@@ -1465,6 +1467,7 @@ class TestBattle(unittest.TestCase):
 
         mock_calculate_crit.return_value = False
         mock_calculate_multiplier.return_value = 1.0
+        mock_calculate_hit_or_miss.return_value = True
         battle.turn(["move", "gust"], ["move", "bounce"])
 
         expected_battle_text = [
@@ -1475,6 +1478,8 @@ class TestBattle(unittest.TestCase):
             'BULBASAUR used Gust!'
         ]
 
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
         self.assertEqual(pokemon_2.cur_hp, 81)
         self.assertEqual(pokemon_1.moves[0].power, 40)
 
@@ -1483,7 +1488,6 @@ class TestBattle(unittest.TestCase):
         self.assertEqual(battle.t2, trainer_2)
         self.assertEqual(battle.turn_count, 1)
         self.assertIsNone(battle.winner)
-        self.assertEqual(battle.get_all_text(), expected_battle_text)
 
     @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
     @patch('poke_battle_sim.util.process_move._calculate_crit')
@@ -1523,10 +1527,11 @@ class TestBattle(unittest.TestCase):
         self.assertEqual(battle.turn_count, 1)
         self.assertEqual(battle.get_all_text(), expected_battle_text)
 
+    @patch('poke_battle_sim.util.process_move._flinch')
     @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
     @patch('poke_battle_sim.util.process_move._calculate_crit')
     def test_stomp(
-            self, mock_calculate_crit, mock_calculate_multiplier
+            self, mock_calculate_crit, mock_calculate_multiplier, _
     ):
         pokemon_1 = Pokemon(1, 22, ["stomp"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
         trainer_1 = Trainer('Ash', [pokemon_1])
@@ -1716,7 +1721,8 @@ class TestBattle(unittest.TestCase):
         self.assertIsNone(battle.winner)
         self.assertEqual(battle.get_all_text(), expected_battle_text)
 
-    def test_leech_seed(self):
+    @patch('poke_battle_sim.util.process_move._calculate_hit_or_miss')
+    def test_leech_seed(self, mock_calculate_hit_or_miss):
         pokemon_1 = Pokemon(1, 22, ["leech-seed"], "male", stats_actual=[100, 100, 100, 100, 100, 100], cur_hp=50)
         trainer_1 = Trainer('Ash', [pokemon_1])
 
@@ -1726,6 +1732,7 @@ class TestBattle(unittest.TestCase):
         battle = Battle(trainer_1, trainer_2)
         battle.start()
 
+        mock_calculate_hit_or_miss.return_value = True
         battle.turn(["move", "leech-seed"], ["move", "splash"])
 
         expected_battle_text = [
@@ -1751,7 +1758,8 @@ class TestBattle(unittest.TestCase):
         self.assertIsNone(battle.winner)
         self.assertEqual(battle.get_all_text(), expected_battle_text)
 
-    def test_leech_seed_on_heal_block(self):
+    @patch('poke_battle_sim.util.process_move._calculate_hit_or_miss')
+    def test_leech_seed_on_heal_block(self, mock_calculate_hit_or_miss):
         pokemon_1 = Pokemon(1, 22, ["leech-seed"], "male", stats_actual=[100, 100, 100, 100, 100, 1], cur_hp=50)
         trainer_1 = Trainer('Ash', [pokemon_1])
 
@@ -1761,6 +1769,7 @@ class TestBattle(unittest.TestCase):
         battle = Battle(trainer_1, trainer_2)
         battle.start()
 
+        mock_calculate_hit_or_miss.return_value = True
         battle.turn(["move", "leech-seed"], ["move", "heal-block"])
 
         expected_battle_text = [
