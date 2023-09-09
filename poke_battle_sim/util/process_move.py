@@ -4975,6 +4975,8 @@ def _ef_211(
     attacker.trainer.light_screen = 0
     attacker.trainer.reflect = 0
     attacker.trainer.mist = 0
+    if battlefield.weather == gs.FOG:
+        battlefield.weather = gs.CLEAR
 
 
 def _ef_212(

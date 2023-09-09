@@ -33,7 +33,7 @@ Here are the distinctions between Pykemon and PokeBattleSim:
 - Heal Block now work as intended.
 - Stomp now break through opponent evasion if caused by Minimize.
 - Stealth Rock is now taken into account.
-- Defog now clear all hazards on the attacking pokemon side.
+- Defog now clear all hazards on the attacking pokemon side and remove fog from the battlefield.
 - Rapid Spin now clean stealth rocks.
 
 ## Overview

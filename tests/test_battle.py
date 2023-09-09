@@ -1160,6 +1160,35 @@ class TestBattle(unittest.TestCase):
         self.assertIsNone(battle.winner)
         self.assertEqual(battle.get_all_text(), expected_battle_text)
 
+    def test_defog_remove_fog(self):
+        pokemon_1 = Pokemon(1, 22, ["defog"], "male", stats_actual=[100, 100, 100, 100, 100, 1])
+        trainer_1 = Trainer('Ash', [pokemon_1])
+
+        pokemon_2 = Pokemon(4, 22, ["splash"], "male", stats_actual=[100, 100, 100, 100, 100, 100])
+        trainer_2 = Trainer('Misty', [pokemon_2])
+
+        battle = Battle(trainer_1, trainer_2, weather="fog")
+        battle.start()
+
+        battle.turn(["move", "defog"], ["move", "splash"])
+
+        expected_battle_text = [
+            'Ash sent out BULBASAUR!',
+            'Misty sent out CHARMANDER!',
+            'Turn 1:',
+            'CHARMANDER used Splash!',
+            'But nothing happened!',
+            'BULBASAUR used Defog!',
+            "CHARMANDER's evasion fell!"
+        ]
+
+        self.assertEqual(battle.battlefield.weather, "clear")
+        self.assertTrue(battle.battle_started)
+        self.assertEqual(battle.t1, trainer_1)
+        self.assertEqual(battle.t2, trainer_2)
+        self.assertIsNone(battle.winner)
+        self.assertEqual(battle.get_all_text(), expected_battle_text)
+
     @patch('poke_battle_sim.util.process_move._calculate_random_multiplier_damage')
     @patch('poke_battle_sim.util.process_move._calculate_crit')
     def test_rapid_spin_stealth_roc(self, mock_calculate_crit, mock_calculate_multiplier):
