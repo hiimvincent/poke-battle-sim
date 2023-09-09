@@ -89,7 +89,7 @@ id,identifier,generation_id,type_id,power,pp,accuracy,priority,target_id,move_cl
 88,rock-throw,1,rock,50,15,90,0,10,2,1,,,
 89,earthquake,1,ground,100,10,100,0,9,2,26,,,
 90,fissure,1,ground,,5,-1,0,10,2,20,,,
-91,dig,1,ground,80,10,100,0,10,2,23,,,
+91,dig,1,ground,80,10,100,0,10,2,42,,,
 92,toxic,1,poison,,10,90,0,10,1,13,,,6
 93,confusion,1,psychic,50,25,100,0,10,3,6,10,,
 94,psychic,1,psychic,90,10,100,0,10,3,3,10,-1,4

@@ -12,10 +12,12 @@ Pokemon Battle Simulator (```poke-battle-sim```) is an open-source Python packag
 
 Here are the distinctions between Pykemon and PokeBattleSim:
 
+#### Features
+- Possibility to create a battle with a weather.
+
 #### Fixes
 - Pokemons can now be initialized with id.
 - Damage calculations now occurs only once.
-- Weather ball move now use rock type on sandstorm.
 - A pokemon can now have only one max HP (particularly useful for Shedinja).
 - A pokemon can't be used multiple time in a same team anymore.
 - Max EVs are decreased to 252 instead of 255, as it may be consider a bug patched in games after the 6th generation.
@@ -23,7 +25,16 @@ Here are the distinctions between Pykemon and PokeBattleSim:
 - The number of moves for Pokemons is now limited to 4.
 - Crashes upon using items have been corrected.
 - fix messages on cure with natural-cure ability.
+- Weather ball move now use rock type on sandstorm.
 - Embargo mechanics now cancel item usage as intended.
+- Nature Power now launch by default Tri Attack or the move associated with the terrain defined in the battle.
+- Earthquake, Gust and Surf damages are now calculated.
+- Whirlpool and Low Kick now deal double damage on under water pokemons.
+- Heal Block now work as intended.
+- Stomp now break through opponent evasion if caused by Minimize.
+- Stealth Rock is now taken into account.
+- Defog now clear all hazards on the attacking pokemon side and remove fog from the battlefield.
+- Rapid Spin now clean stealth rocks.
 
 ## Overview
 

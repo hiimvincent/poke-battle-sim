@@ -19,19 +19,19 @@ def selection_abilities(
 ):
     if poke.has_ability("drizzle") and battlefield.weather != gs.RAIN:
         battlefield.change_weather(gs.RAIN)
-        battlefield.weather_count = 999
+        battlefield.weather_count = -1
         battle.add_text("It started to rain!")
     elif poke.has_ability("drought") and battlefield.weather != gs.HARSH_SUNLIGHT:
         battlefield.change_weather(gs.HARSH_SUNLIGHT)
-        battlefield.weather_count = 999
+        battlefield.weather_count = -1
         battle.add_text("The sunlight turned harsh!")
     elif poke.has_ability("snow-warning") and battlefield.weather != gs.HAIL:
         battlefield.change_weather(gs.HAIL)
-        battlefield.weather_count = 999
+        battlefield.weather_count = -1
         battle.add_text("It started to hail!")
     elif poke.has_ability("sand-stream") and battlefield.weather != gs.SANDSTORM:
         battlefield.change_weather(gs.SANDSTORM)
-        battlefield.weather_count = 999
+        battlefield.weather_count = -1
         battle.add_text("A sandstorm brewed")
     elif poke.has_ability("water-veil") and poke.nv_status == gs.BURNED:
         pm.cure_nv_status(gs.BURNED, poke, battle)
@@ -182,14 +182,14 @@ def end_turn_abilities(poke: pk.Pokemon, battle: bt.Battle):
 def type_protection_abilities(
     defender: pk.Pokemon, move_data: Move, battle: bt.Battle
 ) -> bool:
-    if defender.has_ability("volt-absorb") and move_data.type == "electric":
+    if defender.has_ability("volt-absorb") and move_data.type == "electric" and defender.heal_block_count == 0:
         battle.add_text(
             defender.nickname + " absorbed " + move_data.name + " with Volt Absorb!"
         )
         if not defender.cur_hp == defender.max_hp:
             defender.heal(defender.max_hp // 4)
         return True
-    elif defender.has_ability("water-absorb") and move_data.type == "water":
+    elif defender.has_ability("water-absorb") and move_data.type == "water" and defender.heal_block_count == 0:
         battle.add_text(
             defender.nickname + " absorbed " + move_data.name + " with Water Absorb!"
         )

@@ -17,12 +17,16 @@ import poke_battle_sim.conf.global_data as gd
 
 
 class Battle:
-    def __init__(self, t1: tr.Trainer, t2: tr.Trainer):
+    def __init__(self, t1: tr.Trainer, t2: tr.Trainer, terrain: str = gs.OTHER_TERRAIN, weather: str = gs.CLEAR):
         """
         Creating a battle object requires exactly two Trainers with a valid party size
         and no overlapping Pokemon or Pokemon already in battle.
 
         The order of Trainers does not affect any battle mechanics.
+
+        Two optional parameters can be added :
+        - terrain: the name of the terrain
+        - weather: the starting weather
         """
         if not isinstance(t1, tr.Trainer) or not isinstance(t2, tr.Trainer):
             raise Exception("Attempted to create Battle with invalid Trainer")
@@ -38,12 +42,17 @@ class Battle:
         for t2_poke in t2.poke_list:
             if t2_poke.in_battle:
                 raise Exception("Attempted to create Battle with Pokemon already in battle")
+        if not isinstance(terrain, str) or terrain not in gs.TERRAINS:
+            raise Exception("Attempted to create Battle with invalid terrain type")
+        if not isinstance(weather, str) or weather not in gs.WEATHERS:
+            raise Exception("Attempted to create Battle with invalid weather")
 
         self.t1 = t1
         self.t2 = t2
         self.battle_started = False
         self.all_text = []
         self.cur_text = []
+        self.battlefield = bf.Battlefield(self, terrain=terrain, weather=weather)
 
     def start(self):
         self.t1.start_pokemon(self)
@@ -52,7 +61,6 @@ class Battle:
         self.t2.in_battle = True
         self.t1_faint = False
         self.t2_faint = False
-        self.battlefield = bf.Battlefield(self)
         self.battle_started = True
         self.winner = None
         self.last_move = None
@@ -303,16 +311,17 @@ class Battle:
         if trainer.wish:
             trainer.wish -= 1
             if not trainer.wish:
-                self.add_text(trainer.wish_poke + "'s wish came true!")
-                trainer.current_poke.heal(trainer.current_poke.max_hp // 2)
+                if poke.heal_block_count == 0:
+                    self.add_text(trainer.wish_poke + "'s wish came true!")
+                    trainer.current_poke.heal(trainer.current_poke.max_hp // 2)
                 trainer.wish_poke = None
-        if poke.v_status[gs.INGRAIN]:
+        if poke.v_status[gs.INGRAIN] and poke.heal_block_count == 0:
             self.add_text(poke.nickname + " absorbed nutrients with its roots!")
             heal_amt = max(1, poke.max_hp // 16)
             if poke.item == "big-root":
                 heal_amt = int(heal_amt * 1.3)
             poke.heal(heal_amt, text_skip=True)
-        if poke.v_status[gs.AQUA_RING]:
+        if poke.v_status[gs.AQUA_RING] and poke.heal_block_count == 0:
             self.add_text("A veil of water restored " + poke.nickname + "'s HP!")
             heal_amt = max(1, poke.max_hp // 16)
             if poke.item == "big-root":
@@ -419,7 +428,8 @@ class Battle:
             )
             if other.is_alive:
                 if not poke.has_ability("liquid-ooze"):
-                    other.heal(heal_amt)
+                    if other.heal_block_count == 0:
+                        other.heal(heal_amt)
                 else:
                     other.take_damage(heal_amt)
                     self.add_text(other.nickname + " sucked up the liquid ooze!")
@@ -473,9 +483,9 @@ class Battle:
             poke.embargo_count -= 1
             if not poke.encore_count:
                 self.add_text(poke.nickname + " can use items again!")
-        if poke.hb_count:
-            poke.hb_count -= 1
-            if not poke.hb_count:
+        if poke.heal_block_count:
+            poke.heal_block_count -= 1
+            if not poke.heal_block_count:
                 self.add_text(poke.nickname + "'s Heal Block wore off!")
         if poke.uproar:
             poke.uproar -= 1
@@ -547,7 +557,7 @@ class Battle:
             return True
         old_poke = selector.current_poke
         if selector.selection:
-            selector.selection(self)
+            selector.selection(selector)
         if not selector.current_poke.is_alive or selector.current_poke is old_poke:
             for p in selector.poke_list:
                 if p.is_alive and p is not old_poke:

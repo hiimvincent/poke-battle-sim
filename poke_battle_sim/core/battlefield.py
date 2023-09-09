@@ -8,19 +8,20 @@ import poke_battle_sim.conf.global_settings as gs
 
 
 class Battlefield:
-    def __init__(self, battle: bt.Battle):
-        self.weather = gs.CLEAR
+    def __init__(self, battle: bt.Battle, terrain: str = gs.OTHER_TERRAIN, weather: str = gs.CLEAR):
+        self.weather = weather
+        self._terrain = terrain
         self.acc_modifier = 1
-        self.weather_count = 0
+        self.weather_count = -1
         self.gravity_count = 0
         self.trick_room_count = 0
         self.gravity_stats = None
         self.cur_battle = battle
 
     def update(self):
-        if self.weather_count:
+        if self.weather_count != 0:
             self.weather_count -= 1
-            if self.weather_count:
+            if self.weather_count != 0:
                 if self.weather == gs.SANDSTORM:
                     self.cur_battle.add_text("The sandstorm is raging.")
                 elif self.weather == gs.RAIN:
@@ -84,3 +85,6 @@ class Battlefield:
         if self.weather == gs.HARSH_SUNLIGHT and poke.has_ability("dry-skin"):
             self.cur_battle.add_text(poke.nickname + " was hurt by its Dry Skin!")
             poke.take_damage(max(1, poke.max_hp // 8))
+
+    def get_terrain(self):
+        return self._terrain

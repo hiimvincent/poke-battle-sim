@@ -226,6 +226,8 @@ def _calculate_hit_or_miss(
         d_eva_stage = 0
     if defender.has_ability("unaware"):
         a_acc_stage = 0
+    if move_data.name == "stomp" and defender.minimized:
+        d_eva_stage = 0
     stage = a_acc_stage - d_eva_stage
     stage_mult = max(3, 3 + stage) / max(3, 3 - stage)
     ability_mult = pa.homc_abilities(attacker, defender, battlefield, battle, move_data)
@@ -233,10 +235,10 @@ def _calculate_hit_or_miss(
         attacker, defender, battlefield, battle, move_data, is_first
     )
 
-    ma = move_data.acc
+    move_accuracy = move_data.acc
     if _special_move_acc(attacker, defender, battlefield, battle, move_data):
         return True
-    if not ma:
+    if not move_accuracy:
         return True
     if defender.mr_count and defender.mr_target and attacker is defender.mr_target:
         return True
@@ -246,19 +248,19 @@ def _calculate_hit_or_miss(
         attacker.next_will_hit = False
         return True
 
-    if ma == -1:
-        res = randrange(1, 101) <= attacker.level - defender.level + 30
+    if move_accuracy == -1:
+        result_hit = get_move_precision() <= attacker.level - defender.level + 30
     else:
         hit_threshold = (
-            ma * stage_mult * battlefield.acc_modifier * item_mult * ability_mult
+            move_accuracy * stage_mult * battlefield.acc_modifier * item_mult * ability_mult
         )
-        res = randrange(1, 101) <= hit_threshold
-    if not res:
+        result_hit = get_move_precision() <= hit_threshold
+    if not result_hit:
         if defender.evasion_stage > 0:
             battle.add_text(defender.nickname + " avoided the attack!")
         else:
             _missed(attacker, battle)
-    return res
+    return result_hit
 
 
 def _meta_effect_check(
@@ -331,7 +333,17 @@ def _invulnerability_check(
     if attacker.has_ability("no-guard") or defender.has_ability("no-guard"):
         return False
     if defender.invulnerable:
-        if defender.in_air or defender.in_ground or defender.in_water:
+        if defender.in_air:
+            if move_data.name == "gust":
+                return False
+            _missed(attacker, battle)
+        elif defender.in_ground:
+            if move_data.name == "earthquake":
+                return False
+            _missed(attacker, battle)
+        elif defender.in_water:
+            if move_data.name in ["surf", "whirlpool", "low-kick"]:
+                return False
             _missed(attacker, battle)
         return True
     return False
@@ -428,6 +440,10 @@ def _generate_2_to_5() -> int:
     else:
         num_hits = 5
     return num_hits
+
+
+def get_move_precision() -> int:
+    return randrange(1, 101)
 
 
 def confuse(
@@ -1255,7 +1271,7 @@ def _ef_018(
 ) -> bool:
     if defender.in_water:
         move_data.power *= 2
-        cc_ib[1] = True
+    _calculate_damage(attacker, defender, battlefield, battle, move_data)
 
 
 def _ef_019(
@@ -1324,8 +1340,8 @@ def _ef_022(
     cc_ib: list,
 ) -> bool:
     if defender.in_air:
-        cc_ib[1] = True
         move_data.power *= 2
+    _calculate_damage(attacker, defender, battlefield, battle, move_data)
 
 
 def _ef_023(
@@ -1357,6 +1373,8 @@ def _ef_024(
     is_first: bool,
     cc_ib: list,
 ) -> bool:
+    if move_data.name == "whirlpool" and defender.in_water:
+        move_data.power *= 2
     dmg = _calculate_damage(attacker, defender, battlefield, battle, move_data)
     if (
         defender.is_alive
@@ -1364,10 +1382,9 @@ def _ef_024(
         and not defender.substitute
         and not defender.v_status[gs.BINDING_COUNT]
     ):
-        defender.v_status[gs.BINDING_COUNT] = (
-            _generate_2_to_5() if attacker.item != "grip-claw" else 5
-        )
+        defender.v_status[gs.BINDING_COUNT] = _generate_2_to_5() if attacker.item != "grip-claw" else 5
         defender.binding_poke = attacker
+
         if move_data.ef_stat == gs.BIND:
             defender.binding_type = "Bind"
             battle.add_text(
@@ -1430,8 +1447,7 @@ def _ef_026(
 ) -> bool:
     if defender.in_ground:
         move_data.power *= 2
-        cc_ib[1] = True
-
+    _calculate_damage(attacker, defender, battlefield, battle, move_data)
 
 def _ef_027(
     attacker: pk.Pokemon,
@@ -1597,6 +1613,7 @@ def _ef_035(
         move_data.power = 100
     else:
         move_data.power = 120
+    _calculate_damage(attacker, defender, battlefield, battle, move_data)
 
 
 def _ef_036(
@@ -1654,8 +1671,9 @@ def _ef_038(
         if attacker.item == "big-root":
             heal_amt = int(heal_amt * 1.3)
         if not defender.has_ability("liquid-ooze"):
-            attacker.heal(heal_amt, text_skip=True)
-            battle.add_text(defender.nickname + " had it's energy drained!")
+            if attacker.heal_block_count == 0:
+                attacker.heal(heal_amt, text_skip=True)
+                battle.add_text(defender.nickname + " had it's energy drained!")
         else:
             attacker.take_damage(heal_amt)
             battle.add_text(attacker.nickname + " sucked up the liquid ooze!")
@@ -2896,7 +2914,7 @@ def _ef_102(
     t.current_poke.embargo_count = attacker.embargo_count
     t.current_poke.magnetic_rise = attacker.magnet_rise
     t.current_poke.substitute = attacker.substitute
-    t.current_poke.hb_count = attacker.hb_count
+    t.current_poke.heal_block_count = attacker.heal_block_count
     t.current_poke.power_trick = attacker.power_trick
     if not attacker.has_ability("multitype"):
         t.current_poke.ability_supressed = attacker.ability_suppressed
@@ -2949,7 +2967,7 @@ def _ef_104(
         t = attacker.trainer
         t.spikes = 0
         t.toxic_spikes = 0
-        t.steal_rock = 0
+        t.stealth_rock = 0
     return True
 
 
@@ -3363,7 +3381,33 @@ def _ef_126(
     is_first: bool,
     cc_ib: list,
 ) -> bool:
-    move_data = Move(PokeSim.get_move_data(["swift"])[0])
+    if battlefield.get_terrain() in [gs.BUILDING, gs.DISTORSION_WORLD]:
+        selected_move = Move(PokeSim.get_single_move("tri-attack"))
+    elif battlefield.get_terrain() == gs.SAND:
+        selected_move = Move(PokeSim.get_single_move("earthquake"))
+    elif battlefield.get_terrain() == gs.CAVE:
+        selected_move = Move(PokeSim.get_single_move("rock-slide"))
+    elif battlefield.get_terrain() == gs.TALL_GRASS:
+        selected_move = Move(PokeSim.get_single_move("seed-bomb"))
+    elif battlefield.get_terrain() == gs.WATER:
+        selected_move = Move(PokeSim.get_single_move("hydro-pump"))
+    elif battlefield.get_terrain() == gs.SNOW:
+        selected_move = Move(PokeSim.get_single_move("blizzard"))
+    elif battlefield.get_terrain() == gs.ICE:
+        selected_move = Move(PokeSim.get_single_move("ice-beam"))
+    else:
+        selected_move = Move(PokeSim.get_single_move("tri-attack"))
+    effect_move = _MOVE_EFFECTS[selected_move.ef_id]
+    battle.add_text(cap_name(move_data.name) + " turned into " + cap_name(selected_move.name) + "!")
+    return effect_move(
+        attacker,
+        defender,
+        battlefield,
+        battle,
+        selected_move,
+        is_first,
+        cc_ib,
+    )
 
 
 def _ef_127(
@@ -4132,7 +4176,7 @@ def _ef_168(
     cc_ib: list,
 ) -> bool:
     attacker.heal(max(1, attacker.max_hp // 2))
-    if not is_first or not "flying" in attacker.types:
+    if not is_first or "flying" not in attacker.types:
         return True
     attacker.r_types = attacker.types
     other_type = [type for type in attacker.types if type != "flying"]
@@ -4254,7 +4298,7 @@ def _ef_175(
     if (
         attacker.item
         and attacker.item in gd.BERRY_DATA
-        and not battlefield.weather in [gs.HARSH_SUNLIGHT, gs.RAIN]
+        and battlefield.weather not in [gs.HARSH_SUNLIGHT, gs.RAIN]
         and not attacker.has_ability("klutz")
         and not attacker.embargo_count
     ):
@@ -4514,8 +4558,8 @@ def _ef_189(
     is_first: bool,
     cc_ib: list,
 ) -> bool:
-    if defender.is_alive and not defender.hb_count:
-        defender.hb_count = 5
+    if defender.is_alive and not defender.heal_block_count:
+        defender.heal_block_count = 5
         battle.add_text(defender.nickname + " was prevented from healing!")
     else:
         failed(battle)
@@ -4924,13 +4968,15 @@ def _ef_211(
         battle.add_text(_stat_text(defender, gs.EVA, -1))
         if defender.evasion_stage > -6:
             defender.evasion_stage -= 1
-    defender.trainer.spikes = 0
-    defender.trainer.toxic_spikes = 0
-    defender.stealth_rock = 0
-    defender.trainer.safeguard = 0
-    defender.trainer.light_screen = 0
-    defender.trainer.reflect = 0
-    defender.trainer.mist = 0
+    attacker.trainer.spikes = 0
+    attacker.trainer.toxic_spikes = 0
+    attacker.trainer.stealth_rock = 0
+    attacker.trainer.safeguard = 0
+    attacker.trainer.light_screen = 0
+    attacker.trainer.reflect = 0
+    attacker.trainer.mist = 0
+    if battlefield.weather == gs.FOG:
+        battlefield.weather = gs.CLEAR
 
 
 def _ef_212(
@@ -4979,7 +5025,7 @@ def _ef_214(
     cc_ib: list,
 ) -> bool:
     if not defender.trainer.stealth_rock:
-        defender.trainer.steal_rock = 1
+        defender.trainer.stealth_rock = 1
         battle.add_text(
             "Pointed stones float in the air around "
             + defender.trainer.name
